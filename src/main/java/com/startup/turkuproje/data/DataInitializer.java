@@ -51,6 +51,12 @@ public class DataInitializer implements CommandLineRunner {
                 5. KAPANIŞ: Öğrenilen ders, günümüze yansıması veya mesaj (30 saniye)
                 6. CTA: Abone ol çağrısı ve sonraki video teaser (15 saniye)
 
+                Araştırma bilgileri (varsa kullan):
+                {{research}}
+
+                Kullanıcı notları (varsa dikkat et):
+                {{user_notes}}
+
                 Kurallar:
                 - Belgesel tonunda, abartısız ve saygılı bir dil kullan.
                 - Tarihsel bilgileri doğru ver; emin olmadığın yerlerde "rivayete göre" gibi ifadeler kullan.

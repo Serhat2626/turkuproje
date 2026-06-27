@@ -25,6 +25,7 @@ public class ScriptGenerationService {
     private final PromptTemplateService promptTemplateService;
     private final AiService aiService;
     private final ScriptRepository scriptRepository;
+    private final ResearchService researchService;
 
     /**
      * Proje için AI ile senaryo üret.
@@ -52,6 +53,15 @@ public class ScriptGenerationService {
         variables.put("duration", String.valueOf(project.getVideoDuration()));
         variables.put("title", project.getTitle());
         variables.put("niche", project.getNiche());
+
+        // Araştırma varsa prompt'a ekle
+        com.startup.turkuproje.entity.ResearchNote research = researchService.getApprovedResearch(projectId);
+        if (research != null) {
+            variables.put("research", research.getContent());
+            if (research.getUserNotes() != null) {
+                variables.put("user_notes", research.getUserNotes());
+            }
+        }
 
         String resolvedPrompt = promptTemplateService.resolveTemplate(
                 template.getTemplateContent(), variables);
