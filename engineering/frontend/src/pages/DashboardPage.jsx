@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { projectApi } from '../api/client'
-import StatusBadge from '../components/common/StatusBadge'
-import LoadingSpinner from '../components/common/LoadingSpinner'
-import EmptyState from '../components/common/EmptyState'
+import { projectApi } from '../api/client.js'
+import StatusBadge from '../components/common/StatusBadge.jsx'
+import LoadingSpinner from '../components/common/LoadingSpinner.jsx'
+import EmptyState from '../components/common/EmptyState.jsx'
 import { Plus, Calendar, Clock, FolderOpen } from 'lucide-react'
 
 export default function DashboardPage() {

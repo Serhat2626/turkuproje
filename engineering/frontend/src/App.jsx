@@ -1,8 +1,8 @@
 import { Routes, Route } from 'react-router-dom'
-import Layout from './components/layout/Layout'
-import DashboardPage from './pages/DashboardPage'
-import NewProjectPage from './pages/NewProjectPage'
-import ProjectDetailPage from './pages/ProjectDetailPage'
+import Layout from './components/layout/Layout.jsx'
+import DashboardPage from './pages/DashboardPage.jsx'
+import NewProjectPage from './pages/NewProjectPage.jsx'
+import ProjectDetailPage from './pages/ProjectDetailPage.jsx'
 
 function App() {
   return (

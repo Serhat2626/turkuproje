@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { researchApi } from '../../api/client'
-import LoadingSpinner from '../common/LoadingSpinner'
-import EmptyState from '../common/EmptyState'
+import { researchApi } from '../../api/client.js'
+import LoadingSpinner from '../common/LoadingSpinner.jsx'
+import EmptyState from '../common/EmptyState.jsx'
 import { Search, CheckCircle, RefreshCw, Edit3 } from 'lucide-react'
 
 export default function ResearchTab({ projectId, onStatusChange }) {

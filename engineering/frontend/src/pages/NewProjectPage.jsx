@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { projectApi } from '../api/client'
+import { projectApi } from '../api/client.js'
 import { Sparkles, ArrowLeft } from 'lucide-react'
 
 export default function NewProjectPage() {

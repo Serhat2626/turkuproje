@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
-import { scriptApi } from '../../api/client'
-import LoadingSpinner from '../common/LoadingSpinner'
-import EmptyState from '../common/EmptyState'
+import { scriptApi } from '../../api/client.js'
+import LoadingSpinner from '../common/LoadingSpinner.jsx'
+import EmptyState from '../common/EmptyState.jsx'
 import { FileText, RefreshCw } from 'lucide-react'
 
 const SECTION_LABELS = { hook: '🎯 Hook', intro: '📖 Giriş', story: '📜 Hikâye', climax: '💔 Duygusal Zirve', closing: '🎬 Kapanış', callToAction: '📢 Abone Çağrısı' }
