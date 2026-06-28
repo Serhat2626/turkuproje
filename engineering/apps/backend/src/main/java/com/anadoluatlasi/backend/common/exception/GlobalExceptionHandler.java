@@ -8,7 +8,7 @@ import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 /**
  * Global exception handler.
@@ -43,28 +43,31 @@ public class GlobalExceptionHandler {
 
     /**
      * Bean validation hatası (@Valid) → 400
-     * Alan bazlı hata mesajlarını birleştirir.
+     * Alan bazlı hata mesajlarını errors listesinde döndürür.
      */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ApiResponse<Void>> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
-        String errors = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> error.getField() + ": " + error.getDefaultMessage())
-                .collect(Collectors.joining(", "));
+        List<ApiResponse.FieldError> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+                .map(error -> ApiResponse.FieldError.builder()
+                        .field(error.getField())
+                        .message(error.getDefaultMessage())
+                        .build())
+                .toList();
 
-        log.warn("Bean validasyon hatası: {}", errors);
+        log.warn("Bean validasyon hatası: {} alan", fieldErrors.size());
         return ResponseEntity
                 .status(HttpStatus.BAD_REQUEST)
-                .body(ApiResponse.error(errors));
+                .body(ApiResponse.error("Validasyon hatası", fieldErrors));
     }
 
     /**
-     * İş kuralı ihlali → 422
+     * İş kuralı ihlali → 409 Conflict
      */
     @ExceptionHandler(BusinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleBusinessException(BusinessException ex) {
         log.warn("İş kuralı hatası: {}", ex.getMessage());
         return ResponseEntity
-                .status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .status(HttpStatus.CONFLICT)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 

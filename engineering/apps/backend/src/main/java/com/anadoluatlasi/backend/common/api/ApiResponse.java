@@ -7,6 +7,7 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
  * Tüm API yanıtları için standart sarmalayıcı (wrapper) sınıf.
@@ -24,6 +25,7 @@ public class ApiResponse<T> {
     private boolean success;
     private T data;
     private String message;
+    private List<FieldError> errors;
 
     @Builder.Default
     private LocalDateTime timestamp = LocalDateTime.now();
@@ -60,5 +62,29 @@ public class ApiResponse<T> {
                 .message(message)
                 .timestamp(LocalDateTime.now())
                 .build();
+    }
+
+    /**
+     * Alan bazlı hata listesiyle hatalı yanıt oluşturur.
+     */
+    public static <T> ApiResponse<T> error(String message, List<FieldError> errors) {
+        return ApiResponse.<T>builder()
+                .success(false)
+                .message(message)
+                .errors(errors)
+                .timestamp(LocalDateTime.now())
+                .build();
+    }
+
+    /**
+     * Alan bazlı hata bilgisi.
+     */
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class FieldError {
+        private String field;
+        private String message;
     }
 }
