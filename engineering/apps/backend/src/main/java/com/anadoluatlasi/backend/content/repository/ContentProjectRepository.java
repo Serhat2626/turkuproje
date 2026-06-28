@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * İçerik projesi repository'si.
- * Slug, durum, platform ve bilgi öğesi bazlı sorgular sağlar.
+ * Slug, durum, bilgi öğesi ve platform bazlı sorgular sağlar.
  */
 @Repository
 public interface ContentProjectRepository extends JpaRepository<ContentProject, UUID> {
@@ -26,4 +26,9 @@ public interface ContentProjectRepository extends JpaRepository<ContentProject, 
     List<ContentProject> findByKnowledgeItemId(UUID knowledgeItemId);
 
     List<ContentProject> findAllByOrderByCreatedAtDesc();
+
+    /**
+     * FP-001: Belirli bir bilgi öğesine ait projeleri duruma göre filtreler.
+     */
+    List<ContentProject> findByKnowledgeItemIdAndStatus(UUID knowledgeItemId, ContentProjectStatus status);
 }

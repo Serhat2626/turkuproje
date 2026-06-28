@@ -12,7 +12,7 @@ import java.util.UUID;
 
 /**
  * Bilgi bankası öğeleri için repository arayüzü.
- * Slug, durum, tür ve oluşturulma tarihine göre sorgular sağlar.
+ * Slug, durum, tür, başlık ve oluşturulma tarihine göre sorgular sağlar.
  */
 @Repository
 public interface KnowledgeItemRepository extends JpaRepository<KnowledgeItem, UUID> {
@@ -41,4 +41,9 @@ public interface KnowledgeItemRepository extends JpaRepository<KnowledgeItem, UU
      * Tüm bilgi öğelerini oluşturulma tarihine göre en yeniden eskiye sıralar.
      */
     List<KnowledgeItem> findAllByOrderByCreatedAtDesc();
+
+    /**
+     * FP-001: Başlık içinde arama yapar (case-insensitive).
+     */
+    List<KnowledgeItem> findByTitleContainingIgnoreCase(String keyword);
 }
