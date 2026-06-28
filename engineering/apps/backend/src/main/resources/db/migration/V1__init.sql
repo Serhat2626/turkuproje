@@ -1,0 +1,3 @@
+-- Anadolu Atlasi - Initial migration
+-- Bu dosya ilk veritabanı şemasını oluşturacaktır.
+-- Entity tasarımı sonraki sprintlerde eklenecektir.

@@ -1,0 +1,114 @@
+version: '3.8'
+
+# ================================================================
+# Anadolu Atlası - Lokal Geliştirme Ortamı
+# ================================================================
+# Kullanım:
+#   docker compose --env-file .env up -d
+#
+# Not: Backend ve admin-web ilk aşamada lokal olarak çalıştırılabilir.
+#      Docker Compose ile çalıştırmak için Dockerfile'lar gereklidir.
+# ================================================================
+
+services:
+
+  # ---- PostgreSQL ----
+  postgres:
+    image: postgres:16-alpine
+    container_name: anadolu-postgres
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-anadolu_atlasi}
+      POSTGRES_USER: ${POSTGRES_USER:-anadolu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anadolu_dev}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-anadolu} -d ${POSTGRES_DB:-anadolu_atlasi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Redis ----
+  redis:
+    image: redis:7-alpine
+    container_name: anadolu-redis
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- MinIO (S3 uyumlu dosya depolama) ----
+  minio:
+    image: minio/minio:latest
+    container_name: anadolu-minio
+    restart: unless-stopped
+    ports:
+      - "${MINIO_API_PORT:-9000}:9000"
+      - "${MINIO_CONSOLE_PORT:-9001}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Backend (Spring Boot) ----
+  backend:
+    build:
+      context: ../../apps/backend
+      dockerfile: Dockerfile
+    container_name: anadolu-backend
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-anadolu_atlasi}
+      POSTGRES_USER: ${POSTGRES_USER:-anadolu}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-anadolu_dev}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-anadolu-media}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+      minio:
+        condition: service_started
+
+  # ---- Admin Web (React + TypeScript) ----
+  admin-web:
+    build:
+      context: ../../apps/admin-web
+      dockerfile: Dockerfile
+    container_name: anadolu-admin-web
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_WEB_PORT:-5173}:5173"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:

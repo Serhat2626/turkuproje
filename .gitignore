@@ -1,33 +1,46 @@
-HELP.md
+# ================================================================
+# Anadolu Atlası - Git Ignore
+# ================================================================
+
+# ---- Java / Maven ----
 target/
-.mvn/wrapper/maven-wrapper.jar
+!.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+*.class
+*.jar
+*.war
+*.ear
 
-### STS ###
-.apt_generated
-.classpath
-.factorypath
-.project
-.settings
-.springBeans
-.sts4-cache
+# ---- Node.js ----
+node_modules/
+dist/
+*.local
 
-### IntelliJ IDEA ###
-.idea
+# ---- IDE ----
+.idea/
 *.iws
 *.iml
 *.ipr
-
-### NetBeans ###
-/nbproject/private/
-/nbbuild/
-/dist/
-/nbdist/
-/.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
-
-### VS Code ###
 .vscode/
+*.swp
+*.swo
+
+# ---- OS ----
+.DS_Store
+Thumbs.db
+
+# ---- Environment ----
+.env
+*.env.local
+
+# ---- Docker ----
+minio_data/
+
+# ---- Build ----
+build/
+out/
+
+# ---- Logs ----
+*.log
+logs/
