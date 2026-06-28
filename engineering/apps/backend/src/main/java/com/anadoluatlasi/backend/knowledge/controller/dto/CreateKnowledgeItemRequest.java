@@ -8,7 +8,8 @@ import lombok.Data;
 import lombok.NoArgsConstructor;
 
 /**
- * Bilgi öğesi oluşturma isteği DTO'su.
+ * FP-001: Bilgi öğesi oluşturma isteği DTO'su.
+ * Status alanı yoktur — yeni kayıtlar her zaman DRAFT olarak başlar.
  */
 @Data
 @Builder
@@ -28,4 +29,26 @@ public class CreateKnowledgeItemRequest {
     private String language;
 
     private String summary;
+
+    /** FP-001 */
+    private String description;
+
+    /** FP-001 */
+    @Size(max = 100, message = "Kategori en fazla 100 karakter olabilir")
+    private String category;
+
+    /** FP-001 */
+    @Size(max = 100, message = "İl en fazla 100 karakter olabilir")
+    private String city;
+
+    /** FP-001 */
+    @Size(max = 100, message = "İlçe en fazla 100 karakter olabilir")
+    private String district;
+
+    /** FP-001 */
+    @Size(max = 500, message = "Lokasyon metni en fazla 500 karakter olabilir")
+    private String locationText;
+
+    /** FP-001 */
+    private String notes;
 }
