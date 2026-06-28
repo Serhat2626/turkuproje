@@ -5,15 +5,15 @@
 ## Doküman Bilgisi
 
 | Alan            | Değer                                              |
-| --------------- | -------------------------------------------------- |
-| Doküman         | `docs/02-ai-platform/00-content-agent-workflow.md` |
+| --------------- |----------------------------------------------------|
+| Doküman         | `docs/03-ai-platform/20-content-agent-workflow.md` |
 | Feature         | `FP-001 AI Assisted Content Creation`              |
 | Katman          | AI Platform                                        |
 | Önceki Doküman  | `docs/01-product/00-content-pipeline.md`           |
 | Durum           | Draft                                              |
 | Öncelik         | High                                               |
 | Sahiplik        | AI Platform + Lead Software Architect              |
-| Sonraki Doküman | `docs/02-ai-platform/01-content-agent-contract.md` |
+| Sonraki Doküman | `docs/03-ai-platform/21-content-agent-contract.md` |
 
 ---
 
@@ -1102,7 +1102,7 @@ Bu aşamada IDE AI kod yazmayacaktır.
 
 IDE AI’ın görevi:
 
-1. `docs/02-ai-platform/00-content-agent-workflow.md` dosyasını oluşturmak.
+1. `docs/03-ai-platform/20-content-agent-workflow.md` dosyasını oluşturmak.
 2. Bu dokümanı verilen içerikle doldurmak.
 3. Kod, entity, DTO, service, controller, repository veya migration üretmemek.
 4. Product dokümanı ile çelişen yeni akış eklememek.
@@ -1112,7 +1112,7 @@ IDE AI’ın görevi:
 IDE AI’a verilecek net komut:
 
 ```text
-Create the file docs/02-ai-platform/00-content-agent-workflow.md with the provided content.
+Create the file docs/03-ai-platform/20-content-agent-workflow.md with the provided content.
 Do not generate code.
 Do not create entities, DTOs, controllers, services, repositories, migrations, frontend pages, or API contracts yet.
 Only add this AI Platform documentation file.
@@ -1165,7 +1165,7 @@ Ancak ileride Engineering ve kod aşamasında şu kontroller yapılmalıdır:
 Sıradaki doküman:
 
 ```text
-docs/02-ai-platform/01-content-agent-contract.md
+docs/03-ai-platform/21-content-agent-contract.md
 ```
 
 Bu dokümanda AI Content Agent için daha net bir contract tanımlanacaktır.

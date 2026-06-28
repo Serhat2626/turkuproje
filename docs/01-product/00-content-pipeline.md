@@ -12,7 +12,7 @@
 | Durum           | Draft                                              |
 | Öncelik         | High                                               |
 | Sahiplik        | Product + Lead Software Architect                  |
-| Sonraki Doküman | `docs/02-ai-platform/00-content-agent-workflow.md` |
+| Sonraki Doküman | `docs/03-ai-platform/00-content-agent-workflow.md` |
 
 ---
 
@@ -934,7 +934,7 @@ Ancak ileride bu dokümana göre geliştirilecek kodlar incelenirken şu sorular
 Sıradaki doküman:
 
 ```text
-docs/02-ai-platform/00-content-agent-workflow.md
+docs/03-ai-platform/00-content-agent-workflow.md
 ```
 
 Bu dokümanda Product seviyesinde tanımlanan içerik üretim hattının AI Platform karşılığı hazırlanacaktır.
