@@ -1,14 +1,11 @@
 package com.anadoluatlasi.backend.knowledge.entity;
 
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.FetchType;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
@@ -21,14 +18,12 @@ import org.springframework.data.annotation.LastModifiedDate;
 import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.UUID;
 
 /**
  * Bilgi bankası öğesi entity'si.
- * Anadolu kültürüne ait türkü, sanatçı, bölge, gelenek,
- * tarihî olay ve efsane gibi bilgi öğelerini temsil eder.
+ * Anadolu kültürüne ait konu başlıklarını temsil eder.
+ * FP-001 content pipeline'ın kaynak veri modelidir.
  */
 @Data
 @Builder
@@ -56,6 +51,30 @@ public class KnowledgeItem {
     @Column(name = "summary", columnDefinition = "TEXT")
     private String summary;
 
+    /** FP-001: Detaylı açıklama */
+    @Column(name = "description", columnDefinition = "TEXT")
+    private String description;
+
+    /** FP-001: Kategori (türkü, gelenek, tarihî olay vb.) */
+    @Column(name = "category", length = 100)
+    private String category;
+
+    /** FP-001: İl bilgisi */
+    @Column(name = "city", length = 100)
+    private String city;
+
+    /** FP-001: İlçe bilgisi */
+    @Column(name = "district", length = 100)
+    private String district;
+
+    /** FP-001: Serbest format lokasyon metni */
+    @Column(name = "location_text", length = 500)
+    private String locationText;
+
+    /** FP-001: Editör notları */
+    @Column(name = "notes", columnDefinition = "TEXT")
+    private String notes;
+
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private KnowledgeItemStatus status;
@@ -71,17 +90,6 @@ public class KnowledgeItem {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
-    @Builder.Default
-    @OneToMany(mappedBy = "knowledgeItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<SourceReference> sourceReferences = new ArrayList<>();
-
-    @Builder.Default
-    @OneToMany(mappedBy = "knowledgeItem", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    private List<Fact> facts = new ArrayList<>();
-
-    /**
-     * Kayıt oluşturulmadan önce UUID atar ve oluşturulma zamanını ayarlar.
-     */
     @PrePersist
     public void prePersist() {
         if (this.id == null) {
@@ -92,9 +100,6 @@ public class KnowledgeItem {
         }
     }
 
-    /**
-     * Kayıt güncellenirken güncelleme zamanını ayarlar.
-     */
     @PreUpdate
     public void preUpdate() {
         this.updatedAt = LocalDateTime.now();
