@@ -9,9 +9,9 @@ interface NavItem {
 
 const navItems: NavItem[] = [
   { to: '/', icon: '🏠', label: 'Dashboard' },
-  { to: '/projects', icon: '📚', label: 'İçerik Projeleri', disabled: true },
-  { to: '/knowledge', icon: '🔍', label: 'Bilgi Bankası', disabled: true },
-  { to: '/media', icon: '🎨', label: 'Medya', disabled: true },
+  { to: '/knowledge', icon: '🔍', label: 'Bilgi Bankası' },
+  { to: '/projects', icon: '📚', label: 'İçerik Projeleri' },
+  { to: '/media', icon: '🎨', label: 'Medya' },
   { to: '/artists', icon: '🎵', label: 'Sanatçılar', disabled: true },
   { to: '/prompts', icon: '⚡', label: 'Prompt Şablonları', disabled: true },
 ]
@@ -47,7 +47,7 @@ function Sidebar() {
             <NavLink
               key={item.to}
               to={item.to}
-              end
+              end={item.to === '/'}
               className={({ isActive }) =>
                 `sidebar-nav-item${isActive ? ' active' : ''}`
               }
@@ -61,7 +61,7 @@ function Sidebar() {
 
       {/* ── Footer ──────────────────────── */}
       <div className="sidebar-footer">
-        <span className="sidebar-version">v0.0.1</span>
+        <span className="sidebar-version">v0.0.2</span>
         <span className="sidebar-status-dot" title="Sistem Aktif"></span>
       </div>
     </aside>
