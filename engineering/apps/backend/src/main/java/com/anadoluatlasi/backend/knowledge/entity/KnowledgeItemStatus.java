@@ -2,21 +2,17 @@ package com.anadoluatlasi.backend.knowledge.entity;
 
 /**
  * Bilgi bankası öğelerinin yaşam döngüsü durumlarını tanımlar.
+ *
+ * Geçiş sırası: DRAFT → READY → ARCHIVED
  */
 public enum KnowledgeItemStatus {
 
-    /** Taslak olarak oluşturuldu */
+    /** Taslak olarak oluşturuldu, düzenleme aşamasında */
     DRAFT,
 
-    /** Araştırma aşamasında */
-    RESEARCHING,
+    /** İçerik üretimine hazır */
+    READY,
 
-    /** İnceleme bekliyor */
-    REVIEW_REQUIRED,
-
-    /** Doğrulanmış ve kullanıma hazır */
-    VERIFIED,
-
-    /** Arşivlenmiş */
+    /** Arşivlenmiş, artık aktif değil */
     ARCHIVED
 }

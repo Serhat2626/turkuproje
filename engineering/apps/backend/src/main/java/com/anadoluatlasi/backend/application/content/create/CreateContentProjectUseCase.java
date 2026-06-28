@@ -57,7 +57,7 @@ public class CreateContentProjectUseCase {
                 .slug(CreateContentProjectValidator.generateSlug(command.getTitle()))
                 .contentType(ContentType.valueOf(command.getContentType()))
                 .targetPlatform(TargetPlatform.valueOf(command.getTargetPlatform()))
-                .status(ContentProjectStatus.DRAFT)
+                .status(ContentProjectStatus.CREATED)
                 .language(command.getLanguage())
                 .build();
 
