@@ -5,6 +5,7 @@ import com.anadoluatlasi.backend.ai.entity.AiErrorType;
 import com.anadoluatlasi.backend.ai.entity.AiGenerationRequest;
 import com.anadoluatlasi.backend.ai.entity.AiGenerationStatus;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiProviderTestHelper;
 import com.anadoluatlasi.backend.ai.repository.AiGenerationRequestRepository;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.content.entity.ContentDraft;
