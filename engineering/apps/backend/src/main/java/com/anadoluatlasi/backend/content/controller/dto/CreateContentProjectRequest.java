@@ -11,7 +11,8 @@ import lombok.NoArgsConstructor;
 import java.util.UUID;
 
 /**
- * İçerik projesi oluşturma isteği DTO'su.
+ * FP-001: İçerik projesi oluşturma isteği DTO'su.
+ * Status alanı yoktur — yeni projeler her zaman CREATED olarak başlar.
  */
 @Data
 @Builder
@@ -22,17 +23,22 @@ public class CreateContentProjectRequest {
     @NotNull(message = "Bilgi öğesi ID boş olamaz")
     private UUID knowledgeItemId;
 
-    @NotBlank(message = "Başlık boş olamaz")
-    @Size(max = 255, message = "Başlık en fazla 255 karakter olabilir")
-    private String title;
+    /** İçerik üretim amacı (ContentPurpose enum adı) */
+    private String contentPurpose;
 
-    @NotBlank(message = "İçerik türü boş olamaz")
-    private String contentType;
+    /** Hedef kitle (TargetAudience enum adı) */
+    private String targetAudience;
 
-    @NotBlank(message = "Hedef platform boş olamaz")
-    private String targetPlatform;
+    /** Yazım tonu (ContentTone enum adı) */
+    private String tone;
 
     @NotBlank(message = "Dil boş olamaz")
     @Size(max = 10, message = "Dil kodu en fazla 10 karakter olabilir")
     private String language;
+
+    /** Format ipucu */
+    private String formatHint;
+
+    /** Uzunluk ipucu */
+    private String lengthHint;
 }
