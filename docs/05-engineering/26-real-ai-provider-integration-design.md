@@ -751,4 +751,40 @@ ai:
 |----------------|-------------|----------|
 | (ayarlanmamış) | `MockAiContentAgentGateway` | Deterministic mock |
 | `mock` | `MockAiContentAgentGateway` | Deterministic mock |
-| `openai` | `OpenAiContentAgentGateway` | Skeleton (Task 22), real çağrı (Task 23+) |
+| `openai` | `OpenAiContentAgentGateway` | Skeleton (Task 22), real çağrı (Task 24+) |
+
+---
+
+## Appendix B — Prompt Builder & Response Parser (Task 23)
+
+> Bu bölüm Task 23 ile eklendi.
+
+### Eklenen Sınıflar
+
+| Sınıf | Paket | Rol |
+|-------|-------|-----|
+| `OpenAiPromptBuilder` | `ai.gateway.openai` | `ContentAgentRequest` → chat messages dönüşümü |
+| `OpenAiResponseParser` | `ai.gateway.openai` | Raw model text → `ContentAgentResponse` parse + validation |
+| `OpenAiParseResult` | `ai.gateway.openai` | Parser sonuç wrapper (success/failure) |
+| `OpenAiChatMessage` | `ai.gateway.openai` | Provider-internal chat message DTO |
+
+Tüm sınıflar **package-private** — REST'e expose edilmez.
+
+### Parser Error Mapping
+
+| Senaryo | `AiErrorType` | Retryable |
+|---------|--------------|-----------|
+| null/blank yanıt | `EMPTY_AI_RESPONSE` | ✅ |
+| Geçersiz JSON | `INVALID_AI_RESPONSE_FORMAT` | ✅ |
+| title eksik/boş | `INVALID_AI_RESPONSE_FORMAT` | ✅ |
+| body eksik/boş | `INVALID_AI_RESPONSE_FORMAT` | ✅ |
+| body < 50 karakter | `AI_RESPONSE_TOO_SHORT` | ✅ |
+| Refusal/unsafe content | `AI_RESPONSE_UNSAFE_CONTENT` | ❌ |
+
+### Gerçek HTTP Çağrısı
+
+**Henüz yapılmıyor.** Gateway prompt'u oluşturur ama `AI_PROVIDER_UNAVAILABLE` döner. Task 24+ ile tamamlanacak.
+
+### Raw Payload
+
+Saklanmıyor ve REST'e expose edilmiyor.

@@ -9,15 +9,15 @@ import com.anadoluatlasi.backend.ai.gateway.AiGatewayResult;
 import lombok.extern.slf4j.Slf4j;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 /**
- * FP-001: OpenAI Content Agent Gateway implementasyonu — SKELETON.
+ * FP-001: OpenAI Content Agent Gateway implementasyonu.
  *
- * <p>Bu sınıf gerçek OpenAI API çağrısı yapacak gateway'in iskeletidir.
- * Şu an tam implementasyon yapılmamıştır — API key doğrulaması yapar,
- * ancak gerçek çağrı yerine yapılandırma hatası döndürür.</p>
- *
- * <p>Tam implementasyon Task 23 (Prompt Builder) ve Task 24 (Error Mapping) ile gelecektir.</p>
+ * <p>Bu sınıf gerçek OpenAI API çağrısı yapacak gateway'dir.
+ * Task 22: Skeleton oluşturuldu.
+ * Task 23: PromptBuilder ve ResponseParser entegre edildi.
+ * Gerçek HTTP çağrısı henüz yapılmaz — Task 24+ ile tamamlanacaktır.</p>
  *
  * <p>Gateway kuralları:</p>
  * <ul>
@@ -25,6 +25,7 @@ import java.time.LocalDateTime;
  *   <li>Request/Response contract'ları provider bağımsızdır</li>
  *   <li>Exception fırlatmak yerine AiGatewayResult döndürülür</li>
  *   <li>Proje statüsünü değiştirmez — sadece result döndürür</li>
+ *   <li>Raw prompt/completion saklanmaz ve REST'e expose edilmez</li>
  * </ul>
  */
 @Slf4j
@@ -41,7 +42,7 @@ public class OpenAiContentAgentGateway implements AiContentAgentGateway {
         log.info("OpenAI gateway çağrıldı: requestId={}, projectId={}, model={}",
                 request.getRequestId(), request.getProjectId(), config.getModel());
 
-        // ── API key doğrulama ──
+        // ── 1. API key doğrulama ──
         if (config.getApiKey() == null || config.getApiKey().isBlank()) {
             log.error("OpenAI API key yapılandırılmamış. ai.openai.api-key ayarlanmalıdır.");
             return AiGatewayResult.failure(ContentAgentError.builder()
@@ -54,16 +55,23 @@ public class OpenAiContentAgentGateway implements AiContentAgentGateway {
                     .build());
         }
 
-        // ── Skeleton: gerçek çağrı henüz implementasyon dışı ──
-        // Task 23 ile PromptBuilder, Task 24 ile Error Mapping eklenecek.
-        log.warn("OpenAI gateway SKELETON modu — gerçek API çağrısı henüz implement edilmedi. requestId={}",
-                request.getRequestId());
+        // ── 2. Prompt construction ──
+        List<OpenAiChatMessage> messages = OpenAiPromptBuilder.buildMessages(request);
+        log.debug("OpenAI prompt oluşturuldu: {} mesaj, promptVersion={}",
+                messages.size(), OpenAiPromptBuilder.getPromptVersion());
+
+        // ── 3. Real API call — henüz implement edilmedi ──
+        // Task 24+ ile HTTP client eklenerek gerçek çağrı yapılacak.
+        // Şu an skeleton modu: prompt build edilir ama çağrı yapılmaz.
+        log.warn("OpenAI gateway SKELETON modu — gerçek API çağrısı henüz implement edilmedi. " +
+                "requestId={}, promptVersion={}", request.getRequestId(), OpenAiPromptBuilder.getPromptVersion());
 
         return AiGatewayResult.failure(ContentAgentError.builder()
                 .requestId(request.getRequestId())
                 .projectId(request.getProjectId())
                 .errorType(AiErrorType.AI_PROVIDER_UNAVAILABLE)
-                .message("OpenAI gateway henüz tam olarak implement edilmedi. Task 23/24 ile tamamlanacaktır.")
+                .message("OpenAI gateway henüz tam olarak implement edilmedi. " +
+                        "Prompt oluşturuldu ancak HTTP çağrısı yapılmadı. Task 24+ ile tamamlanacaktır.")
                 .retryable(true)
                 .occurredAt(LocalDateTime.now())
                 .build());
