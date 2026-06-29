@@ -231,6 +231,7 @@ public class ContentProjectController {
                 .retryCount(result.getRetryCount())
                 .lastErrorType(result.getLastErrorType())
                 .lastErrorMessage(result.getLastErrorMessage())
+                .latestDraftId(result.getLatestDraftId())
                 .createdAt(result.getCreatedAt())
                 .updatedAt(result.getUpdatedAt())
                 .build();

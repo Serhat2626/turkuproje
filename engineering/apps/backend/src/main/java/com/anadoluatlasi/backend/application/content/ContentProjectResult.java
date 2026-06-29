@@ -27,6 +27,7 @@ public class ContentProjectResult {
     Integer retryCount;
     String lastErrorType;
     String lastErrorMessage;
+    UUID latestDraftId;
     LocalDateTime createdAt;
     LocalDateTime updatedAt;
 }

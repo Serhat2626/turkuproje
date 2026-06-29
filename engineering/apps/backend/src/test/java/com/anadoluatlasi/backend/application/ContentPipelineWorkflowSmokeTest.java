@@ -74,7 +74,7 @@ class ContentPipelineWorkflowSmokeTest {
     @BeforeEach
     void setUp() {
         knowledgeItemService = new KnowledgeItemService(knowledgeItemRepository);
-        contentProjectService = new ContentProjectService(contentProjectRepository, knowledgeItemRepository);
+        contentProjectService = new ContentProjectService(contentProjectRepository, contentDraftRepository, knowledgeItemRepository);
         aiGenerationService = new AiGenerationService(
                 contentProjectRepository, contentDraftRepository,
                 aiGenerationRequestRepository, aiContentAgentGateway);

@@ -554,6 +554,17 @@ function ContentProjectsPage() {
           </div>
         )}
 
+        {/* Stable draft open button — uses backend latestDraftId, persists after reload */}
+        {detail.latestDraftId && (
+          <FormCard icon="📄" title="Son Taslak">
+            <div className="detail-actions" style={{ borderTop: 'none', paddingTop: 0 }}>
+              <button className="btn btn-primary" onClick={() => navigate(`/drafts/${detail.latestDraftId}`)}>
+                📄 Taslağı Aç
+              </button>
+            </div>
+          </FormCard>
+        )}
+
         {/* Action buttons — status-driven, action endpoints only */}
         <FormCard icon="⚡" title="Aksiyonlar">
           <div className="detail-actions" style={{ borderTop: 'none', paddingTop: 0 }}>

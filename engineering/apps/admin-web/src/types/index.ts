@@ -131,6 +131,7 @@ export interface ContentProjectResponse {
   retryCount: number;
   lastErrorType: string | null;
   lastErrorMessage: string | null;
+  latestDraftId: string | null;
   createdAt: string;
   updatedAt: string | null;
 }

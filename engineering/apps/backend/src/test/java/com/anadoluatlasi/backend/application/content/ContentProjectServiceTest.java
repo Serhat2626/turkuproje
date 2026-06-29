@@ -3,11 +3,15 @@ package com.anadoluatlasi.backend.application.content;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
 import com.anadoluatlasi.backend.common.exception.ValidationException;
+import com.anadoluatlasi.backend.content.entity.ContentDraft;
+import com.anadoluatlasi.backend.content.entity.ContentDraftStatus;
+import com.anadoluatlasi.backend.content.entity.GeneratedBy;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
 import com.anadoluatlasi.backend.content.entity.ContentProjectStatus;
 import com.anadoluatlasi.backend.content.entity.ContentPurpose;
 import com.anadoluatlasi.backend.content.entity.ContentTone;
 import com.anadoluatlasi.backend.content.entity.TargetAudience;
+import com.anadoluatlasi.backend.content.repository.ContentDraftRepository;
 import com.anadoluatlasi.backend.content.repository.ContentProjectRepository;
 import com.anadoluatlasi.backend.knowledge.entity.KnowledgeItem;
 import com.anadoluatlasi.backend.knowledge.entity.KnowledgeItemStatus;
@@ -38,6 +42,9 @@ class ContentProjectServiceTest {
 
     @Mock
     private ContentProjectRepository contentProjectRepository;
+
+    @Mock
+    private ContentDraftRepository contentDraftRepository;
 
     @Mock
     private KnowledgeItemRepository knowledgeItemRepository;
@@ -391,6 +398,66 @@ class ContentProjectServiceTest {
 
             assertThatThrownBy(() -> service.cancel(project.getId()))
                     .isInstanceOf(BusinessException.class);
+        }
+    }
+
+    // ── Latest Draft Id (KL-001) ────────────────────────────
+
+    @Nested
+    @DisplayName("latestDraftId (KL-001)")
+    class LatestDraftId {
+
+        @Test
+        @DisplayName("getDetail — draft varsa latestDraftId dolu döner")
+        void shouldIncludeLatestDraftIdWhenDraftExists() {
+            ContentProject project = buildProject(ContentProjectStatus.DRAFT_READY);
+            UUID draftId = UUID.randomUUID();
+
+            when(contentProjectRepository.findById(project.getId())).thenReturn(Optional.of(project));
+
+            ContentDraft draft = ContentDraft.builder()
+                    .id(draftId)
+                    .contentProject(project)
+                    .status(ContentDraftStatus.GENERATED)
+                    .generatedBy(GeneratedBy.AI_CONTENT_AGENT)
+                    .build();
+            when(contentDraftRepository.findFirstByContentProjectIdOrderByCreatedAtDesc(project.getId()))
+                    .thenReturn(Optional.of(draft));
+
+            ContentProjectResult result = service.getDetail(project.getId());
+
+            assertThat(result.getLatestDraftId()).isEqualTo(draftId);
+            assertThat(result.getStatus()).isEqualTo("DRAFT_READY");
+        }
+
+        @Test
+        @DisplayName("getDetail — draft yoksa latestDraftId null döner")
+        void shouldReturnNullLatestDraftIdWhenNoDraft() {
+            ContentProject project = buildProject(ContentProjectStatus.CREATED);
+
+            when(contentProjectRepository.findById(project.getId())).thenReturn(Optional.of(project));
+            when(contentDraftRepository.findFirstByContentProjectIdOrderByCreatedAtDesc(project.getId()))
+                    .thenReturn(Optional.empty());
+
+            ContentProjectResult result = service.getDetail(project.getId());
+
+            assertThat(result.getLatestDraftId()).isNull();
+            assertThat(result.getStatus()).isEqualTo("CREATED");
+        }
+
+        @Test
+        @DisplayName("latestDraftId proje statüsünü APPROVED yapmaz")
+        void shouldNotChangeStatusToApproved() {
+            ContentProject project = buildProject(ContentProjectStatus.DRAFT_READY);
+
+            when(contentProjectRepository.findById(project.getId())).thenReturn(Optional.of(project));
+            when(contentDraftRepository.findFirstByContentProjectIdOrderByCreatedAtDesc(project.getId()))
+                    .thenReturn(Optional.empty());
+
+            ContentProjectResult result = service.getDetail(project.getId());
+
+            assertThat(result.getStatus()).isNotEqualTo("APPROVED");
+            assertThat(result.getStatus()).isNotEqualTo("READY_FOR_PUBLISH");
         }
     }
 }

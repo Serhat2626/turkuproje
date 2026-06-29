@@ -8,6 +8,7 @@ import com.anadoluatlasi.backend.content.entity.ContentProjectStatus;
 import com.anadoluatlasi.backend.content.entity.ContentPurpose;
 import com.anadoluatlasi.backend.content.entity.ContentTone;
 import com.anadoluatlasi.backend.content.entity.TargetAudience;
+import com.anadoluatlasi.backend.content.repository.ContentDraftRepository;
 import com.anadoluatlasi.backend.content.repository.ContentProjectRepository;
 import com.anadoluatlasi.backend.knowledge.entity.KnowledgeItem;
 import com.anadoluatlasi.backend.knowledge.entity.KnowledgeItemStatus;
@@ -45,6 +46,7 @@ import java.util.UUID;
 public class ContentProjectService {
 
     private final ContentProjectRepository contentProjectRepository;
+    private final ContentDraftRepository contentDraftRepository;
     private final KnowledgeItemRepository knowledgeItemRepository;
 
     /**
@@ -309,6 +311,11 @@ public class ContentProjectService {
     }
 
     private ContentProjectResult toResult(ContentProject entity, KnowledgeItem ki) {
+        UUID latestDraftId = contentDraftRepository
+                .findFirstByContentProjectIdOrderByCreatedAtDesc(entity.getId())
+                .map(draft -> draft.getId())
+                .orElse(null);
+
         return ContentProjectResult.builder()
                 .id(entity.getId())
                 .knowledgeItemId(ki != null ? ki.getId() : null)
@@ -323,6 +330,7 @@ public class ContentProjectService {
                 .retryCount(entity.getRetryCount())
                 .lastErrorType(entity.getLastErrorType() != null ? entity.getLastErrorType().name() : null)
                 .lastErrorMessage(entity.getLastErrorMessage())
+                .latestDraftId(latestDraftId)
                 .createdAt(entity.getCreatedAt())
                 .updatedAt(entity.getUpdatedAt())
                 .build();

@@ -283,13 +283,9 @@ npx vite build         # Beklenen: 62 modül, build başarılı
 
 ## 9. Bilinen Kısıtlamalar
 
-### KL-001 — ContentProjectResponse latestDraftId içermiyor
+### ~~KL-001 — ContentProjectResponse latestDraftId içermiyor~~ — ✅ ÇÖZÜLDÜ (Task 20)
 
-**Etki**: Content Project detay sayfası yenilendikten sonra "Taslağı Aç" butonu kaybolur. Draft'a erişim sadece AI üretim sonucundaki `contentDraftId` üzerinden mümkündür.
-
-**Geçici Çözüm**: AI üretim sonrası hemen "Taslağı Aç" butonuna tıklayın.
-
-**Kalıcı Çözüm**: Backend DTO genişletmesi — `ContentProjectResponse`'a `latestDraftId` veya `latestDraftSummary` alanı eklenmesi. Ayrı bir backend/frontend task olarak planlanabilir.
+**Çözüm**: `ContentProjectResponse`'a `latestDraftId` alanı eklendi. Backend `ContentDraftRepository.findFirstByContentProjectIdOrderByCreatedAtDesc` ile en son draft'ı bulur. Content Project detay sayfası yenilense bile "📄 Taslağı Aç" butonu kalıcı olarak görünür.
 
 ---
 
