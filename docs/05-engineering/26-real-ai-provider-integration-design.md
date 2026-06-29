@@ -711,3 +711,44 @@ Bu tasarımda ve sonraki implementasyonda aşağıdakiler **kapsam dışıdır**
 | API Smoke Test | `23-content-pipeline-api-smoke-test.md` |
 | Admin Frontend Plan | `24-content-pipeline-admin-frontend-plan.md` |
 | E2E QA Guide | `25-content-pipeline-e2e-qa.md` |
+
+---
+
+## Appendix A — Implementasyon Referansı (Task 22)
+
+> Bu bölüm Task 22 ile eklendi. Gerçek konfigürasyon ve bean wiring detayları.
+
+### Konfigürasyon Sınıfları
+
+| Sınıf | Paket | Rol |
+|-------|-------|-----|
+| `AiProviderProperties` | `ai.config` | `@ConfigurationProperties(prefix = "ai")` — provider ve OpenAI ayarları |
+| `AiGatewayConfig` | `ai.config` | `@Configuration` — conditional bean wiring |
+| `OpenAiContentAgentGateway` | `ai.gateway.openai` | Skeleton gateway impl |
+
+### Sanitized Configuration
+
+```yaml
+# application.yml (commit edilebilir — hassas veri yok)
+ai:
+  provider: mock   # mock | openai
+
+# ── OpenAI aktif etmek için ──────────────────────────
+# ai:
+#   provider: openai
+#   openai:
+#     api-key: ${OPENAI_API_KEY}   # environment variable ile
+#     model: gpt-4.1-mini
+#     base-url: https://api.openai.com/v1
+#     timeout-seconds: 60
+#     max-output-tokens: 2000
+#     temperature: 0.4
+```
+
+### Bean Selection Kuralları
+
+| `ai.provider` | Gateway Bean | Davranış |
+|----------------|-------------|----------|
+| (ayarlanmamış) | `MockAiContentAgentGateway` | Deterministic mock |
+| `mock` | `MockAiContentAgentGateway` | Deterministic mock |
+| `openai` | `OpenAiContentAgentGateway` | Skeleton (Task 22), real çağrı (Task 23+) |
