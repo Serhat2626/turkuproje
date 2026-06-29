@@ -30,16 +30,11 @@ const EMPTY_FORM = {
   tone: '', language: 'tr', formatHint: '', lengthHint: '',
 }
 
-// ── Status-driven button visibility (docs/24) ────────────
-const canGenerate = (s: string) => s === 'CREATED' || s === 'REVISION_REQUESTED'
-const canRetry = (s: string) => s === 'FAILED'
-const canStartReview = (s: string) => s === 'DRAFT_READY'
-const canApprove = (s: string) => s === 'IN_REVIEW'
-const canRevision = (s: string) => s === 'IN_REVIEW'
-const canReject = (s: string) => s === 'IN_REVIEW'
-const canPublish = (s: string) => s === 'APPROVED'
-const canCancel = (s: string) =>
-  ['CREATED','AI_REQUESTED','AI_PROCESSING','DRAFT_READY','IN_REVIEW','REVISION_REQUESTED'].includes(s)
+import {
+  canGenerateAiDraft, canRetryAiDraft, canStartReview,
+  canApproveProject, canRequestRevision, canRejectProject,
+  canMarkReadyForPublish, canCancelProject,
+} from '../utils/actionVisibility'
 
 function ContentProjectsPage() {
   const navigate = useNavigate()
@@ -562,13 +557,13 @@ function ContentProjectsPage() {
         {/* Action buttons — status-driven, action endpoints only */}
         <FormCard icon="⚡" title="Aksiyonlar">
           <div className="detail-actions" style={{ borderTop: 'none', paddingTop: 0 }}>
-            {canGenerate(s) && (
+            {canGenerateAiDraft(s) && (
               <button className="btn btn-primary" disabled={actionLoading} onClick={() => handleGenerateAiDraft(detail.id)}>
                 {actionLoading && <span className="loading-spinner" />}
                 🤖 AI Draft Üret
               </button>
             )}
-            {canRetry(s) && (
+            {canRetryAiDraft(s) && (
               <button className="btn btn-primary" disabled={actionLoading} onClick={() => handleRetry(detail.id)}>
                 {actionLoading && <span className="loading-spinner" />}
                 🔄 Yeniden Dene
@@ -579,27 +574,27 @@ function ContentProjectsPage() {
                 👁 Review Başlat
               </button>
             )}
-            {canApprove(s) && (
+            {canApproveProject(s) && (
               <button className="btn-action btn-action-success" onClick={() => handleApprove(detail.id)}>
                 ✓ Onayla
               </button>
             )}
-            {canRevision(s) && (
+            {canRequestRevision(s) && (
               <button className="btn-action" onClick={() => handleRequestRevision(detail.id)}>
                 ↩ Revizyon
               </button>
             )}
-            {canReject(s) && (
+            {canRejectProject(s) && (
               <button className="btn-action btn-action-danger" onClick={() => handleReject(detail.id)}>
                 ✕ Reddet
               </button>
             )}
-            {canPublish(s) && (
+            {canMarkReadyForPublish(s) && (
               <button className="btn-action btn-action-success" onClick={() => handlePublish(detail.id)}>
                 ✓✓ Yayına Hazır
               </button>
             )}
-            {canCancel(s) && (
+            {canCancelProject(s) && (
               <button className="btn-action btn-action-danger" onClick={() => handleCancel(detail.id)}>
                 — İptal
               </button>

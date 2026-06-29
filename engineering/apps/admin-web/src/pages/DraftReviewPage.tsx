@@ -9,8 +9,7 @@ import SubmitButton from '../components/common/SubmitButton'
 import StatusBadge from '../components/common/StatusBadge'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 
-// ── Backend editable statuses (ContentDraftService.EDITABLE_STATUSES) ──
-const EDITABLE_DRAFT_STATUSES = ['GENERATED', 'REVISION_NEEDED']
+import { canEditDraft } from '../utils/actionVisibility'
 
 function DraftReviewPage() {
   const { draftId } = useParams<{ draftId: string }>()
@@ -60,7 +59,7 @@ function DraftReviewPage() {
   }
 
   // ── Helpers ───────────────────────────────────────────
-  const isEditable = draft ? EDITABLE_DRAFT_STATUSES.includes(draft.status) : false
+  const isEditable = draft ? canEditDraft(draft.status) : false
 
   const isDirty = form.title !== original.title ||
     form.body !== original.body ||
