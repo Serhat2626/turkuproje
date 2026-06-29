@@ -788,3 +788,57 @@ Tüm sınıflar **package-private** — REST'e expose edilmez.
 ### Raw Payload
 
 Saklanmıyor ve REST'e expose edilmiyor.
+
+---
+
+## Appendix C — HTTP Client & Error Mapping (Task 24)
+
+> Bu bölüm Task 24 ile eklendi.
+
+### HTTP Client
+
+| Özellik | Değer |
+|---------|-------|
+| Client | Spring `RestClient` (Boot 3.5) |
+| Sınıf | `OpenAiClient` (package-private) |
+| Endpoint | `POST /chat/completions` |
+| Auth | `Authorization: Bearer ${apiKey}` |
+| Timeout | `ai.openai.timeout-seconds` (connect: min(timeout, 10s), read: timeout) |
+
+### Akış
+
+```
+Request → API key check → PromptBuilder → OpenAiClient → ResponseParser → AiGatewayResult
+```
+
+### HTTP Error Mapping
+
+| Kaynak | AiErrorType | Retryable |
+|--------|------------|-----------|
+| API key eksik/boş | `AI_PROVIDER_CONFIG_ERROR` | ❌ |
+| HTTP 401/403 | `AI_PROVIDER_AUTH_ERROR` | ❌ |
+| HTTP 408 | `AI_PROVIDER_TIMEOUT` | ✅ |
+| HTTP 429 | `AI_PROVIDER_RATE_LIMIT` | ✅ |
+| HTTP 500/502/503/504 | `AI_PROVIDER_UNAVAILABLE` | ✅ |
+| Network timeout | `AI_PROVIDER_TIMEOUT` | ✅ |
+| Network IO error | `AI_PROVIDER_UNAVAILABLE` | ✅ |
+| Boş choices | `EMPTY_AI_RESPONSE` | ✅ |
+| content_filter | `AI_RESPONSE_UNSAFE_CONTENT` | ❌ |
+| model refusal | `AI_RESPONSE_UNSAFE_CONTENT` | ❌ |
+| Diğer HTTP | `AI_PROVIDER_INTERNAL_ERROR` | ✅ |
+| Bilinmeyen exception | `UNKNOWN_AI_ERROR` | ✅ |
+
+### Güvenli Loglama
+
+| Loglanır | Loglanmaz |
+|----------|-----------|
+| provider name | API key |
+| model | tam prompt |
+| requestId | tam raw response |
+| projectId | kullanıcı içeriği |
+| durationMs | |
+| error type | |
+
+### Raw Payload
+
+Saklanmıyor ve REST'e expose edilmiyor. `rawResponseStored=false`.

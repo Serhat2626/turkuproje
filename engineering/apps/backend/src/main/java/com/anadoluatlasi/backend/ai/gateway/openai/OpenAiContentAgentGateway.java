@@ -3,6 +3,8 @@ package com.anadoluatlasi.backend.ai.gateway.openai;
 import com.anadoluatlasi.backend.ai.config.AiProviderProperties;
 import com.anadoluatlasi.backend.ai.contract.ContentAgentError;
 import com.anadoluatlasi.backend.ai.contract.ContentAgentRequest;
+import com.anadoluatlasi.backend.ai.contract.ContentAgentResponse;
+import com.anadoluatlasi.backend.ai.contract.ProviderExecutionMetadata;
 import com.anadoluatlasi.backend.ai.entity.AiErrorType;
 import com.anadoluatlasi.backend.ai.gateway.AiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiGatewayResult;
@@ -14,10 +16,9 @@ import java.util.List;
 /**
  * FP-001: OpenAI Content Agent Gateway implementasyonu.
  *
- * <p>Bu sınıf gerçek OpenAI API çağrısı yapacak gateway'dir.
- * Task 22: Skeleton oluşturuldu.
+ * <p>Task 22: Skeleton oluşturuldu.
  * Task 23: PromptBuilder ve ResponseParser entegre edildi.
- * Gerçek HTTP çağrısı henüz yapılmaz — Task 24+ ile tamamlanacaktır.</p>
+ * Task 24: HTTP client, error mapping ve tam akış implementasyonu.</p>
  *
  * <p>Gateway kuralları:</p>
  * <ul>
@@ -32,9 +33,19 @@ import java.util.List;
 public class OpenAiContentAgentGateway implements AiContentAgentGateway {
 
     private final AiProviderProperties.OpenAi config;
+    private final OpenAiClient client;
 
     public OpenAiContentAgentGateway(AiProviderProperties.OpenAi config) {
         this.config = config;
+        this.client = new OpenAiClient(config);
+    }
+
+    /**
+     * Test'te OpenAiClient inject etmek için paket-internal constructor.
+     */
+    OpenAiContentAgentGateway(AiProviderProperties.OpenAi config, OpenAiClient client) {
+        this.config = config;
+        this.client = client;
     }
 
     @Override
@@ -44,7 +55,7 @@ public class OpenAiContentAgentGateway implements AiContentAgentGateway {
 
         // ── 1. API key doğrulama ──
         if (config.getApiKey() == null || config.getApiKey().isBlank()) {
-            log.error("OpenAI API key yapılandırılmamış. ai.openai.api-key ayarlanmalıdır.");
+            log.error("OpenAI API key yapılandırılmamış. requestId={}", request.getRequestId());
             return AiGatewayResult.failure(ContentAgentError.builder()
                     .requestId(request.getRequestId())
                     .projectId(request.getProjectId())
@@ -57,23 +68,71 @@ public class OpenAiContentAgentGateway implements AiContentAgentGateway {
 
         // ── 2. Prompt construction ──
         List<OpenAiChatMessage> messages = OpenAiPromptBuilder.buildMessages(request);
+        String promptVersion = OpenAiPromptBuilder.getPromptVersion();
         log.debug("OpenAI prompt oluşturuldu: {} mesaj, promptVersion={}",
-                messages.size(), OpenAiPromptBuilder.getPromptVersion());
+                messages.size(), promptVersion);
 
-        // ── 3. Real API call — henüz implement edilmedi ──
-        // Task 24+ ile HTTP client eklenerek gerçek çağrı yapılacak.
-        // Şu an skeleton modu: prompt build edilir ama çağrı yapılmaz.
-        log.warn("OpenAI gateway SKELETON modu — gerçek API çağrısı henüz implement edilmedi. " +
-                "requestId={}, promptVersion={}", request.getRequestId(), OpenAiPromptBuilder.getPromptVersion());
+        // ── 3. HTTP çağrısı ──
+        OpenAiCallResult callResult = client.call(messages, request.getRequestId(), request.getProjectId());
 
-        return AiGatewayResult.failure(ContentAgentError.builder()
-                .requestId(request.getRequestId())
-                .projectId(request.getProjectId())
-                .errorType(AiErrorType.AI_PROVIDER_UNAVAILABLE)
-                .message("OpenAI gateway henüz tam olarak implement edilmedi. " +
-                        "Prompt oluşturuldu ancak HTTP çağrısı yapılmadı. Task 24+ ile tamamlanacaktır.")
-                .retryable(true)
-                .occurredAt(LocalDateTime.now())
-                .build());
+        // ── 4. HTTP hata kontrolü ──
+        if (!callResult.isSuccess()) {
+            log.warn("OpenAI HTTP çağrısı başarısız: requestId={}, error={}, retryable={}",
+                    request.getRequestId(), callResult.getErrorType(), callResult.isRetryable());
+            return AiGatewayResult.failure(ContentAgentError.builder()
+                    .requestId(request.getRequestId())
+                    .projectId(request.getProjectId())
+                    .errorType(callResult.getErrorType())
+                    .message(callResult.getErrorMessage())
+                    .retryable(callResult.isRetryable())
+                    .occurredAt(LocalDateTime.now())
+                    .build());
+        }
+
+        // ── 5. Response parsing ──
+        OpenAiParseResult parseResult = OpenAiResponseParser.parse(
+                callResult.getContent(), request.getRequestId(), request.getProjectId());
+
+        if (!parseResult.isSuccess()) {
+            log.warn("OpenAI yanıt parse hatası: requestId={}, error={}, retryable={}",
+                    request.getRequestId(), parseResult.getErrorType(), parseResult.isRetryable());
+            return AiGatewayResult.failure(ContentAgentError.builder()
+                    .requestId(request.getRequestId())
+                    .projectId(request.getProjectId())
+                    .errorType(parseResult.getErrorType())
+                    .message(parseResult.getErrorMessage())
+                    .retryable(parseResult.isRetryable())
+                    .occurredAt(LocalDateTime.now())
+                    .build());
+        }
+
+        // ── 6. Success — provider metadata ekle ──
+        ContentAgentResponse response = parseResult.getResponse();
+
+        ContentAgentResponse enrichedResponse = ContentAgentResponse.builder()
+                .requestId(response.getRequestId())
+                .projectId(response.getProjectId())
+                .title(response.getTitle())
+                .body(response.getBody())
+                .summary(response.getSummary())
+                .suggestedTags(response.getSuggestedTags())
+                .warnings(response.getWarnings())
+                .qualityNotes(response.getQualityNotes())
+                .generationReason(response.getGenerationReason())
+                .providerMetadata(ProviderExecutionMetadata.builder()
+                        .providerName("openai")
+                        .modelName(config.getModel())
+                        .durationMs(callResult.getDurationMs())
+                        .tokenUsage(callResult.getTokenUsage())
+                        .rawResponseStored(false)
+                        .promptVersion(promptVersion)
+                        .build())
+                .build();
+
+        log.info("OpenAI başarılı: requestId={}, projectId={}, durationMs={}, title={}",
+                request.getRequestId(), request.getProjectId(),
+                callResult.getDurationMs(), enrichedResponse.getTitle());
+
+        return AiGatewayResult.success(enrichedResponse);
     }
 }

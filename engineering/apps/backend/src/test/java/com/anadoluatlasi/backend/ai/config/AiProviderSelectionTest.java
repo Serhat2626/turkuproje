@@ -142,8 +142,8 @@ class AiProviderSelectionTest {
         }
 
         @Test
-        @DisplayName("API key varsa skeleton UNAVAILABLE döner (henüz implement değil)")
-        void returnsUnavailableWhenApiKeyPresent() {
+        @DisplayName("API key varsa gateway çağrı dener, başarısız olursa retryable failure döner")
+        void returnsFailureWhenApiKeyPresent() {
             AiProviderProperties.OpenAi config = new AiProviderProperties.OpenAi();
             config.setApiKey("sk-test-dummy-key");
             OpenAiContentAgentGateway gateway = new OpenAiContentAgentGateway(config);
@@ -151,10 +151,11 @@ class AiProviderSelectionTest {
 
             AiGatewayResult result = gateway.generateContentDraft(request);
 
+            // Gateway gerçek çağrı dener — dummy key/URL ile başarısız olur
             assertThat(result.isSuccess()).isFalse();
             assertThat(result.getError()).isNotNull();
-            assertThat(result.getError().getErrorType().name()).isEqualTo("AI_PROVIDER_UNAVAILABLE");
-            assertThat(result.getError().isRetryable()).isTrue();
+            // Hata tipi ağ durumuna göre değişebilir (timeout, unavailable, auth vs.)
+            assertThat(result.getError().getErrorType()).isNotNull();
         }
 
         @Test
@@ -168,13 +169,13 @@ class AiProviderSelectionTest {
             AiGatewayResult result = gateway.generateContentDraft(request);
 
             // Gateway sadece AiGatewayResult döner — ContentProjectStatus manipülasyonu yapmaz.
-            // Result success olsa bile (gelecekte), response sadece draft içeriği taşır.
-            assertThat(result.isSuccess()).isFalse(); // skeleton → always failure
+            // Başarısız çağrıda error taşır, başarılı olursa sadece draft content taşır.
+            assertThat(result.isSuccess()).isFalse(); // dummy key ile başarısız
             if (result.getResponse() != null) {
-                // Response varsa status-related alan içermez (contract bağımsız)
                 assertThat(result.getResponse()).isNotNull();
             }
         }
+
 
         @Test
         @DisplayName("OpenAI gateway error requestId/projectId taşır")
