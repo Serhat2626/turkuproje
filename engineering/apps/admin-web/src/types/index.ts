@@ -105,28 +105,128 @@ export const LANGUAGES = [
   { value: 'en', label: 'English' },
 ] as const;
 
-// ── Content Domain ──────────────────────────────────────────
+// ── Content Domain (FP-001) ─────────────────────────────────
 
 export interface CreateContentProjectRequest {
   knowledgeItemId: string;
-  title: string;
-  contentType: string;
-  targetPlatform: string;
+  contentPurpose?: string;
+  targetAudience?: string;
+  tone?: string;
   language: string;
+  formatHint?: string;
+  lengthHint?: string;
 }
 
 export interface ContentProjectResponse {
   id: string;
   knowledgeItemId: string;
-  title: string;
-  slug: string;
-  contentType: string;
-  targetPlatform: string;
+  knowledgeItemTitle: string;
+  contentPurpose: string | null;
+  targetAudience: string | null;
+  tone: string | null;
+  language: string;
+  formatHint: string | null;
+  lengthHint: string | null;
+  status: string;
+  retryCount: number;
+  lastErrorType: string | null;
+  lastErrorMessage: string | null;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface ContentProjectSummaryResponse {
+  id: string;
+  knowledgeItemId: string;
+  knowledgeItemTitle: string;
+  contentPurpose: string | null;
   status: string;
   language: string;
   createdAt: string;
 }
 
+export interface AiGenerationSummaryResponse {
+  id: string | null;
+  contentProjectId: string;
+  success: boolean;
+  contentDraftId: string | null;
+  projectStatus: string;
+  draftTitle: string | null;
+  message: string | null;
+  errorType: string | null;
+  retryable: boolean | null;
+  retryCount: number | null;
+  maxRetryCount: number | null;
+}
+
+export interface ContentDraftResponse {
+  id: string;
+  contentProjectId: string;
+  title: string;
+  body: string;
+  summary: string | null;
+  status: string;
+  generatedBy: string;
+  createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface GenerateAiDraftRequest {
+  humanFeedbackNote?: string;
+  feedbackType?: string;
+}
+
+export interface ReviewNoteRequest {
+  reviewNote: string;
+}
+
+export interface ApproveRequest {
+  reviewNote?: string;
+}
+
+export const CONTENT_PURPOSES = [
+  { value: 'INFORMATIONAL_TEXT', label: 'Bilgilendirici Metin' },
+  { value: 'CHILD_FRIENDLY_TEXT', label: 'Çocuklara Uygun Metin' },
+  { value: 'TOURISTIC_GUIDE_TEXT', label: 'Turistik Rehber' },
+  { value: 'SOCIAL_MEDIA_POST', label: 'Sosyal Medya' },
+  { value: 'MOBILE_APP_CARD', label: 'Mobil Kart' },
+  { value: 'AUDIO_GUIDE_SCRIPT', label: 'Sesli Rehber' },
+] as const;
+
+export const TARGET_AUDIENCES = [
+  { value: 'GENERAL_USER', label: 'Genel Kullanıcı' },
+  { value: 'CHILD', label: 'Çocuk' },
+  { value: 'TOURIST', label: 'Turist' },
+  { value: 'STUDENT', label: 'Öğrenci' },
+  { value: 'RESEARCHER', label: 'Araştırmacı' },
+  { value: 'MOBILE_APP_USER', label: 'Mobil Kullanıcı' },
+] as const;
+
+export const CONTENT_TONES = [
+  { value: 'INFORMATIVE', label: 'Bilgilendirici' },
+  { value: 'SIMPLE', label: 'Sade' },
+  { value: 'STORYTELLING', label: 'Hikâye Anlatıcı' },
+  { value: 'NON_ACADEMIC', label: 'Gündelik' },
+  { value: 'CHILD_FRIENDLY', label: 'Çocuklara Uygun' },
+  { value: 'TOURISTIC', label: 'Turistik' },
+  { value: 'SHORT_AND_CLEAR', label: 'Kısa ve Net' },
+] as const;
+
+export const CONTENT_PROJECT_STATUSES = [
+  { value: 'CREATED', label: 'Oluşturuldu' },
+  { value: 'AI_REQUESTED', label: 'AI Bekleniyor' },
+  { value: 'AI_PROCESSING', label: 'AI İşliyor' },
+  { value: 'DRAFT_READY', label: 'Taslak Hazır' },
+  { value: 'IN_REVIEW', label: 'İncelemede' },
+  { value: 'REVISION_REQUESTED', label: 'Revizyon Gerekli' },
+  { value: 'APPROVED', label: 'Onaylandı' },
+  { value: 'READY_FOR_PUBLISH', label: 'Yayına Hazır' },
+  { value: 'FAILED', label: 'Başarısız' },
+  { value: 'REJECTED', label: 'Reddedildi' },
+  { value: 'CANCELLED', label: 'İptal Edildi' },
+] as const;
+
+// Legacy constants — kept for backward compatibility with existing pages
 export const CONTENT_TYPES = [
   { value: 'LONG_VIDEO', label: 'Uzun Video' },
   { value: 'SHORT_VIDEO', label: 'Kısa Video' },
