@@ -31,3 +31,9 @@ management:
   endpoint:
     health:
       show-details: always
+
+# ── AI Provider ──────────────────────────────────────
+# Varsayılan: mock (gerçek AI çağrısı yapılmaz)
+# Gerçek provider için: ai.provider=openai ve ai.openai.api-key env variable
+ai:
+  provider: mock
