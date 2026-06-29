@@ -4,6 +4,7 @@ interface StatusBadgeProps {
 
 const statusColors: Record<string, string> = {
   DRAFT: 'badge-draft',
+  READY: 'badge-success',
   RESEARCHING: 'badge-info',
   VERIFIED: 'badge-success',
   ARCHIVED: 'badge-muted',

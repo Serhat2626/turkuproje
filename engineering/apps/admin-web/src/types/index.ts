@@ -27,6 +27,25 @@ export interface CreateKnowledgeItemRequest {
   type: string;
   language: string;
   summary?: string;
+  description?: string;
+  category?: string;
+  city?: string;
+  district?: string;
+  locationText?: string;
+  notes?: string;
+}
+
+export interface UpdateKnowledgeItemRequest {
+  title: string;
+  type?: string;
+  language?: string;
+  summary?: string;
+  description?: string;
+  category?: string;
+  city?: string;
+  district?: string;
+  locationText?: string;
+  notes?: string;
 }
 
 export interface KnowledgeItemResponse {
@@ -34,9 +53,36 @@ export interface KnowledgeItemResponse {
   title: string;
   slug: string;
   type: string;
+  summary: string | null;
+  description: string | null;
+  category: string | null;
+  city: string | null;
+  district: string | null;
+  locationText: string | null;
+  notes: string | null;
   status: string;
   language: string;
   createdAt: string;
+  updatedAt: string | null;
+}
+
+export interface KnowledgeItemSummaryResponse {
+  id: string;
+  title: string;
+  slug: string;
+  type: string;
+  category: string | null;
+  city: string | null;
+  status: string;
+  language: string;
+  createdAt: string;
+}
+
+export interface ActionStatusResponse {
+  id: string;
+  status: string;
+  message: string;
+  timestamp: string;
 }
 
 export const KNOWLEDGE_ITEM_TYPES = [
@@ -46,6 +92,12 @@ export const KNOWLEDGE_ITEM_TYPES = [
   { value: 'TRADITION', label: 'Gelenek' },
   { value: 'HISTORICAL_EVENT', label: 'Tarihî Olay' },
   { value: 'LEGEND', label: 'Efsane' },
+] as const;
+
+export const KNOWLEDGE_ITEM_STATUSES = [
+  { value: 'DRAFT', label: 'Taslak' },
+  { value: 'READY', label: 'Hazır' },
+  { value: 'ARCHIVED', label: 'Arşivlenmiş' },
 ] as const;
 
 export const LANGUAGES = [
