@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
+import { useNavigate } from 'react-router-dom'
 import {
   listContentProjects, getContentProject, createContentProject,
   generateAiDraft, retryAiDraft, startContentProjectReview,
@@ -41,6 +42,7 @@ const canCancel = (s: string) =>
   ['CREATED','AI_REQUESTED','AI_PROCESSING','DRAFT_READY','IN_REVIEW','REVISION_REQUESTED'].includes(s)
 
 function ContentProjectsPage() {
+  const navigate = useNavigate()
   // ── State ─────────────────────────────────────────────
   const [view, setView] = useState<View>('list')
   const [items, setItems] = useState<ContentProjectSummaryResponse[]>([])
@@ -537,6 +539,13 @@ function ContentProjectsPage() {
                 </div>
               )}
             </div>
+            {aiResult.success && aiResult.contentDraftId && (
+              <div className="detail-actions" style={{ borderTop: 'none', paddingTop: 8 }}>
+                <button className="btn btn-primary" onClick={() => navigate(`/drafts/${aiResult.contentDraftId}`)}>
+                  📄 Taslağı Aç
+                </button>
+              </div>
+            )}
           </FormCard>
         )}
 
