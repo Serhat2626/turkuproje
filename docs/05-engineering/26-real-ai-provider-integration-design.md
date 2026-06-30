@@ -842,3 +842,48 @@ Request → API key check → PromptBuilder → OpenAiClient → ResponseParser 
 ### Raw Payload
 
 Saklanmıyor ve REST'e expose edilmiyor. `rawResponseStored=false`.
+
+---
+
+## Appendix D — E2E Backend Safety Tests (Task 25)
+
+> Bu bölüm Task 25 ile eklendi.
+
+### Test Wiring
+
+```
+AiGenerationService → OpenAiContentAgentGateway → mocked OpenAiClient
+                                                 → real OpenAiPromptBuilder
+                                                 → real OpenAiResponseParser
+```
+
+Repositories mock'lanmış (mevcut test pattern). Dış ağa çıkış **YOKTUR**.
+
+### Safety Kuralları Test Edilen
+
+| Kural | Test |
+|-------|------|
+| AI success → DRAFT_READY | ✅ |
+| AI success → APPROVED olmamalı | ✅ |
+| AI success → READY_FOR_PUBLISH olmamalı | ✅ |
+| Draft status GENERATED | ✅ |
+| Draft generatedBy AI_CONTENT_AGENT | ✅ |
+| AiGenerationRequest COMPLETED | ✅ |
+| Config error → FAILED, draft yok | ✅ |
+| Auth error → FAILED, retryable=false | ✅ |
+| Rate limit → FAILED, retryable=true | ✅ |
+| Server error → FAILED | ✅ |
+| Timeout → FAILED | ✅ |
+| Invalid JSON → FAILED | ✅ |
+| Unsafe → FAILED, retryable=false | ✅ |
+| Retry success → DRAFT_READY (APPROVED değil) | ✅ |
+| Unsafe sonrası retry engelli | ✅ |
+| Auth error sonrası retry engelli | ✅ |
+| Config error sonrası retry engelli | ✅ |
+| Max 3 retry sonrası engelli | ✅ |
+
+### Kalan Limitasyon
+
+Real staging run henüz yapılmadı. Staging QA runbook: [27-real-ai-provider-staging-qa.md](./27-real-ai-provider-staging-qa.md)
+
+Production rollout checklist: [28-real-ai-provider-production-rollout-checklist.md](./28-real-ai-provider-production-rollout-checklist.md)
