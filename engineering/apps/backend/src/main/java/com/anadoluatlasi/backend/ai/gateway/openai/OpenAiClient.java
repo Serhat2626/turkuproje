@@ -142,8 +142,10 @@ class OpenAiClient {
         HttpStatusCode status = e.getStatusCode();
         int code = status.value();
 
-        log.warn("OpenAI HTTP hatası: requestId={}, status={}, durationMs={}",
-                requestId, code, durationMs);
+        // 400 hatalarında response body'yi logla (API key, prompt, raw response hariç — sadece error message)
+        String errorBody = e.getResponseBodyAsString();
+        log.warn("OpenAI HTTP hatası: requestId={}, status={}, durationMs={}, errorBody={}",
+                requestId, code, durationMs, errorBody);
 
         return switch (code) {
             case 401, 403 -> OpenAiCallResult.failure(AiErrorType.AI_PROVIDER_AUTH_ERROR,
@@ -187,7 +189,7 @@ class OpenAiClient {
         private String model;
         private List<Map<String, String>> messages;
         private double temperature;
-        @JsonProperty("max_output_tokens")
+        @JsonProperty("max_tokens")
         private int maxOutputTokens;
     }
 

@@ -37,7 +37,7 @@ public class AiProviderProperties {
         private String apiKey;
 
         /** Kullanılacak model */
-        private String model = "gpt-4.1-mini";
+        private String model = "gpt-4o-mini";
 
         /** OpenAI API base URL */
         private String baseUrl = "https://api.openai.com/v1";
