@@ -56,7 +56,7 @@ ai:
   provider: openai
   openai:
     api-key: ${OPENAI_API_KEY}
-    model: gpt-4.1-mini
+    model: gpt-4o-mini
     base-url: https://api.openai.com/v1
     timeout-seconds: 60
     max-output-tokens: 2000
@@ -75,10 +75,10 @@ ai:
 
 | Model | Başlangıç Önerisi | Not |
 |-------|--------------------|-----|
-| `gpt-4.1-mini` | ✅ Önerilen | Düşük maliyet, yeterli kalite |
+| `gpt-4o-mini` | ✅ Önerilen | Düşük maliyet, yeterli kalite |
 | `gpt-4.1` | İsteğe bağlı | Daha yüksek kalite gerekirse |
 
-İlk rollout'ta `gpt-4.1-mini` ile başlanması önerilir. Kalite yeterliyse devam,
+İlk rollout'ta `gpt-4o-mini` ile başlanması önerilir. Kalite yeterliyse devam,
 yetersizse `gpt-4.1`'e upgrade değerlendirilir.
 
 ---
@@ -251,7 +251,7 @@ Faz 3: Kademeli Genişleme
 
 | Parametre | Değer |
 |-----------|-------|
-| Model | `gpt-4.1-mini` |
+| Model | `gpt-4o-mini` |
 | Tahmini input / istek | ~500-800 token |
 | Tahmini output / istek | ~1000-2000 token |
 | İlk hafta beklenen generation | 10-30 |
@@ -391,7 +391,7 @@ Her production rollout denemesi için doldurulacak:
 ║ Ortam         : Production                      ║
 ║ Commit/Versiyon: __________________________    ║
 ║ Provider Config: ai.provider=openai             ║
-║ Model         : gpt-4.1-mini                    ║
+║ Model         : gpt-4o-mini                    ║
 ║ Operatör      : ____________________________    ║
 ║                                                  ║
 ║ Smoke Test Sonucu:                               ║

@@ -52,7 +52,7 @@ ai:
   provider: openai
   openai:
     api-key: ${OPENAI_API_KEY}
-    model: gpt-4.1-mini
+    model: gpt-4o-mini
     base-url: https://api.openai.com/v1
     timeout-seconds: 60
     max-output-tokens: 2000
@@ -77,11 +77,11 @@ export OPENAI_API_KEY="sk-..."
 
 | Model | Maliyet | Kalite | Hız | Staging Önerisi |
 |-------|---------|--------|-----|-----------------|
-| `gpt-4.1-mini` | Düşük | Yeterli | Hızlı | ✅ Önerilen |
+| `gpt-4o-mini` | Düşük | Yeterli | Hızlı | ✅ Önerilen |
 | `gpt-4.1` | Orta | Yüksek | Orta | İsteğe bağlı |
 | `gpt-4o` | Yüksek | Çok yüksek | Orta | Gereksiz |
 
-Staging testlerinde maliyet kontrolü için `gpt-4.1-mini` önerilir.
+Staging testlerinde maliyet kontrolü için `gpt-4o-mini` önerilir.
 
 ---
 
@@ -334,7 +334,7 @@ Staging ortamında aşağıdaki test verisini oluşturun:
 | Bilgi | Loglanmalı | Kontrol |
 |-------|-----------|---------|
 | Provider name (`openai`) | ✅ | ☐ |
-| Model name (`gpt-4.1-mini`) | ✅ | ☐ |
+| Model name (`gpt-4o-mini`) | ✅ | ☐ |
 | Request ID | ✅ | ☐ |
 | Project ID | ✅ | ☐ |
 | Duration (ms) | ✅ | ☐ |
@@ -388,7 +388,7 @@ grep "OpenAI başarılı" staging.log
 
 | Parametre | Değer |
 |-----------|-------|
-| Model | `gpt-4.1-mini` |
+| Model | `gpt-4o-mini` |
 | Tahmini input token / istek | ~500-800 |
 | Tahmini output token / istek | ~1000-2000 |
 | Planlanan test sayısı | 5-8 başarılı generation |
@@ -396,7 +396,7 @@ grep "OpenAI başarılı" staging.log
 | Tahmini toplam maliyet | < $0.50 |
 
 > [!NOTE]
-> Maliyet tahmini `gpt-4.1-mini` fiyatlandırmasına göre hesaplanmıştır.
+> Maliyet tahmini `gpt-4o-mini` fiyatlandırmasına göre hesaplanmıştır.
 > Gerçek maliyet model ve yanıt uzunluğuna göre değişebilir.
 
 ---

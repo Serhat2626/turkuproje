@@ -104,7 +104,7 @@ ai:
   provider: openai
   openai:
     api-key: ${OPENAI_API_KEY}
-    model: gpt-4.1-mini
+    model: gpt-4o-mini
     base-url: https://api.openai.com/v1
     timeout-seconds: 60
     max-output-tokens: 2000
