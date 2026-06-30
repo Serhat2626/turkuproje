@@ -1,0 +1,116 @@
+# ================================================================
+# Anadolu Atlası - Staging Stack (Docker Swarm)
+# ================================================================
+#
+# Deploy:
+#   docker stack deploy -c docker-stack.staging.yml anadolu-atlasi-staging
+#
+# Rollback (mock'a dönüş):
+#   AI_PROVIDER env'i kaldırılarak servis update edilir.
+#
+# ÖNEMLİ:
+#   - Bu dosya GIT'e commit edilebilir — secret içermez.
+#   - OPENAI_API_KEY docker secret veya GitLab CI variable ile sağlanır.
+#   - Production DB/network/volume kullanılmaz.
+#   - Mevcut projelerin servisleri etkilenmez.
+# ================================================================
+
+version: "3.8"
+
+services:
+
+  # ── Staging Backend ──────────────────────────────────
+  backend:
+    image: ${BACKEND_IMAGE:-registry.gitlab.com/anadolu-atlasi/backend:staging}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+        delay: 5s
+      update_config:
+        parallelism: 1
+        delay: 10s
+      resources:
+        limits:
+          cpus: "1.0"
+          memory: 768M
+        reservations:
+          cpus: "0.25"
+          memory: 384M
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      # ── DB (sunucudaki mevcut PostgreSQL, ayrı staging DB) ──
+      SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST:-host.docker.internal}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-anadolu_atlasi_staging}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-anadolu_staging}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      # ── Redis ──
+      SPRING_DATA_REDIS_HOST: redis
+      SPRING_DATA_REDIS_PORT: 6379
+      # ── AI Provider ──
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
+    networks:
+      - aa-staging-internal
+      - nginx-proxy-manager_default
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+  # ── Staging Redis (stack-internal) ──────────────────
+  redis:
+    image: redis:7-alpine
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    volumes:
+      - redis_staging_data:/data
+    networks:
+      - aa-staging-internal
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ── Staging Admin Web ──────────────────────────────
+  admin-web:
+    image: ${ADMIN_WEB_IMAGE:-registry.gitlab.com/anadolu-atlasi/admin-web:staging}
+    deploy:
+      replicas: 1
+      restart_policy:
+        condition: any
+      resources:
+        limits:
+          cpus: "0.25"
+          memory: 128M
+        reservations:
+          cpus: "0.1"
+          memory: 64M
+    networks:
+      - aa-staging-internal
+      - nginx-proxy-manager_default
+
+networks:
+  # Stack-internal network — sadece bu stack'in servisleri arası
+  aa-staging-internal:
+    driver: overlay
+
+  # Nginx Proxy Manager'ın paylaşımlı network'ü — routing için
+  # Bu network mevcut olmalıdır (external: true)
+  nginx-proxy-manager_default:
+    external: true
+
+volumes:
+  redis_staging_data:

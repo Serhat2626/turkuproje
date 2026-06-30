@@ -1,0 +1,118 @@
+# ================================================================
+# Anadolu Atlası - Staging Ortamı (Real AI Provider)
+# ================================================================
+# Kullanım:
+#   1. .env.staging.example dosyasını .env.staging olarak kopyalayın
+#   2. .env.staging içindeki AI_OPENAI_API_KEY değerini doldurun
+#   3. docker compose -f docker-compose.staging.yml --env-file .env.staging up -d
+#
+# Rollback (mock'a dönüş):
+#   .env.staging içinde AI_PROVIDER=mock yapın ve restart edin
+#
+# ÖNEMLİ:
+#   - .env.staging dosyası git'e commit edilmez
+#   - Production DB kullanılmaz (ayrı staging DB)
+#   - Portlar local dev ile çakışmaz (8081, 5174, 5433, 6380)
+# ================================================================
+
+services:
+
+  # ---- Staging PostgreSQL (ayrı port, ayrı DB) ----
+  postgres-staging:
+    image: postgres:16-alpine
+    container_name: anadolu-postgres-staging
+    restart: unless-stopped
+    ports:
+      - "${POSTGRES_PORT:-5433}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-anadolu_atlasi_staging}
+      POSTGRES_USER: ${POSTGRES_USER:-anadolu_staging}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staging_secure_password_change_me}
+    volumes:
+      - postgres_staging_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-anadolu_staging} -d ${POSTGRES_DB:-anadolu_atlasi_staging}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Staging Redis (ayrı port) ----
+  redis-staging:
+    image: redis:7-alpine
+    container_name: anadolu-redis-staging
+    restart: unless-stopped
+    ports:
+      - "${REDIS_PORT:-6380}:6379"
+    volumes:
+      - redis_staging_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Staging MinIO ----
+  minio-staging:
+    image: minio/minio:latest
+    container_name: anadolu-minio-staging
+    restart: unless-stopped
+    ports:
+      - "${MINIO_API_PORT:-9002}:9000"
+      - "${MINIO_CONSOLE_PORT:-9003}:9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_staging_123}
+    volumes:
+      - minio_staging_data:/data
+    command: server /data --console-address ":9001"
+
+  # ---- Staging Backend (Real AI Provider) ----
+  backend-staging:
+    build:
+      context: ../../apps/backend
+      dockerfile: Dockerfile
+    container_name: anadolu-backend-staging
+    restart: unless-stopped
+    ports:
+      - "${BACKEND_PORT:-8081}:8080"
+    environment:
+      SPRING_PROFILES_ACTIVE: local
+      POSTGRES_HOST: postgres-staging
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-anadolu_atlasi_staging}
+      POSTGRES_USER: ${POSTGRES_USER:-anadolu_staging}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-staging_secure_password_change_me}
+      REDIS_HOST: redis-staging
+      REDIS_PORT: 6379
+      MINIO_ENDPOINT: http://minio-staging:9000
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_staging_123}
+      MINIO_BUCKET: ${MINIO_BUCKET:-anadolu-media-staging}
+      # ── AI Provider Config ──
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
+      AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
+    depends_on:
+      postgres-staging:
+        condition: service_healthy
+      redis-staging:
+        condition: service_healthy
+      minio-staging:
+        condition: service_started
+
+  # ---- Staging Admin Web ----
+  admin-web-staging:
+    build:
+      context: ../../apps/admin-web
+      dockerfile: Dockerfile
+    container_name: anadolu-admin-web-staging
+    restart: unless-stopped
+    ports:
+      - "${ADMIN_WEB_PORT:-5174}:5173"
+    depends_on:
+      - backend-staging
+
+volumes:
+  postgres_staging_data:
+  redis_staging_data:
+  minio_staging_data:
