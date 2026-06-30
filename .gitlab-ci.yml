@@ -1,0 +1,99 @@
+# ================================================================
+# Anadolu Atlası - GitLab CI/CD Pipeline
+# ================================================================
+#
+# Pipeline akışı:
+#   dev branch push → build → push → deploy-staging
+#
+# Gerekli GitLab CI/CD Variables (Settings → CI/CD → Variables):
+#   SSH_PRIVATE_KEY        → Sunucu SSH private key (File type, masked)
+#   DEPLOY_SERVER          → root@<server-ip> (protected)
+#   CI_DEPLOY_USER         → GitLab deploy token username
+#   CI_DEPLOY_PASSWORD     → GitLab deploy token password (masked)
+#   E_POSTGRES_PASSWORD    → Staging DB şifresi (masked, protected)
+#   E_AI_PROVIDER          → "openai" veya "mock" (protected)
+#   E_AI_OPENAI_API_KEY    → OpenAI API key (masked, protected)
+#   E_AI_OPENAI_MODEL      → "gpt-4o-mini" (protected, optional)
+#
+# ================================================================
+
+image: docker:latest
+
+services:
+  - docker:dind
+
+variables:
+  DOCKER_DRIVER: overlay2
+  BACKEND_DIR: engineering/apps/backend
+  ADMIN_WEB_DIR: engineering/apps/admin-web
+  STACK_FILE: engineering/infrastructure/docker/docker-stack.staging.yml
+  STACK_NAME: anadolu-atlasi-staging
+
+stages:
+  - build
+  - deploy-staging
+
+# ── Build & Push: Backend ──────────────────────────────
+build-backend:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_REF_NAME ./$BACKEND_DIR/
+    - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_REF_NAME
+  only:
+    - dev
+
+# ── Build & Push: Admin Web ───────────────────────────
+build-admin-web:
+  stage: build
+  script:
+    - docker build -t $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_REF_NAME ./$ADMIN_WEB_DIR/
+    - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
+    - docker push $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_REF_NAME
+  only:
+    - dev
+
+# ── Deploy: Staging ───────────────────────────────────
+deploy-staging:
+  stage: deploy-staging
+  image: alpine:latest
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  script:
+    - |
+      ssh $DEPLOY_SERVER "
+        # Registry login
+        docker login registry.gitlab.com -u ${CI_DEPLOY_USER} -p ${CI_DEPLOY_PASSWORD};
+
+        # Kodu güncelle
+        cd /opt/anadolu-atlasi && git fetch origin dev && git checkout dev && git reset --hard origin/dev;
+
+        # Environment variables
+        export BACKEND_IMAGE='${CI_REGISTRY_IMAGE}/backend:${CI_COMMIT_REF_NAME}';
+        export ADMIN_WEB_IMAGE='${CI_REGISTRY_IMAGE}/admin-web:${CI_COMMIT_REF_NAME}';
+        export POSTGRES_PASSWORD='${E_POSTGRES_PASSWORD}';
+        export AI_PROVIDER='${E_AI_PROVIDER:-mock}';
+        export AI_OPENAI_API_KEY='${E_AI_OPENAI_API_KEY}';
+        export AI_OPENAI_MODEL='${E_AI_OPENAI_MODEL:-gpt-4o-mini}';
+
+        # Stack deploy (idempotent — yeni oluşturur veya günceller)
+        docker stack deploy \
+          -c ${STACK_FILE} \
+          --with-registry-auth \
+          ${STACK_NAME};
+
+        # Deployment doğrulama (30s bekle)
+        sleep 30;
+        echo '=== Services ===';
+        docker stack services ${STACK_NAME};
+        echo '=== Backend Health ===';
+        curl -s http://localhost:8081/actuator/health | head -c 200;
+      "
+  only:
+    - dev
+  when: manual
+  allow_failure: false

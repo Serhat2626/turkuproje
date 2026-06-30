@@ -1,11 +1,15 @@
 # ================================================================
-# Anadolu Atlası - Staging Stack (Docker Swarm - Single Node)
+# Anadolu Atlası - Staging Stack (Docker Swarm)
 # ================================================================
 #
-# Deploy:
+# Manuel deploy:
 #   export AI_OPENAI_API_KEY="sk-proj-..."
 #   export POSTGRES_PASSWORD="REDACTED_SECRET"
-#   docker stack deploy -c docker-stack.staging.yml anadolu-atlasi-staging
+#   docker stack deploy -c docker-stack.staging.yml --resolve-image never anadolu-atlasi-staging
+#
+# CI/CD deploy:
+#   CI pipeline otomatik olarak image build/push yapar ve stack deploy eder.
+#   Image tag'leri CI_COMMIT_REF_NAME (branch adı) ile belirlenir.
 #
 # Rollback:
 #   docker service update --env-add AI_PROVIDER=mock anadolu-atlasi-staging_backend
@@ -20,7 +24,7 @@ services:
 
   # ── Staging Backend ──────────────────────────────────
   backend:
-    image: registry.gitlab.com/solostartup/turkuproje/backend:staging
+    image: ${BACKEND_IMAGE:-registry.gitlab.com/solostartup/turkuproje/backend:staging}
     ports:
       - "8081:8080"
     deploy:
@@ -50,7 +54,7 @@ services:
       REDIS_HOST: redis
       REDIS_PORT: 6379
       # ── AI Provider ──
-      AI_PROVIDER: ${AI_PROVIDER:-openai}
+      AI_PROVIDER: ${AI_PROVIDER:-mock}
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
       AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
     networks:
@@ -88,7 +92,7 @@ services:
 
   # ── Staging Admin Web ──────────────────────────────
   admin-web:
-    image: registry.gitlab.com/solostartup/turkuproje/admin-web:staging
+    image: ${ADMIN_WEB_IMAGE:-registry.gitlab.com/solostartup/turkuproje/admin-web:staging}
     ports:
       - "5174:5173"
     deploy:
