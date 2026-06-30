@@ -142,10 +142,15 @@ class OpenAiClient {
         HttpStatusCode status = e.getStatusCode();
         int code = status.value();
 
-        // 400 hatalarında response body'yi logla (API key, prompt, raw response hariç — sadece error message)
-        String errorBody = e.getResponseBodyAsString();
+        // Error body'yi güvenli şekilde logla — max 500 karakter.
+        // OpenAI error body genelde kısa JSON (error.type/message) içerir,
+        // ancak prompt echo veya partial content riski nedeniyle truncate edilir.
+        String rawBody = e.getResponseBodyAsString();
+        String safeBody = (rawBody != null && rawBody.length() > 500)
+                ? rawBody.substring(0, 500) + "...[TRUNCATED]"
+                : rawBody;
         log.warn("OpenAI HTTP hatası: requestId={}, status={}, durationMs={}, errorBody={}",
-                requestId, code, durationMs, errorBody);
+                requestId, code, durationMs, safeBody);
 
         return switch (code) {
             case 401, 403 -> OpenAiCallResult.failure(AiErrorType.AI_PROVIDER_AUTH_ERROR,
