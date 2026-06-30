@@ -34,10 +34,10 @@ class AiProviderSelectionTest {
         }
 
         @Test
-        @DisplayName("OpenAI varsayılan model gpt-4.1-mini")
+        @DisplayName("OpenAI varsayılan model gpt-4o-mini")
         void defaultModel() {
             AiProviderProperties props = new AiProviderProperties();
-            assertThat(props.getOpenai().getModel()).isEqualTo("gpt-4.1-mini");
+            assertThat(props.getOpenai().getModel()).isEqualTo("gpt-4o-mini");
         }
 
         @Test
