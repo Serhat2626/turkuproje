@@ -884,6 +884,10 @@ Repositories mock'lanmış (mevcut test pattern). Dış ağa çıkış **YOKTUR*
 
 ### Kalan Limitasyon
 
-Real staging run henüz yapılmadı. Staging QA runbook: [27-real-ai-provider-staging-qa.md](./27-real-ai-provider-staging-qa.md)
+Real staging run henüz yapılmadı — staging altyapısı (deployment ortamı, PostgreSQL, API key) gerekli.
+
+Staging QA runbook: [27-real-ai-provider-staging-qa.md](./27-real-ai-provider-staging-qa.md)
 
 Production rollout checklist: [28-real-ai-provider-production-rollout-checklist.md](./28-real-ai-provider-production-rollout-checklist.md)
+
+Staging execution report: [29-real-ai-provider-staging-execution-report.md](./29-real-ai-provider-staging-execution-report.md) (GO WITH CONDITIONS — altyapı bekleniyor)
