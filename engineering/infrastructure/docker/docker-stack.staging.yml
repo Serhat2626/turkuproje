@@ -1,18 +1,17 @@
 # ================================================================
-# Anadolu Atlası - Staging Stack (Docker Swarm)
+# Anadolu Atlası - Staging Stack (Docker Swarm - Single Node)
 # ================================================================
 #
 # Deploy:
+#   export AI_OPENAI_API_KEY="sk-proj-..."
+#   export POSTGRES_PASSWORD="REDACTED_SECRET"
 #   docker stack deploy -c docker-stack.staging.yml anadolu-atlasi-staging
 #
-# Rollback (mock'a dönüş):
-#   AI_PROVIDER env'i kaldırılarak servis update edilir.
+# Rollback:
+#   docker service update --env-add AI_PROVIDER=mock anadolu-atlasi-staging_backend
 #
-# ÖNEMLİ:
-#   - Bu dosya GIT'e commit edilebilir — secret içermez.
-#   - OPENAI_API_KEY docker secret veya GitLab CI variable ile sağlanır.
-#   - Production DB/network/volume kullanılmaz.
-#   - Mevcut projelerin servisleri etkilenmez.
+# Kaldırma:
+#   docker stack rm anadolu-atlasi-staging
 # ================================================================
 
 version: "3.8"
@@ -21,7 +20,9 @@ services:
 
   # ── Staging Backend ──────────────────────────────────
   backend:
-    image: ${BACKEND_IMAGE:-registry.gitlab.com/anadolu-atlasi/backend:staging}
+    image: registry.gitlab.com/solostartup/turkuproje/backend:staging
+    ports:
+      - "8081:8080"
     deploy:
       replicas: 1
       restart_policy:
@@ -39,20 +40,21 @@ services:
           memory: 384M
     environment:
       SPRING_PROFILES_ACTIVE: local
-      # ── DB (sunucudaki mevcut PostgreSQL, ayrı staging DB) ──
-      SPRING_DATASOURCE_URL: jdbc:postgresql://${POSTGRES_HOST:-host.docker.internal}:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-anadolu_atlasi_staging}
-      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER:-anadolu_staging}
-      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
-      # ── Redis ──
-      SPRING_DATA_REDIS_HOST: redis
-      SPRING_DATA_REDIS_PORT: 6379
+      # ── DB (host PostgreSQL via docker0 bridge) ──
+      POSTGRES_HOST: 172.17.0.1
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: anadolu_atlasi_staging
+      POSTGRES_USER: anadolu_staging
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-REDACTED_SECRET}
+      # ── Redis (stack-internal service) ──
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       # ── AI Provider ──
-      AI_PROVIDER: ${AI_PROVIDER:-mock}
+      AI_PROVIDER: ${AI_PROVIDER:-openai}
       AI_OPENAI_API_KEY: ${AI_OPENAI_API_KEY:-}
       AI_OPENAI_MODEL: ${AI_OPENAI_MODEL:-gpt-4o-mini}
     networks:
       - aa-staging-internal
-      - nginx-proxy-manager_default
     healthcheck:
       test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/actuator/health || exit 1"]
       interval: 30s
@@ -60,7 +62,7 @@ services:
       retries: 3
       start_period: 60s
 
-  # ── Staging Redis (stack-internal) ──────────────────
+  # ── Staging Redis ──────────────────────────────────
   redis:
     image: redis:7-alpine
     deploy:
@@ -86,7 +88,9 @@ services:
 
   # ── Staging Admin Web ──────────────────────────────
   admin-web:
-    image: ${ADMIN_WEB_IMAGE:-registry.gitlab.com/anadolu-atlasi/admin-web:staging}
+    image: registry.gitlab.com/solostartup/turkuproje/admin-web:staging
+    ports:
+      - "5174:5173"
     deploy:
       replicas: 1
       restart_policy:
@@ -100,17 +104,10 @@ services:
           memory: 64M
     networks:
       - aa-staging-internal
-      - nginx-proxy-manager_default
 
 networks:
-  # Stack-internal network — sadece bu stack'in servisleri arası
   aa-staging-internal:
     driver: overlay
-
-  # Nginx Proxy Manager'ın paylaşımlı network'ü — routing için
-  # Bu network mevcut olmalıdır (external: true)
-  nginx-proxy-manager_default:
-    external: true
 
 volumes:
   redis_staging_data:
