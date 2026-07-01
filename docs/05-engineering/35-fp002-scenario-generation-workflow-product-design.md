@@ -35,12 +35,23 @@ ileride storyboard ve video üretim sürecinin girdisi olacaktır.
 | Terim | Tanım |
 |-------|-------|
 | Content Draft | FP-001'de AI tarafından üretilen ve admin tarafından onaylanan metin taslağı |
-| Scenario | Content Draft'tan üretilen yapılandırılmış video senaryosu |
-| ScriptDraft | Domain model'deki entity adı (02-domain-model.md ile tutarlı) |
+| **Scenario** | Content Draft'tan üretilen yapılandırılmış video senaryosu — **ürün seviyesi ana kavram** |
 | Beat | Senaryo içindeki anlatım birimi (Hook, Giriş, vb.) |
 
-> **Not**: Domain model'de bu entity `ScriptDraft` olarak planlanmıştır.
-> FP-002 implementasyonunda bu isimlendirme korunacaktır.
+### Entity İsimlendirme — Engineering Design'a Ertelenmiştir
+
+Bu doküman ürün tasarımıdır. Java entity/class adı burada sabitlenmez.
+Nihai isimlendirme FP-002 engineering design task'ında belirlenecektir.
+
+**Aday isimler** (engineering design'da değerlendirilecek):
+
+| Aday | Not |
+|------|-----|
+| `Scenario` | Ürün diliyle tam uyumlu |
+| `ScenarioDraft` | FP-001 `ContentDraft` pattern'ıyla tutarlı |
+| `ScenarioCandidate` | Version/candidate semantiğini vurgular |
+| `GeneratedScenario` | AI üretim bağlamını vurgular |
+| `ScriptDraft` | Domain model (02-domain-model.md) legacy uyumu — sadece referans |
 
 ---
 
@@ -49,7 +60,7 @@ ileride storyboard ve video üretim sürecinin girdisi olacaktır.
 | # | Kapsam |
 |---|--------|
 | 1 | Approved content draft'tan senaryo generation |
-| 2 | Senaryo adayı (ScriptDraft) oluşturma |
+| 2 | Senaryo adayı (Scenario) oluşturma |
 | 3 | Admin tarafından senaryo review/edit |
 | 4 | Admin tarafından explicit senaryo approve |
 | 5 | Admin tarafından senaryo reject veya regeneration |
@@ -82,66 +93,74 @@ ileride storyboard ve video üretim sürecinin girdisi olacaktır.
 
 ## 5. Scenario Lifecycle
 
-### State Machine
+> ⚠️ Aşağıdaki lifecycle **aday tasarımdır**. Nihai status enum kararı
+> FP-002 engineering design task'ında verilecektir.
+
+### Önerilen Aday Lifecycle (Recommended)
 
 ```mermaid
 stateDiagram-v2
-    [*] --> DRAFT : AI generation başlatıldı
-    DRAFT --> AI_GENERATED : AI senaryo üretimi başarılı
-    DRAFT --> FAILED : AI üretim hatası
-    AI_GENERATED --> EDITED : Admin düzenledi
-    AI_GENERATED --> APPROVED : Admin onayladı
-    AI_GENERATED --> REJECTED : Admin reddetti
-    EDITED --> APPROVED : Admin onayladı
-    EDITED --> REJECTED : Admin reddetti
+    [*] --> AI_GENERATED : AI senaryo üretimi başarılı
+    [*] --> FAILED : AI üretim hatası
+    AI_GENERATED --> NEEDS_REVIEW : Admin incelemeye aldı
+    NEEDS_REVIEW --> APPROVED : Admin onayladı
+    NEEDS_REVIEW --> REJECTED : Admin reddetti
     APPROVED --> [*]
     REJECTED --> [*]
-    FAILED --> DRAFT : Retry
+    FAILED --> AI_GENERATED : Retry başarılı
 ```
 
-### Status Değerleri
+### Candidate A — Recommended
 
 | Status | Açıklama | Kim tetikler |
 |--------|----------|-------------|
-| `DRAFT` | AI üretimi başlatıldı/bekliyor | Sistem |
 | `AI_GENERATED` | AI tarafından üretildi, review bekliyor | AI Provider |
-| `EDITED` | Admin tarafından düzenlendi | Admin |
+| `NEEDS_REVIEW` | Admin incelemeye aldı | Admin |
 | `APPROVED` | Admin tarafından onaylandı | Admin (explicit) |
 | `REJECTED` | Admin tarafından reddedildi | Admin (explicit) |
 | `FAILED` | AI üretimi başarısız | Sistem |
 
+### Candidate B — Simpler Alternative
+
+| Status | Açıklama |
+|--------|----------|
+| `PENDING_REVIEW` | AI üretildi, review bekliyor |
+| `APPROVED` | Admin onayladı |
+| `REJECTED` | Admin reddetti |
+| `FAILED` | AI üretimi başarısız |
+
+### Editing Hakkında
+
+`EDITED` ayrı bir lifecycle status **değildir**. Admin düzenlemesi
+status değişikliği yerine **metadata** olarak izlenir:
+
+| Metadata | Açıklama |
+|----------|----------|
+| `editedBy` | Düzenleyen admin |
+| `editedAt` | Düzenleme zamanı |
+| `version` | Düzenleme sonrası version artışı |
+| `reviewNotes` | Admin notları |
+
+> Bu yaklaşım FP-001'deki `EDITED` status'ünden farklıdır.
+> FP-001'de EDITED ayrı status'tür; FP-002'de metadata olarak
+> değerlendirilecektir. Nihai karar engineering design'da verilir.
+
 ### FP-001 ile Karşılaştırma
 
-| Alan | FP-001 ContentDraft | FP-002 ScriptDraft |
-|------|---------------------|---------------------|
-| Status enum | GENERATED, EDITED, REVISION_NEEDED, APPROVED, REJECTED | DRAFT, AI_GENERATED, EDITED, APPROVED, REJECTED, FAILED |
+| Alan | FP-001 ContentDraft | FP-002 Scenario |
+|------|---------------------|------------------|
+| Status enum | GENERATED, EDITED, REVISION_NEEDED, APPROVED, REJECTED | Candidate: AI_GENERATED, NEEDS_REVIEW, APPROVED, REJECTED, FAILED |
+| Edit tracking | Status olarak (EDITED) | Metadata olarak (editedAt, version) |
 | Auto-approve | ❌ Yok | ❌ Yok |
 | Auto-publish | ❌ Yok | ❌ Yok |
 | Human review | ✅ Zorunlu | ✅ Zorunlu |
-| Retry | ContentProject üzerinden | Scenario üzerinden |
+| FAILED tracking | ContentProject'te | Scenario'da (daha temiz) |
 
-> **Tasarım kararı**: FP-001'de FAILED status ContentProject'te
-> tutuluyordu. FP-002'de FAILED status doğrudan ScriptDraft'ta
-> tutulacak — bu daha temiz bir model sağlar ve retry logic'i
-> basitleştirir.
+### Domain Model Referansı
 
-### Domain Model Uyumu
-
-Domain model'de (02-domain-model.md) ScriptDraft zaten planlanmıştır:
-
-```
-ScriptDraft
-├── id
-├── content_project_id
-├── version
-├── title
-├── body
-├── status (DRAFT, AI_GENERATED, HUMAN_REVIEWED, APPROVED, REJECTED)
-├── created_by
-└── created_at
-```
-
-FP-002 bu modeli temel alacak ve gerekli alanları genişletecektir.
+Domain model'de (02-domain-model.md, L281-L306) `ScriptDraft` entity'si
+planlanmıştır. FP-002 engineering design bu referansı değerlendirecek
+ve güncel ürün diline uygun entity adı belirleyecektir.
 
 ---
 
@@ -178,15 +197,19 @@ Regeneration iki senaryoda gerçekleşebilir:
 
 ### Prerequisite Kontrolü
 
-```
-Content Project status == APPROVED
-  └── latestDraftId != null
-       └── ContentDraft status == APPROVED veya EDITED
-            └── Senaryo generation başlatılabilir
-```
+Senaryo generation için **ürün seviyesi gereksinim**:
 
-> **Basitleştirme**: MVP'de `ContentProject.status == APPROVED` kontrolü
-> yeterlidir. Draft'ın kendisi zaten approve flow'undan geçmiştir.
+> Scenario generation requires an approved, human-reviewed source draft
+> associated with the Content Project.
+
+Bu şu anlamlara gelir:
+
+- İncelenmemiş (unreviewed) AI çıktısından senaryo üretilemez
+- Onaylanmamış (unapproved) draft'tan senaryo üretilemez
+- Senaryo, kaynak Content Project ve approved draft'a izlenebilir olmalı
+
+**Domain field/status kontrolünün tam tanımı** (örn. `ContentProject.status`,
+`ContentDraft.status`, veya her ikisi) engineering design'da teyit edilecektir.
 
 ---
 
@@ -195,9 +218,9 @@ Content Project status == APPROVED
 ### 7.1 Senaryo Generation Başlangıcı
 
 **Nereden başlar:**
-- Content Project detay sayfasında, project status `APPROVED` olduğunda
+- Content Project detay sayfasında, draft onaylanmış olduğunda
 - "Senaryo Üret" butonu görünür hale gelir
-- Buton sadece APPROVED project'lerde aktif
+- Buton sadece approved human-reviewed draft'ı olan project'lerde aktif
 
 **Admin ne görür (generate öncesi):**
 - Content Project özeti (başlık, KI bilgisi, approved draft preview)
@@ -270,7 +293,8 @@ Content Project status == APPROVED
 
 - Her beat inline editable
 - Markdown desteği (body alanları)
-- Save → status `EDITED` olur
+- Save → edit metadata güncellenir (editedAt, version)
+- Edit, lifecycle status değiştirmez — senaryo review'da kalmaya devam eder
 - Edit sonrası auto-approve olmaz
 
 ### 7.5 Approve / Reject
@@ -346,7 +370,7 @@ Bu yapı `AGENTS.md`'deki proje tanımıyla tutarlıdır:
 | # | Kural | Kontrol |
 |---|-------|---------|
 | 1 | Senaryo bir Content Project'e bağlı olmalı | `contentProjectId` zorunlu |
-| 2 | Senaryo generation için approved draft gerekli | `ContentProject.status == APPROVED` |
+| 2 | Senaryo generation için approved human-reviewed draft gerekli | Prerequisite — field kontrolü eng. design'da |
 | 3 | Senaryo approval için içerik mevcut olmalı | title + en az 1 beat dolu |
 | 4 | Senaryo otomatik APPROVED olamaz | AI generation → AI_GENERATED, never APPROVED |
 | 5 | Senaryo kaynak draft/project izlenebilirliğini korumalı | `contentProjectId` referansı |
@@ -355,15 +379,19 @@ Bu yapı `AGENTS.md`'deki proje tanımıyla tutarlıdır:
 | 8 | Senaryo REST model'de provider-specific field olmamalı | DTO'lar provider-agnostic |
 | 9 | Version tracking: her generation yeni version | `version` field auto-increment |
 | 10 | Aynı project'te max 1 APPROVED senaryo | Business rule — son approved geçerli |
+| 11 | Unreviewed AI output'tan senaryo üretilemez | Prerequisite |
+| 12 | Unapproved draft'tan senaryo üretilemez | Prerequisite |
 
 ### Prerequisite Chain
 
 ```
 KnowledgeItem (READY)
-  └── ContentProject (APPROVED)
-       └── ContentDraft (APPROVED/EDITED — latestDraftId)
-            └── ScriptDraft (generation mümkün)
+  └── ContentProject
+       └── Approved human-reviewed Content Draft
+            └── Scenario generation mümkün
 ```
+
+> Tam domain field/status kontrolü engineering design'da belirlenecektir.
 
 ---
 
@@ -373,11 +401,11 @@ KnowledgeItem (READY)
 
 | # | Hata | Davranış | Kullanıcı Görünümü |
 |---|------|----------|-------------------|
-| 1 | AI provider failure (timeout, 5xx) | ScriptDraft → FAILED, retryable | "Üretim başarısız. Tekrar deneyin." |
-| 2 | AI provider auth error (401) | ScriptDraft → FAILED, not retryable | "Sistem hatası. Yöneticiyle iletişime geçin." |
+| 1 | AI provider failure (timeout, 5xx) | Scenario → FAILED, retryable | "Üretim başarısız. Tekrar deneyin." |
+| 2 | AI provider auth error (401) | Scenario → FAILED, not retryable | "Sistem hatası. Yöneticiyle iletişime geçin." |
 | 3 | Invalid/missing approved draft | Generation başlamaz | "Önce draft'ı onaylayın." |
-| 4 | Empty/invalid AI output | ScriptDraft → FAILED, retryable | "Geçersiz senaryo üretildi. Tekrar deneyin." |
-| 5 | Rate limit (429) | ScriptDraft → FAILED, retryable | "Lütfen birkaç dakika bekleyip tekrar deneyin." |
+| 4 | Empty/invalid AI output | Scenario → FAILED, retryable | "Geçersiz senaryo üretildi. Tekrar deneyin." |
+| 5 | Rate limit (429) | Scenario → FAILED, retryable | "Lütfen birkaç dakika bekleyip tekrar deneyin." |
 
 ### Retry Davranışı
 
@@ -389,14 +417,14 @@ KnowledgeItem (READY)
 ### Regeneration Davranışı
 
 - **User regeneration**: Admin "Yeniden Üret" butonuna basar
-- Mevcut AI_GENERATED/EDITED senaryo dokunulmaz
+- Mevcut senaryo dokunulmaz
 - Yeni version oluşturulur
 - Admin istediği version'ı approve eder
 
 ### Approved Senaryo Koruması
 
 - Approved senaryo hiçbir zaman overwrite edilmez
-- Yeni generation = yeni version (DRAFT → AI_GENERATED)
+- Yeni generation = yeni version (AI_GENERATED)
 - Eski approved version tarihçede kalır
 
 ---
@@ -410,7 +438,7 @@ KnowledgeItem (READY)
 | ContentProject entity | Input reference — `contentProjectId` |
 | ContentDraft | Senaryo generation'ın source content'i |
 | AI provider architecture | Aynı gateway interface, config, provider |
-| AiContentAgentGateway | Genişletilecek veya yeni method eklenecek |
+| AiContentAgentGateway | Genişletilecek veya yeni gateway oluşturulacak |
 | AiGatewayResult | Aynı result pattern |
 | Error mapping | Aynı error type ve retry logic |
 | Human review governance | Aynı kurallar devam |
@@ -430,7 +458,7 @@ KnowledgeItem (READY)
 
 ### AI Gateway Genişletme Stratejisi
 
-FP-002 için iki seçenek:
+FP-002 için iki seçenek (karar engineering design'da):
 
 **A) Mevcut gateway'e yeni method ekleme:**
 ```
@@ -448,6 +476,7 @@ AiScenarioAgentGateway      — FP-002 (yeni)
 > **Tavsiye**: Option B — Separation of concerns. Her gateway tek bir
 > sorumluluk taşır. Mock provider'da da ayrı mock implementasyonu olur.
 > Bu yaklaşım provider boundary kuralını daha iyi korur.
+> Nihai karar engineering design'da verilecektir.
 
 ---
 
@@ -487,6 +516,6 @@ AiScenarioAgentGateway      — FP-002 (yeni)
 
 | Doküman | Açıklama |
 |---------|----------|
-| [02-domain-model.md](./02-domain-model.md) | ScriptDraft entity planı (L281-L306) |
+| [02-domain-model.md](./02-domain-model.md) | Domain model — ScriptDraft referansı (L281-L306) |
 | [18-content-pipeline-engineering.md](./18-content-pipeline-engineering.md) | FP-001 content pipeline mimari dokümanı |
 | [34-fp001-final-closure-operational-baseline.md](./34-fp001-final-closure-operational-baseline.md) | FP-001 closure — safety guarantees |
