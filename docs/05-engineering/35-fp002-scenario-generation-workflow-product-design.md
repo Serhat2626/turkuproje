@@ -185,7 +185,7 @@ ve güncel ürün diline uygun entity adı belirleyecektir.
 Regeneration iki senaryoda gerçekleşebilir:
 
 **A) Henüz approve edilmemiş senaryo varken:**
-- Mevcut AI_GENERATED/EDITED senaryo korunur (version tracking)
+- Mevcut review-pending senaryo korunur (version tracking)
 - Yeni version üretilir
 - Admin hangi version'ı approve edeceğini seçer
 
