@@ -230,3 +230,13 @@ smoke test geçmiş, güvenlik doğrulanmış, rollback hazır bırakılmıştı
 | [29-real-ai-provider-staging-execution-report.md](./29-real-ai-provider-staging-execution-report.md) | Staging execution report |
 | [30-local-real-provider-smoke-test.md](./30-local-real-provider-smoke-test.md) | Local smoke test |
 | [31-real-ai-provider-staging-setup.md](./31-real-ai-provider-staging-setup.md) | Staging setup rehberi |
+| [33-openai-key-rotation-production-cleanup.md](./33-openai-key-rotation-production-cleanup.md) | Key rotation (bu task sonrası) |
+
+---
+
+> **⚠️ Key Rotation Notu (Task 33)**
+>
+> Bu task sırasında kullanılan OpenAI API key'i, operator tarafından
+> chat ortamına yapıştırıldığı için exposed kabul edilmiş ve
+> Task 33'te rotate edilmiştir. Bu raporda eski veya yeni key değeri
+> bulunmamaktadır.
