@@ -6,6 +6,7 @@ import com.anadoluatlasi.backend.ai.gateway.mock.MockAiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Bean;
@@ -20,8 +21,15 @@ import org.springframework.context.annotation.Configuration;
  *   <li>{@code openai} — OpenAI gateway'ler</li>
  * </ul>
  *
- * <p>Aynı anda yalnızca bir provider aktiftir.
- * Content ve Scenario gateway'leri ayrı interface'lerdir.</p>
+ * <p><strong>FP-001 Content Gateway:</strong> Provider seçimi {@code ai.provider} ile yapılır.
+ * {@code mock} veya ayarlanmamışsa MockAiContentAgentGateway, {@code openai} ise
+ * OpenAiContentAgentGateway aktifleşir.</p>
+ *
+ * <p><strong>FP-002 Scenario Gateway:</strong> Henüz gerçek OpenAI scenario provider
+ * implementasyonu yoktur. {@link MockAiScenarioAgentGateway} fallback olarak
+ * {@code @ConditionalOnMissingBean} ile kayıtlıdır. Bu sayede {@code ai.provider=openai}
+ * olsa bile, scenario gateway eksik bean hatası oluşmaz. İleride gerçek scenario provider
+ * eklendiğinde, o bean fallback'i override edecektir.</p>
  */
 @Slf4j
 @Configuration
@@ -57,13 +65,19 @@ public class AiGatewayConfig {
     // ── FP-002: Scenario Agent Gateway ──────────────────────
 
     /**
-     * Mock scenario gateway — varsayılan provider.
-     * {@code ai.provider} ayarlanmamışsa veya {@code mock} ise aktifleşir.
+     * Mock scenario gateway — fallback provider.
+     *
+     * <p>{@code @ConditionalOnMissingBean} kullanılır çünkü FP-002 henüz gerçek
+     * OpenAI scenario provider'a sahip değildir. {@code ai.provider=openai} olduğunda
+     * da bu mock gateway aktif kalır ve context start hatası önlenir.</p>
+     *
+     * <p>İleride gerçek {@code OpenAiScenarioAgentGateway} implement edildiğinde,
+     * o bean bu fallback'i otomatik olarak override edecektir.</p>
      */
     @Bean
-    @ConditionalOnProperty(name = "ai.provider", havingValue = "mock", matchIfMissing = true)
+    @ConditionalOnMissingBean(AiScenarioAgentGateway.class)
     public AiScenarioAgentGateway mockAiScenarioAgentGateway() {
-        log.info("AI Scenario Provider: MOCK — deterministic 6-beat senaryo üretir.");
+        log.info("AI Scenario Provider: MOCK (fallback) — deterministic 6-beat senaryo üretir.");
         return new MockAiScenarioAgentGateway();
     }
 }
