@@ -1,18 +1,15 @@
 package com.anadoluatlasi.backend.ai.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.experimental.SuperBuilder;
 
 import java.math.BigDecimal;
-import java.time.LocalDateTime;
-import java.util.UUID;
 
 /**
  * AI üretim çağrılarının loglarını tutan entity.
@@ -21,16 +18,12 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "ai_generation_logs")
-@EntityListeners(AuditingEntityListener.class)
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class AiGenerationLog {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class AiGenerationLog extends BaseEntity {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "content_project_id")
@@ -58,19 +51,4 @@ public class AiGenerationLog {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private AiGenerationStatus status;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
 }

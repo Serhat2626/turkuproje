@@ -102,7 +102,7 @@ class AdminScenarioControllerTest {
                 .providerType("MOCK")
                 .modelName("mock-v1")
                 .build();
-        draft.prePersist();
+        draft.onPrePersist();
 
         List<ScenarioBeat> beats = new ArrayList<>();
         for (ScenarioBeatType type : ScenarioBeatType.values()) {
@@ -114,7 +114,7 @@ class AdminScenarioControllerTest {
                     .orderIndex(type.getOrder())
                     .estimatedDurationSeconds(30)
                     .build();
-            beat.prePersist();
+            beat.onPrePersist();
             beats.add(beat);
         }
         draft.getBeats().addAll(beats);

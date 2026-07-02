@@ -1,24 +1,20 @@
 package com.anadoluatlasi.backend.storyboard.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import com.anadoluatlasi.backend.scenario.entity.ScenarioBeatType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 /**
  * FP-003: Storyboard scene entity'si.
@@ -36,17 +32,13 @@ import java.util.UUID;
  * storyboard scene'ler doğrudan bu beat'lere referans verir.</p>
  */
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "storyboard_scenes")
-@EntityListeners(AuditingEntityListener.class)
-public class StoryboardScene {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class StoryboardScene extends BaseEntity {
 
     /** Bu scene'in ait olduğu storyboard taslağı */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -112,11 +104,4 @@ public class StoryboardScene {
      */
     @Column(name = "media_generation_notes", columnDefinition = "TEXT")
     private String mediaGenerationNotes;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
 }

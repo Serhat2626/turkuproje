@@ -98,7 +98,7 @@ class AdminStoryboardControllerTest {
                 .sourceDraft(sourceDraft)
                 .version(1)
                 .build();
-        sourceScenarioDraft.prePersist();
+        sourceScenarioDraft.onPrePersist();
     }
 
     private StoryboardDraft buildDraft(StoryboardDraftStatus status) {
@@ -120,7 +120,7 @@ class AdminStoryboardControllerTest {
                 .providerType("MOCK")
                 .modelName("mock-v1")
                 .build();
-        draft.prePersist();
+        draft.onPrePersist();
 
         List<StoryboardScene> scenes = new ArrayList<>();
         ScenarioBeatType[] beatTypes = ScenarioBeatType.values();
@@ -140,7 +140,7 @@ class AdminStoryboardControllerTest {
                     .characters("Anlatıcı")
                     .estimatedDurationSeconds(30)
                     .build();
-            scene.prePersist();
+            scene.onPrePersist();
             scenes.add(scene);
         }
         draft.getScenes().addAll(scenes);

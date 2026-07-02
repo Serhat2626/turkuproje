@@ -659,7 +659,7 @@ class StoryboardGenerationServiceTest {
                     .orderIndex(beatType.getOrder())
                     .estimatedDurationSeconds(30)
                     .build();
-            beat.prePersist(); // UUID ata
+            beat.onPrePersist(); // UUID ata
             beats.add(beat);
         }
         scenario.getBeats().addAll(beats);
@@ -688,7 +688,7 @@ class StoryboardGenerationServiceTest {
                 .thenAnswer(invocation -> {
                     StoryboardDraft draft = invocation.getArgument(0);
                     if (draft.getId() == null) {
-                        draft.prePersist();
+                        draft.onPrePersist();
                     }
                     return draft;
                 });

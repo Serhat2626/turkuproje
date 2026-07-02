@@ -1,16 +1,12 @@
 package com.anadoluatlasi.backend.media.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Medya varlıklarını temsil eden entity.
@@ -19,16 +15,12 @@ import java.util.UUID;
  */
 @Entity
 @Table(name = "media_assets")
-@EntityListeners(AuditingEntityListener.class)
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MediaAsset {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class MediaAsset extends BaseEntity {
 
     @Enumerated(EnumType.STRING)
     @Column(name = "asset_type", nullable = false, length = 50)
@@ -58,19 +50,4 @@ public class MediaAsset {
 
     @Column(name = "metadata_json", columnDefinition = "TEXT")
     private String metadataJson;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
 }

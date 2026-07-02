@@ -1,5 +1,6 @@
 package com.anadoluatlasi.backend.storyboard.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import com.anadoluatlasi.backend.content.entity.ContentDraft;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
 import com.anadoluatlasi.backend.content.entity.GeneratedBy;
@@ -7,30 +8,24 @@ import com.anadoluatlasi.backend.scenario.entity.ScenarioDraft;
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
 import jakarta.persistence.OrderBy;
-import jakarta.persistence.PrePersist;
-import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
+import lombok.experimental.SuperBuilder;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * FP-003: Storyboard taslağı entity'si.
@@ -49,17 +44,13 @@ import java.util.UUID;
  * </ul>
  */
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "storyboard_drafts")
-@EntityListeners(AuditingEntityListener.class)
-public class StoryboardDraft {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class StoryboardDraft extends BaseEntity {
 
     /** Bu storyboard'un ait olduğu içerik projesi */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -140,14 +131,6 @@ public class StoryboardDraft {
     @OrderBy("sceneNumber ASC")
     private List<StoryboardScene> scenes = new ArrayList<>();
 
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
     /** Onay zamanı */
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
@@ -175,19 +158,4 @@ public class StoryboardDraft {
     /** Düzenleyen admin */
     @Column(name = "edited_by", length = 100)
     private String editedBy;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-        if (this.createdAt == null) {
-            this.createdAt = LocalDateTime.now();
-        }
-    }
-
-    @PreUpdate
-    public void preUpdate() {
-        this.updatedAt = LocalDateTime.now();
-    }
 }

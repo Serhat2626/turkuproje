@@ -124,25 +124,25 @@ class StoryboardDraftDomainTest {
         void shouldGenerateUuidOnPrePersist() {
             StoryboardDraft draft = createMinimalDraft();
             assertThat(draft.getId()).isNull();
-            draft.prePersist();
+            draft.onPrePersist();
             assertThat(draft.getId()).isNotNull();
         }
 
         @Test
-        @DisplayName("@PrePersist createdAt otomatik atanır")
-        void shouldSetCreatedAtOnPrePersist() {
+        @DisplayName("createdAt alanı mevcut — @CreatedDate JPA auditing ile otomatik atanır")
+        void shouldSupportCreatedAtField() {
             StoryboardDraft draft = createMinimalDraft();
             assertThat(draft.getCreatedAt()).isNull();
-            draft.prePersist();
+            draft.setCreatedAt(java.time.LocalDateTime.now());
             assertThat(draft.getCreatedAt()).isNotNull();
         }
 
         @Test
-        @DisplayName("@PreUpdate updatedAt güncellenir")
-        void shouldUpdateTimestampOnPreUpdate() {
+        @DisplayName("updatedAt alanı set edilebilir — @LastModifiedDate JPA auditing ile otomatik güncellenir")
+        void shouldSupportUpdatedAtField() {
             StoryboardDraft draft = createMinimalDraft();
             assertThat(draft.getUpdatedAt()).isNull();
-            draft.preUpdate();
+            draft.setUpdatedAt(java.time.LocalDateTime.now());
             assertThat(draft.getUpdatedAt()).isNotNull();
         }
     }
@@ -157,7 +157,7 @@ class StoryboardDraftDomainTest {
         @DisplayName("Scene gerekli alanlarla oluşturulabilir")
         void shouldCreateSceneWithRequiredFields() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             StoryboardScene scene = createScene(draft, 1,
                     ScenarioBeatType.HOOK, "Açılış Sahnesi",
@@ -176,7 +176,7 @@ class StoryboardDraftDomainTest {
         @DisplayName("Scene tüm opsiyonel alanlarla oluşturulabilir")
         void shouldCreateSceneWithAllFields() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             StoryboardScene scene = StoryboardScene.builder()
                     .storyboardDraft(draft)
@@ -210,7 +210,7 @@ class StoryboardDraftDomainTest {
         @DisplayName("Storyboard birden fazla sıralı scene içerebilir")
         void shouldContainMultipleOrderedScenes() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             List<StoryboardScene> scenes = List.of(
                     createScene(draft, 1, ScenarioBeatType.HOOK, "Açılış", "Hook görseli"),
@@ -234,7 +234,7 @@ class StoryboardDraftDomainTest {
         @DisplayName("Scene sıralaması sceneNumber ile deterministik")
         void shouldHaveDeterministicOrderBySceneNumber() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             StoryboardScene scene1 = createScene(draft, 1, ScenarioBeatType.HOOK, "Açılış", "Hook");
             StoryboardScene scene2 = createScene(draft, 2, ScenarioBeatType.INTRODUCTION, "Giriş", "Giriş");
@@ -248,11 +248,11 @@ class StoryboardDraftDomainTest {
         @DisplayName("Scene @PrePersist UUID otomatik atanır")
         void shouldGenerateSceneUuid() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             StoryboardScene scene = createScene(draft, 1, ScenarioBeatType.HOOK, "Test", "Test");
             assertThat(scene.getId()).isNull();
-            scene.prePersist();
+            scene.onPrePersist();
             assertThat(scene.getId()).isNotNull();
         }
     }
@@ -312,7 +312,7 @@ class StoryboardDraftDomainTest {
         @DisplayName("Scene source beat type olarak ScenarioBeatType kullanılır")
         void shouldUseScenarioBeatTypeForSourceBeat() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             StoryboardScene scene = createScene(draft, 1, ScenarioBeatType.HOOK, "Test", "Test");
             assertThat(scene.getSourceBeatType()).isEqualTo(ScenarioBeatType.HOOK);
@@ -322,7 +322,7 @@ class StoryboardDraftDomainTest {
         @DisplayName("Tüm 6 beat tipi source olarak kullanılabilir")
         void shouldSupportAllSixBeatTypes() {
             StoryboardDraft draft = createMinimalDraft();
-            draft.prePersist();
+            draft.onPrePersist();
 
             for (ScenarioBeatType beatType : ScenarioBeatType.values()) {
                 StoryboardScene scene = createScene(draft, beatType.getOrder(),

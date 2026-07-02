@@ -84,7 +84,7 @@ class ScenarioReviewServiceTest {
                 .providerType("MOCK")
                 .modelName("mock-scenario-v1")
                 .build();
-        draft.prePersist();
+        draft.onPrePersist();
 
         // 6 beat oluştur
         List<ScenarioBeat> beats = new ArrayList<>();
@@ -98,7 +98,7 @@ class ScenarioReviewServiceTest {
                     .orderIndex(i + 1)
                     .estimatedDurationSeconds(30)
                     .build();
-            beat.prePersist();
+            beat.onPrePersist();
             beats.add(beat);
         }
         draft.getBeats().addAll(beats);

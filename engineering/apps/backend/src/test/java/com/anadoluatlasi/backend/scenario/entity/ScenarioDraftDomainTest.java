@@ -111,7 +111,7 @@ class ScenarioDraftDomainTest {
                     .build();
 
             assertThat(draft.getId()).isNull();
-            draft.prePersist();
+            draft.onPrePersist();
             assertThat(draft.getId()).isNotNull();
         }
 
@@ -127,7 +127,7 @@ class ScenarioDraftDomainTest {
                     .build();
 
             assertThat(draft.getCreatedAt()).isNull();
-            draft.prePersist();
+            draft.setCreatedAt(java.time.LocalDateTime.now());
             assertThat(draft.getCreatedAt()).isNotNull();
         }
 
@@ -143,7 +143,7 @@ class ScenarioDraftDomainTest {
                     .build();
 
             assertThat(draft.getUpdatedAt()).isNull();
-            draft.preUpdate();
+            draft.setUpdatedAt(java.time.LocalDateTime.now());
             assertThat(draft.getUpdatedAt()).isNotNull();
         }
     }
@@ -164,7 +164,7 @@ class ScenarioDraftDomainTest {
                     .status(ScenarioDraftStatus.AI_GENERATED)
                     .generatedBy(GeneratedBy.AI_CONTENT_AGENT)
                     .build();
-            draft.prePersist();
+            draft.onPrePersist();
 
             List<ScenarioBeat> beats = List.of(
                     createBeat(draft, ScenarioBeatType.HOOK, "Hook metni"),
@@ -210,11 +210,11 @@ class ScenarioDraftDomainTest {
                     .status(ScenarioDraftStatus.AI_GENERATED)
                     .generatedBy(GeneratedBy.AI_CONTENT_AGENT)
                     .build();
-            draft.prePersist();
+            draft.onPrePersist();
 
             ScenarioBeat beat = createBeat(draft, ScenarioBeatType.HOOK, "Hook");
             assertThat(beat.getId()).isNull();
-            beat.prePersist();
+            beat.onPrePersist();
             assertThat(beat.getId()).isNotNull();
         }
 

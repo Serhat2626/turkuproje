@@ -1,16 +1,12 @@
 package com.anadoluatlasi.backend.ai.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 /**
  * AI prompt şablonlarını temsil eden entity.
@@ -21,16 +17,12 @@ import java.util.UUID;
 @Table(name = "prompt_templates", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"name", "version"})
 })
-@EntityListeners(AuditingEntityListener.class)
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class PromptTemplate {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class PromptTemplate extends BaseEntity {
 
     @Column(name = "name", nullable = false)
     private String name;
@@ -48,19 +40,4 @@ public class PromptTemplate {
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)
     private PromptTemplateStatus status;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
 }

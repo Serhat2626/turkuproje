@@ -1,16 +1,12 @@
 package com.anadoluatlasi.backend.content.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.annotation.CreatedDate;
-import org.springframework.data.annotation.LastModifiedDate;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.time.LocalDateTime;
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 /**
  * Senaryo taslağı entity'si.
@@ -21,16 +17,12 @@ import java.util.UUID;
 @Table(name = "script_drafts", uniqueConstraints = {
         @UniqueConstraint(columnNames = {"content_project_id", "version"})
 })
-@EntityListeners(AuditingEntityListener.class)
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
-public class ScriptDraft {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class ScriptDraft extends BaseEntity {
 
     /**
      * Bu taslağın ait olduğu içerik projesi.
@@ -54,19 +46,4 @@ public class ScriptDraft {
 
     @Column(name = "created_by", length = 255)
     private String createdBy;
-
-    @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
-
-    @PrePersist
-    protected void onCreate() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
 }

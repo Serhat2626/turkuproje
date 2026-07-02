@@ -1,23 +1,19 @@
 package com.anadoluatlasi.backend.scenario.entity;
 
+import com.anadoluatlasi.backend.common.entity.BaseEntity;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.EntityListeners;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
 import jakarta.persistence.FetchType;
-import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
-import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.springframework.data.jpa.domain.support.AuditingEntityListener;
-
-import java.util.UUID;
+import lombok.experimental.SuperBuilder;
 
 /**
  * FP-002: Senaryo beat entity'si.
@@ -27,17 +23,13 @@ import java.util.UUID;
  * EMOTIONAL_CLIMAX → CONCLUSION → CALL_TO_ACTION).</p>
  */
 @Data
-@Builder
+@EqualsAndHashCode(callSuper = true)
+@SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
 @Table(name = "scenario_beats")
-@EntityListeners(AuditingEntityListener.class)
-public class ScenarioBeat {
-
-    @Id
-    @Column(name = "id", nullable = false, updatable = false)
-    private UUID id;
+public class ScenarioBeat extends BaseEntity {
 
     /** Bu beat'in ait olduğu senaryo taslağı */
     @ManyToOne(fetch = FetchType.LAZY)
@@ -64,11 +56,4 @@ public class ScenarioBeat {
     /** Tahmini süre (saniye) */
     @Column(name = "estimated_duration_seconds")
     private Integer estimatedDurationSeconds;
-
-    @PrePersist
-    public void prePersist() {
-        if (this.id == null) {
-            this.id = UUID.randomUUID();
-        }
-    }
 }

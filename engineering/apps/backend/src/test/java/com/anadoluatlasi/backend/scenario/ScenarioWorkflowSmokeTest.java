@@ -87,7 +87,7 @@ class ScenarioWorkflowSmokeTest {
         when(scenarioDraftRepository.save(any(ScenarioDraft.class)))
                 .thenAnswer(inv -> {
                     ScenarioDraft draft = inv.getArgument(0);
-                    if (draft.getId() == null) draft.prePersist();
+                    if (draft.getId() == null) draft.onPrePersist();
                     return draft;
                 });
     }
