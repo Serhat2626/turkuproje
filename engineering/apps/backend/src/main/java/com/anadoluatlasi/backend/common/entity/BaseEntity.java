@@ -41,11 +41,12 @@ public abstract class BaseEntity {
     private UUID id;
 
     @CreatedDate
-    @Column(name = "created_at", nullable = false, updatable = false)
+    @Column(name = "created_at", nullable = false, updatable = false,
+            columnDefinition = "TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime createdAt;
 
     @LastModifiedDate
-    @Column(name = "updated_at")
+    @Column(name = "updated_at", columnDefinition = "TIMESTAMP DEFAULT CURRENT_TIMESTAMP")
     private LocalDateTime updatedAt;
 
     @PrePersist
