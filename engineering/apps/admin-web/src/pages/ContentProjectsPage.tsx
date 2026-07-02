@@ -22,6 +22,7 @@ import StatusBadge from '../components/common/StatusBadge'
 import LoadingSpinner from '../components/common/LoadingSpinner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import NoteDialog from '../components/common/NoteDialog'
+import ScenarioWorkflowSection from '../components/scenario/ScenarioWorkflowSection'
 
 type View = 'list' | 'create' | 'detail'
 
@@ -612,6 +613,9 @@ function ContentProjectsPage() {
             )}
           </div>
         </FormCard>
+
+        {/* FP-002: Scenario Workflow Section */}
+        <ScenarioWorkflowSection contentProjectId={detail.id} projectStatus={s} />
       </>
     )
   }

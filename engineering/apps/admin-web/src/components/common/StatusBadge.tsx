@@ -14,6 +14,8 @@ const statusColors: Record<string, string> = {
   APPROVED: 'badge-success',
   READY_FOR_PUBLISH: 'badge-success',
   GENERATED: 'badge-info',
+  AI_GENERATED: 'badge-info',
+  NEEDS_REVIEW: 'badge-info',
   EDITED: 'badge-draft',
   REVISION_NEEDED: 'badge-info',
   RESEARCHING: 'badge-info',

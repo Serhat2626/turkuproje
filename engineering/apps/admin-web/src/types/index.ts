@@ -288,3 +288,111 @@ export const STORAGE_PROVIDERS = [
   { value: 'S3', label: 'Amazon S3' },
   { value: 'LOCAL', label: 'Yerel' },
 ] as const;
+
+// ── Scenario Domain (FP-002) ───────────────────────────────────
+
+export type ScenarioStatus = 'AI_GENERATED' | 'NEEDS_REVIEW' | 'APPROVED' | 'REJECTED' | 'FAILED'
+
+export const SCENARIO_STATUSES: { value: ScenarioStatus; label: string }[] = [
+  { value: 'AI_GENERATED', label: 'AI Generated' },
+  { value: 'NEEDS_REVIEW', label: 'Needs Review' },
+  { value: 'APPROVED', label: 'Onaylandı' },
+  { value: 'REJECTED', label: 'Reddedildi' },
+  { value: 'FAILED', label: 'Başarısız' },
+]
+
+export const SCENARIO_BEAT_TYPES = [
+  { value: 'HOOK', label: 'Hook', order: 1 },
+  { value: 'INTRODUCTION', label: 'Giriş', order: 2 },
+  { value: 'MAIN_NARRATIVE', label: 'Hikâye', order: 3 },
+  { value: 'EMOTIONAL_CLIMAX', label: 'Duygusal Zirve', order: 4 },
+  { value: 'CONCLUSION', label: 'Kapanış', order: 5 },
+  { value: 'CALL_TO_ACTION', label: 'CTA', order: 6 },
+] as const
+
+export interface ScenarioBeat {
+  type: string
+  label: string
+  body: string
+  orderIndex: number
+  estimatedDurationSeconds: number | null
+}
+
+export interface ScenarioDraftSummaryResponse {
+  id: string
+  version: number
+  status: ScenarioStatus
+  title: string | null
+  generatedBy: string | null
+  providerType: string | null
+  createdAt: string
+  approvedAt: string | null
+  rejectedAt: string | null
+  editedAt: string | null
+}
+
+export interface ScenarioDraftResponse {
+  id: string
+  contentProjectId: string
+  sourceDraftId: string
+  version: number
+  status: ScenarioStatus
+  title: string | null
+  summary: string | null
+  targetAudience: string | null
+  culturalObjective: string | null
+  tone: string | null
+  estimatedDurationSeconds: number | null
+  setting: string | null
+  characters: string | null
+  reviewNotes: string | null
+  generatedBy: string | null
+  providerType: string | null
+  modelName: string | null
+  createdAt: string
+  updatedAt: string | null
+  approvedAt: string | null
+  rejectedAt: string | null
+  editedAt: string | null
+  createdBy: string | null
+  approvedBy: string | null
+  rejectedBy: string | null
+  editedBy: string | null
+  beats: ScenarioBeat[]
+}
+
+export interface ScenarioBeatEditPayload {
+  type: string
+  label: string
+  body: string
+  orderIndex: number
+  estimatedDurationSeconds: number | null
+}
+
+export interface ScenarioDraftEditPayload {
+  title?: string
+  summary?: string
+  targetAudience?: string
+  culturalObjective?: string
+  tone?: string
+  estimatedDurationSeconds?: number | null
+  setting?: string
+  characters?: string
+  reviewNotes?: string
+  beats?: ScenarioBeatEditPayload[]
+}
+
+export interface ScenarioGenerateResponse {
+  success: boolean
+  contentProjectId: string
+  scenarioDraftId: string | null
+  version: number | null
+  status: string | null
+  scenarioTitle: string | null
+  message: string | null
+  errorCode: string | null
+}
+
+export interface ScenarioRejectRequest {
+  reason: string
+}
