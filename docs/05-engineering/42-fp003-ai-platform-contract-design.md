@@ -557,7 +557,48 @@ Her generated storyboard candidate şu bilgilere traceable olmalıdır:
 
 ---
 
-## 14. Non-Goals
+## 14. Future Compatibility: Multi-Platform Content Packaging
+
+Storyboard AI contract'ları, gelecekte çok platformlu içerik paketleme workflow'unu destekleyecek şekilde provider-agnostic ve future-compatible tasarlanmıştır.
+
+### Mevcut Product-Level Alanlar
+
+Current `StoryboardAgentRequest` contract'ında şu alanlar yer alır:
+
+| Alan | Açıklama | FP-003 Kullanımı |
+|------|----------|-----------------|
+| `targetPlatform` | Hedef platform (YouTube, Instagram Reels, vb.) | Opsiyonel — tek storyboard üretimi |
+| `aspectRatio` | Görüntü oranı (16:9, 9:16, 1:1) | Opsiyonel — scene composition notu |
+| `estimatedDurationSeconds` | Hedef video süresi | Opsiyonel — scene süre dağılımı |
+| `desiredSceneCount` | İstenen scene sayısı | Opsiyonel — beat başına scene çarpanı |
+
+Bu alanlar gelecek FP-004 multi-platform packaging workflow'u için handoff kolaylığı sağlar.
+
+### FP-003 Scope Kuralları
+
+| # | Kural |
+|---|-------|
+| 1 | FP-003 **bir adet storyboard candidate** üretir |
+| 2 | FP-003 aynı anda birden fazla platform varyantı **üretmez** |
+| 3 | Multi-platform derivative çıktılar **FP-004 scope'udur** |
+| 4 | Platform API entegrasyonu FP-003 kapsamında **yoktur** |
+| 5 | Media rendering (image/video/audio) FP-003 kapsamında **yoktur** |
+
+### FP-004 Gelecek Yönü
+
+```
+Approved StoryboardDraft
+    │
+    ├──→ YouTube Long-form package (16:9, uzun narration)
+    ├──→ YouTube Shorts package (9:16, hook-driven cut)
+    ├──→ Instagram Reels package (9:16, hızlı ritim)
+    ├──→ Facebook Reels package (9:16, erişilebilir ton)
+    └──→ Social metadata (title, caption, hashtags, CTA)
+```
+
+---
+
+## 15. Non-Goals
 
 Bu task aşağıdakileri tasarlamaz veya implement etmez:
 
@@ -575,10 +616,11 @@ Bu task aşağıdakileri tasarlamaz veya implement etmez:
 | 10 | Cost dashboard | Future FP |
 | 11 | Prompt management UI | Future FP |
 | 12 | Multi-provider UI | Future FP |
+| 13 | Multi-platform content packaging | FP-004 |
 
 ---
 
-## 15. Acceptance Criteria
+## 16. Acceptance Criteria
 
 | # | Kriter | Durum |
 |---|--------|-------|
@@ -596,3 +638,4 @@ Bu task aşağıdakileri tasarlamaz veya implement etmez:
 | 12 | Safety/governance rules korundu | ✅ |
 | 13 | No raw prompt, raw provider response, API key, or secret | ✅ |
 | 14 | FP-003 yalnızca Storyboard Workflow'a odaklı | ✅ |
+| 15 | Multi-platform future compatibility belgelendi | ✅ |

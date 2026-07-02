@@ -408,7 +408,44 @@ Mevcut FP-001 ve FP-002 gateway'leri etkilenmez.
 
 ---
 
-## 13. Future Follow-ups
+## 13. Future Handoff: Multi-Platform Content Packaging
+
+FP-003 storyboard tasarımı, gelecekte çok platformlu içerik paketleme workflow'unu destekleyecek şekilde düşünülmüştür.
+
+### Gelecek Platform Hedefleri
+
+| Platform | Format | Özellikler |
+|----------|--------|-----------|
+| **YouTube Long-form** | Yatay 16:9 | Uzun hikâye anlatımı, zengin narration, detaylı scene'ler |
+| **YouTube Shorts** | Dikey 9:16 | Kısa hook-driven cut, özlü hikâye anı, hızlı ritim |
+| **Instagram Reels** | Dikey 9:16 | Hızlı görsel ritim, duygusal/merak hook'u |
+| **Facebook Reels** | Dikey 9:16 | Erişilebilir hikâye anlatımı, hafif nostaljik/açıklayıcı ton |
+| **Social Metadata** | Metin | Başlık, açıklama, hashtag'ler, CTA |
+
+### Platform-Spesifik Çıktı Şekli (Gelecek)
+
+Her platform paketi şu çıktıları içerebilir:
+
+- **Video package:** Platform-optimize edilmiş scene seçimi + süre + format
+- **Thumbnail/cover:** Platform boyutunda kapak görseli
+- **Title + caption:** Platform diline uygun başlık ve açıklama
+- **Hashtags:** Platform algoritmasına uygun etiketler
+- **CTA:** Platforma özel izleyici eylemi çağrısı
+
+### FP-003 ile İlişki
+
+| # | Kural |
+|---|-------|
+| 1 | Multi-platform content packaging **FP-004 scope'udur**, FP-003 kapsamında değildir |
+| 2 | FP-003 gerçek video dosyası **üretmez** |
+| 3 | FP-003 platformlara **yayınlamaz** |
+| 4 | FP-003 social media postları **oluşturmaz** |
+| 5 | FP-003 `targetPlatform`, `aspectRatio`, `estimatedDurationSeconds` gibi product-level alanları tutar — gelecek paketleme için handoff kolaylığı sağlar |
+| 6 | FP-003 storyboard, FP-004'ün girdi kaynağı olarak tasarlanmıştır: **Approved StoryboardDraft → platform-spesifik içerik paketleri** |
+
+---
+
+## 14. Future Follow-ups
 
 Aşağıdakiler yalnızca gelecek scope olarak listelenmiştir, FP-003 kapsamında değildir:
 
@@ -418,17 +455,18 @@ Aşağıdakiler yalnızca gelecek scope olarak listelenmiştir, FP-003 kapsamın
 | 2 | FP-003 Task 03 — Engineering design & task breakdown | FP-003 |
 | 3 | Backend storyboard domain/schema implementation | FP-003 |
 | 4 | Admin storyboard UI implementation | FP-003 |
-| 5 | Image generation workflow | Future FP |
-| 6 | Video generation workflow | Future FP |
-| 7 | Audio / TTS generation workflow | Future FP |
-| 8 | Media asset management | Future FP |
-| 9 | Cost dashboard | Future FP |
-| 10 | Prompt management UI | Future FP |
-| 11 | Analytics | Future FP |
+| 5 | **FP-004 — Multi-Platform Content Packaging Workflow** | **Future FP** |
+| 6 | Image generation workflow | Future FP |
+| 7 | Video generation workflow | Future FP |
+| 8 | Audio / TTS generation workflow | Future FP |
+| 9 | Media asset management | Future FP |
+| 10 | Cost dashboard | Future FP |
+| 11 | Prompt management UI | Future FP |
+| 12 | Analytics | Future FP |
 
 ---
 
-## 14. Acceptance Criteria
+## 15. Acceptance Criteria
 
 | # | Kriter | Durum |
 |---|--------|-------|
@@ -446,3 +484,4 @@ Aşağıdakiler yalnızca gelecek scope olarak listelenmiştir, FP-003 kapsamın
 | 12 | Out-of-scope items açıkça exclude edildi | ✅ |
 | 13 | FP-003 yalnızca Storyboard Workflow'a odaklı | ✅ |
 | 14 | No secrets/raw prompt/raw provider payload | ✅ |
+| 15 | Multi-platform content packaging gelecek FP-004 olarak belgelendi | ✅ |

@@ -591,10 +591,50 @@ Task 13 (Final Closure)
 | 9 | Bulk storyboard generation |
 | 10 | Production provider switching |
 | 11 | Stack naming cleanup (OPS-001) |
+| 12 | Multi-platform content packaging (FP-004) |
 
 ---
 
-## 15. Acceptance Criteria
+## 15. Future Follow-up: FP-004 — Multi-Platform Content Packaging Workflow
+
+Aşağıdaki scope FP-003 Task 04–13 implementation listesine dahil **değildir**.
+Bu yalnızca gelecek feature sprint referansıdır.
+
+### Hedef
+
+Approved StoryboardDraft → platform-spesifik içerik paketleri
+
+### Potansiyel Platform Paketleri
+
+| # | Paket | Format | Açıklama |
+|---|-------|--------|----------|
+| 1 | YouTube Long-form | 16:9 | Uzun hikâye anlatımı, detaylı scene seçimi, zengin narration |
+| 2 | YouTube Shorts | 9:16 | Kısa hook-driven cut, özlü hikâye anı |
+| 3 | Instagram Reels | 9:16 | Hızlı görsel ritim, duygusal/merak hook'u |
+| 4 | Facebook Reels | 9:16 | Erişilebilir hikâye anlatımı, nostaljik/açıklayıcı ton |
+| 5 | Social Metadata | Metin | Başlık, açıklama, hashtag'ler, CTA |
+
+### FP-003 Handoff Noktaları
+
+FP-003 storyboard modeli şu alanlarla FP-004'e handoff sağlar:
+
+- `targetPlatform` — gelecek platform-spesifik paketleme için ipucu
+- `aspectRatio` — görsel composition planlaması
+- `estimatedDurationSeconds` — platform süre optimizasyonu
+- `StoryboardScene.mediaGenerationNotes` — scene bazlı media üretim metadata'sı
+
+### Scope Sınırı
+
+| # | Kural |
+|---|-------|
+| 1 | FP-004 scope'u FP-003 implementation task listesine (Task 04–13) dahil değildir |
+| 2 | FP-003 yalnızca storyboard generation/review/approval yapar |
+| 3 | FP-004 için backend/frontend/schema kararları FP-003 closure sonrasına ertelenir |
+| 4 | FP-003 mevcut task listesi değiştirilmez |
+
+---
+
+## 16. Acceptance Criteria
 
 | # | Kriter | Durum |
 |---|--------|-------|
@@ -609,3 +649,4 @@ Task 13 (Final Closure)
 | 9 | FP-001/FP-002/FP-003 governance rules korundu | ✅ |
 | 10 | Media generation scope creep açıkça engellendi | ✅ |
 | 11 | No raw prompt/provider payload/secret documented | ✅ |
+| 12 | FP-004 multi-platform future direction belgelendi | ✅ |
