@@ -396,3 +396,119 @@ export interface ScenarioGenerateResponse {
 export interface ScenarioRejectRequest {
   reason: string
 }
+
+// ── Storyboard Domain (FP-003) ────────────────────────────────
+
+export type StoryboardStatus = 'AI_GENERATED' | 'NEEDS_REVIEW' | 'APPROVED' | 'REJECTED' | 'FAILED'
+
+export const STORYBOARD_STATUSES: { value: StoryboardStatus; label: string }[] = [
+  { value: 'AI_GENERATED', label: 'AI Generated' },
+  { value: 'NEEDS_REVIEW', label: 'Needs Review' },
+  { value: 'APPROVED', label: 'Onaylandı' },
+  { value: 'REJECTED', label: 'Reddedildi' },
+  { value: 'FAILED', label: 'Başarısız' },
+]
+
+export interface StoryboardScene {
+  id: string
+  sceneNumber: number
+  sourceBeatType: string | null
+  sourceBeatOrder: number | null
+  sceneTitle: string | null
+  visualDescription: string | null
+  narrationText: string | null
+  onScreenText: string | null
+  cameraDirection: string | null
+  transitionNote: string | null
+  mood: string | null
+  location: string | null
+  characters: string | null
+  estimatedDurationSeconds: number | null
+}
+
+export interface StoryboardDraftSummaryResponse {
+  id: string
+  version: number
+  status: StoryboardStatus
+  title: string | null
+  sceneCount: number
+  generatedBy: string | null
+  providerType: string | null
+  createdAt: string
+  approvedAt: string | null
+  rejectedAt: string | null
+  editedAt: string | null
+}
+
+export interface StoryboardDraftResponse {
+  id: string
+  contentProjectId: string
+  sourceDraftId: string
+  sourceScenarioDraftId: string
+  sourceScenarioVersion: number | null
+  version: number
+  status: StoryboardStatus
+  title: string | null
+  summary: string | null
+  targetPlatform: string | null
+  aspectRatio: string | null
+  estimatedDurationSeconds: number | null
+  visualStyleGuide: string | null
+  narrationStyle: string | null
+  reviewNotes: string | null
+  generatedBy: string | null
+  providerType: string | null
+  modelName: string | null
+  createdAt: string
+  updatedAt: string | null
+  approvedAt: string | null
+  rejectedAt: string | null
+  editedAt: string | null
+  createdBy: string | null
+  approvedBy: string | null
+  rejectedBy: string | null
+  editedBy: string | null
+  scenes: StoryboardScene[]
+}
+
+export interface StoryboardSceneEditPayload {
+  sceneNumber: number
+  sceneTitle?: string
+  visualDescription?: string
+  narrationText?: string
+  onScreenText?: string
+  cameraDirection?: string
+  transitionNote?: string
+  mood?: string
+  location?: string
+  characters?: string
+  estimatedDurationSeconds?: number | null
+}
+
+export interface StoryboardDraftEditPayload {
+  title?: string
+  summary?: string
+  targetPlatform?: string
+  aspectRatio?: string
+  estimatedDurationSeconds?: number | null
+  visualStyleGuide?: string
+  narrationStyle?: string
+  reviewNotes?: string
+  scenes?: StoryboardSceneEditPayload[]
+}
+
+export interface StoryboardGenerateResponse {
+  success: boolean
+  contentProjectId: string
+  storyboardDraftId: string | null
+  version: number | null
+  status: string | null
+  storyboardTitle: string | null
+  sceneCount: number | null
+  message: string | null
+  errorCode: string | null
+}
+
+export interface StoryboardRejectRequest {
+  reason: string
+}

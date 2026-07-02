@@ -23,6 +23,8 @@ import LoadingSpinner from '../components/common/LoadingSpinner'
 import ConfirmDialog from '../components/common/ConfirmDialog'
 import NoteDialog from '../components/common/NoteDialog'
 import ScenarioWorkflowSection from '../components/scenario/ScenarioWorkflowSection'
+import StoryboardWorkflowSection from '../components/storyboard/StoryboardWorkflowSection'
+import { listProjectScenarios } from '../api/scenarioApi'
 
 type View = 'list' | 'create' | 'detail'
 
@@ -55,6 +57,9 @@ function ContentProjectsPage() {
   const [actionLoading, setActionLoading] = useState(false)
 
   const [aiResult, setAiResult] = useState<AiGenerationSummaryResponse | null>(null)
+
+  // FP-003: Storyboard için onaylanmış senaryo ID'si
+  const [approvedScenarioId, setApprovedScenarioId] = useState<string | null>(null)
 
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -100,6 +105,14 @@ function ContentProjectsPage() {
       setAlert({ type: 'error', message: 'Detay yüklenemedi' })
     } finally {
       setDetailLoading(false)
+    }
+    // FP-003: Onaylanmış senaryo ID'sini yükle
+    try {
+      const scenarioRes = await listProjectScenarios(id)
+      const approved = (scenarioRes.data ?? []).find(s => s.status === 'APPROVED')
+      setApprovedScenarioId(approved?.id ?? null)
+    } catch {
+      setApprovedScenarioId(null)
     }
   }
 
@@ -616,6 +629,9 @@ function ContentProjectsPage() {
 
         {/* FP-002: Scenario Workflow Section */}
         <ScenarioWorkflowSection contentProjectId={detail.id} projectStatus={s} />
+
+        {/* FP-003: Storyboard Workflow Section */}
+        <StoryboardWorkflowSection contentProjectId={detail.id} projectStatus={s} approvedScenarioId={approvedScenarioId} />
       </>
     )
   }
