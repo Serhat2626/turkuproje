@@ -8,6 +8,7 @@ import com.anadoluatlasi.backend.ai.gateway.mock.MockAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiScenarioAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiStoryboardAgentGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -32,11 +33,9 @@ import org.springframework.context.annotation.Configuration;
  * {@link OpenAiScenarioAgentGateway} aktifleşir. Aksi halde
  * {@link MockAiScenarioAgentGateway} fallback olarak devreye girer.</p>
  *
- * <p><strong>FP-003 Storyboard Gateway:</strong> OpenAI storyboard gateway henüz
- * implement edilmemiştir (Task 09). {@code @ConditionalOnMissingBean} ile
- * {@link MockAiStoryboardAgentGateway} fallback olarak her zaman aktiftir.
- * {@code ai.provider=openai} olduğunda bile mock storyboard gateway çalışır çünkü
- * henüz gerçek storyboard gateway bean'i yoktur.</p>
+ * <p><strong>FP-003 Storyboard Gateway:</strong> {@code ai.provider=openai} olduğunda
+ * {@link OpenAiStoryboardAgentGateway} aktifleşir. Aksi halde
+ * {@link MockAiStoryboardAgentGateway} fallback olarak devreye girer.</p>
  */
 @Slf4j
 @Configuration
@@ -101,16 +100,23 @@ public class AiGatewayConfig {
     // ── FP-003: Storyboard Agent Gateway ────────────────────
 
     /**
+     * OpenAI storyboard gateway — gerçek AI provider.
+     * {@code ai.provider=openai} ayarlandığında aktifleşir.
+     */
+    @Bean
+    @ConditionalOnProperty(name = "ai.provider", havingValue = "openai")
+    public AiStoryboardAgentGateway openAiStoryboardAgentGateway(AiProviderProperties properties) {
+        log.info("AI Storyboard Provider: OPENAI — model={}",
+                properties.getOpenai().getModel());
+        return new OpenAiStoryboardAgentGateway(properties.getOpenai());
+    }
+
+    /**
      * Mock storyboard gateway — fallback provider.
      *
-     * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır. OpenAI storyboard
-     * gateway henüz implement edilmemiştir (Task 09). Bu nedenle
-     * {@code ai.provider=openai} olduğunda bile mock storyboard gateway
-     * aktif kalır — çünkü gerçek storyboard gateway bean'i yoktur.</p>
-     *
-     * <p>OpenAI storyboard gateway implement edildiğinde (Task 09),
-     * {@code @ConditionalOnProperty(name = "ai.provider", havingValue = "openai")}
-     * ile kayıtlı gerçek gateway bu fallback'i otomatik olarak devre dışı bırakacaktır.</p>
+     * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır. {@code ai.provider=openai}
+     * olduğunda {@code OpenAiStoryboardAgentGateway} bean'i mevcut olacağından,
+     * bu fallback devre dışı kalır.</p>
      */
     @Bean
     @ConditionalOnMissingBean(AiStoryboardAgentGateway.class)
@@ -119,4 +125,5 @@ public class AiGatewayConfig {
         return new MockAiStoryboardAgentGateway();
     }
 }
+
 
