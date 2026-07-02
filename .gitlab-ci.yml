@@ -8,7 +8,7 @@
 #
 # Gerekli GitLab CI/CD Variables (Settings → CI/CD → Variables):
 #   SSH_PRIVATE_KEY        → Sunucu SSH private key (File type, masked)
-#   DEPLOY_SERVER          → root@<server-ip> (protected)
+#   DEPLOY_SERVER_NEW          → root@<server-ip> (protected)
 #   CI_DEPLOY_USER         → GitLab deploy token username
 #   CI_DEPLOY_PASSWORD     → GitLab deploy token password (masked)
 #   E_POSTGRES_PASSWORD    → Staging DB şifresi (masked, protected)
@@ -68,7 +68,7 @@ deploy-staging:
     - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
   script:
     - |
-      ssh $DEPLOY_SERVER "
+      ssh $DEPLOY_SERVER_NEW "
         # Registry login
         docker login registry.gitlab.com -u ${CI_DEPLOY_USER} -p ${CI_DEPLOY_PASSWORD};
 
