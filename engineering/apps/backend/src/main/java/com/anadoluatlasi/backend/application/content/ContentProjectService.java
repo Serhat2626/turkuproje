@@ -3,6 +3,7 @@ package com.anadoluatlasi.backend.application.content;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
 import com.anadoluatlasi.backend.common.exception.ValidationException;
+import com.anadoluatlasi.backend.content.entity.ContentDraftStatus;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
 import com.anadoluatlasi.backend.content.entity.ContentProjectStatus;
 import com.anadoluatlasi.backend.content.entity.ContentPurpose;
@@ -182,6 +183,16 @@ public class ContentProjectService {
 
         entity.setStatus(ContentProjectStatus.APPROVED);
         ContentProject saved = contentProjectRepository.save(entity);
+
+        // Draft'ı da APPROVED yap — FP-002 senaryo üretimi APPROVED draft gerektirir
+        contentDraftRepository
+                .findFirstByContentProjectIdOrderByCreatedAtDesc(saved.getId())
+                .ifPresent(draft -> {
+                    draft.setStatus(ContentDraftStatus.APPROVED);
+                    contentDraftRepository.save(draft);
+                    log.info("İçerik taslağı onaylandı: draftId={}", draft.getId());
+                });
+
         log.info("İçerik projesi onaylandı: id={}, note={}", saved.getId(),
                 reviewNote != null ? reviewNote : "(yok)");
 
