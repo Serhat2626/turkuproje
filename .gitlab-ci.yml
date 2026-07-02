@@ -3,17 +3,22 @@
 # ================================================================
 #
 # Pipeline akışı:
-#   dev branch push → build → push → deploy-staging
+#   dev branch push      → build only (test/review için)
+#   staging branch push  → build → auto deploy-staging
+#
+# Branching:
+#   dev      → aktif geliştirme, build + push (deploy yok)
+#   staging  → staging deployment, build + push + auto deploy
 #
 # Gerekli GitLab CI/CD Variables (Settings → CI/CD → Variables):
 #   SSH_PRIVATE_KEY        → Sunucu SSH private key (File type, masked)
-#   DEPLOY_SERVER          → root@<server-ip> (protected)
+#   DEPLOY_SERVER          → root@<server-ip> (protected: staging)
 #   CI_DEPLOY_USER         → GitLab deploy token username
 #   CI_DEPLOY_PASSWORD     → GitLab deploy token password (masked)
-#   E_POSTGRES_PASSWORD    → Staging DB şifresi (masked, protected)
-#   E_AI_PROVIDER          → "openai" veya "mock" (protected)
-#   E_AI_OPENAI_API_KEY    → OpenAI API key (masked, protected)
-#   E_AI_OPENAI_MODEL      → "gpt-4o-mini" (protected, optional)
+#   E_POSTGRES_PASSWORD    → Staging DB şifresi (masked, protected: staging)
+#   E_AI_PROVIDER          → "openai" veya "mock" (protected: staging)
+#   E_AI_OPENAI_API_KEY    → OpenAI API key (masked, protected: staging)
+#   E_AI_OPENAI_MODEL      → "gpt-4o-mini" (protected: staging, optional)
 #
 # ================================================================
 
@@ -42,6 +47,7 @@ build-backend:
     - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_REF_NAME
   only:
     - dev
+    - staging
 
 # ── Build & Push: Admin Web ───────────────────────────
 build-admin-web:
@@ -52,8 +58,9 @@ build-admin-web:
     - docker push $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_REF_NAME
   only:
     - dev
+    - staging
 
-# ── Deploy: Staging ───────────────────────────────────
+# ── Deploy: Staging (auto on staging branch) ──────────
 deploy-staging:
   stage: deploy-staging
   image: alpine:latest
@@ -70,7 +77,7 @@ deploy-staging:
         docker login registry.gitlab.com -u ${CI_DEPLOY_USER} -p ${CI_DEPLOY_PASSWORD};
 
         # Kodu güncelle
-        cd /opt/anadolu-atlasi && git fetch origin dev && git checkout dev && git reset --hard origin/dev;
+        cd /opt/anadolu-atlasi && git fetch origin staging && git checkout staging && git reset --hard origin/staging;
 
         # Environment variables
         export BACKEND_IMAGE='${CI_REGISTRY_IMAGE}/backend:${CI_COMMIT_REF_NAME}';
@@ -94,6 +101,5 @@ deploy-staging:
         curl -s http://localhost:8081/actuator/health | head -c 200;
       "
   only:
-    - dev
-  when: manual
+    - staging
   allow_failure: false
