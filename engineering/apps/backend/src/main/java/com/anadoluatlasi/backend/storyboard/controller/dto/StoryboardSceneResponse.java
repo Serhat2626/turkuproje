@@ -33,5 +33,4 @@ public class StoryboardSceneResponse {
     private String location;
     private String characters;
     private Integer estimatedDurationSeconds;
-    private String mediaGenerationNotes;
 }

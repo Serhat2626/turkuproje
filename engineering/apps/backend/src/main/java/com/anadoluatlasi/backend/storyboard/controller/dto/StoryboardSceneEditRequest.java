@@ -28,5 +28,4 @@ public class StoryboardSceneEditRequest {
     private String location;
     private String characters;
     private Integer estimatedDurationSeconds;
-    private String mediaGenerationNotes;
 }

@@ -210,7 +210,6 @@ public class AdminStoryboardController {
                 .location(scene.getLocation())
                 .characters(scene.getCharacters())
                 .estimatedDurationSeconds(scene.getEstimatedDurationSeconds())
-                .mediaGenerationNotes(scene.getMediaGenerationNotes())
                 .build();
     }
 
@@ -246,7 +245,6 @@ public class AdminStoryboardController {
                             .location(s.getLocation())
                             .characters(s.getCharacters())
                             .estimatedDurationSeconds(s.getEstimatedDurationSeconds())
-                            .mediaGenerationNotes(s.getMediaGenerationNotes())
                             .build())
                     .collect(Collectors.toList());
         }

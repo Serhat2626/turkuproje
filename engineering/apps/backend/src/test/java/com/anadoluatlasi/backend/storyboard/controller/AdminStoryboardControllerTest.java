@@ -486,7 +486,8 @@ class AdminStoryboardControllerTest {
                     .collect(Collectors.toSet());
 
             assertThat(fieldNames).doesNotContain("status", "id", "storyboardDraftId",
-                    "prompt", "rawPrompt", "apiKey", "secret");
+                    "prompt", "rawPrompt", "apiKey", "secret",
+                    "mediaGenerationNotes", "imageGenerationNotes", "videoGenerationNotes");
         }
     }
 
@@ -668,6 +669,31 @@ class AdminStoryboardControllerTest {
 
             assertThat(fieldNames).doesNotContain("sceneOutput", "storyboardSceneOutput",
                     "sceneOutputs");
+        }
+
+        @Test
+        @DisplayName("REST DTO'lar mediaGenerationNotes expose etmez")
+        void restDtosDoNotExposeMediaGenerationNotes() {
+            Set<String> sceneResponseFields = Arrays.stream(StoryboardSceneResponse.class.getDeclaredFields())
+                    .map(Field::getName)
+                    .collect(Collectors.toSet());
+            Set<String> sceneEditFields = Arrays.stream(StoryboardSceneEditRequest.class.getDeclaredFields())
+                    .map(Field::getName)
+                    .collect(Collectors.toSet());
+            Set<String> draftResponseFields = Arrays.stream(StoryboardDraftResponse.class.getDeclaredFields())
+                    .map(Field::getName)
+                    .collect(Collectors.toSet());
+            Set<String> summaryFields = Arrays.stream(StoryboardDraftSummaryResponse.class.getDeclaredFields())
+                    .map(Field::getName)
+                    .collect(Collectors.toSet());
+
+            String[] mediaFields = {"mediaGenerationNotes", "imageGenerationNotes",
+                    "videoGenerationNotes", "mediaPrompt", "generationPrompt", "assetGenerationNotes"};
+
+            assertThat(sceneResponseFields).doesNotContain(mediaFields);
+            assertThat(sceneEditFields).doesNotContain(mediaFields);
+            assertThat(draftResponseFields).doesNotContain(mediaFields);
+            assertThat(summaryFields).doesNotContain(mediaFields);
         }
 
         @Test
