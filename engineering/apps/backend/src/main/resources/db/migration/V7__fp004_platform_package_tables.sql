@@ -1,13 +1,11 @@
 -- FP-004: Multi-Platform Content Packaging — Tables
 -- Creates platform_package_drafts and platform_package_scene_usages tables.
-
--- gen_random_uuid() requires pgcrypto on PostgreSQL < 13
-CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+-- UUID generation is handled by JPA/Hibernate at the application layer.
 
 -- ── platform_package_drafts ─────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS platform_package_drafts (
-    id                              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                              UUID PRIMARY KEY,
     content_project_id              UUID NOT NULL REFERENCES content_projects(id),
     source_storyboard_draft_id      UUID NOT NULL REFERENCES storyboard_drafts(id),
     package_type                    VARCHAR(30) NOT NULL,
@@ -63,7 +61,7 @@ CREATE TABLE IF NOT EXISTS platform_package_drafts (
 -- ── platform_package_scene_usages ───────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS platform_package_scene_usages (
-    id                              UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    id                              UUID PRIMARY KEY,
     platform_package_draft_id       UUID NOT NULL REFERENCES platform_package_drafts(id) ON DELETE CASCADE,
     scene_number                    INTEGER NOT NULL,
     source_storyboard_scene_id      UUID REFERENCES storyboard_scenes(id),
