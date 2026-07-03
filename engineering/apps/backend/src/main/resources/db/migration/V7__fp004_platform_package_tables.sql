@@ -1,6 +1,9 @@
 -- FP-004: Multi-Platform Content Packaging — Tables
 -- Creates platform_package_drafts and platform_package_scene_usages tables.
 
+-- gen_random_uuid() requires pgcrypto on PostgreSQL < 13
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+
 -- ── platform_package_drafts ─────────────────────────────────────────
 
 CREATE TABLE IF NOT EXISTS platform_package_drafts (
