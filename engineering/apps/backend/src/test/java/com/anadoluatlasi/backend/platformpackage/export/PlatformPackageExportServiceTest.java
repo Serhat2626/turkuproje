@@ -712,4 +712,263 @@ class PlatformPackageExportServiceTest {
             assertThat(response.getExportType()).isEqualTo(exportType);
         }
     }
+
+    // ═══ §16.1 #17: YT Long-Form Platform Fields ═══
+
+    @Nested
+    @DisplayName("§16.1 #17 — YT Long-Form export alanları")
+    class YtLongFormFieldTests {
+
+        @Test
+        @DisplayName("Markdown export videoTitle, chapters, tags, pinned comment içerir")
+        void markdownShouldContainYtLfFields() {
+            PlatformPackageDraft draft = createApprovedYtLfDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.MARKDOWN_BRIEF);
+            String content = response.getContent();
+
+            assertThat(content).contains("Truva Atı'nın Bilinmeyen Hikayesi | Anadolu Atlası");
+            assertThat(content).contains("00:00 Giriş");
+            assertThat(content).contains("truva atı");
+            assertThat(content).contains("Hangi Anadolu hikayesini dinlemek istersiniz?");
+            assertThat(content).contains("TRUVA ATI'NIN SIRRI");
+        }
+
+        @Test
+        @DisplayName("JSON export videoTitle, chapters, tags parsed array olarak içerir")
+        void jsonShouldContainYtLfFields() throws Exception {
+            PlatformPackageDraft draft = createApprovedYtLfDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.JSON_PACKAGE);
+            JsonNode root = OBJECT_MAPPER.readTree(response.getContent());
+            JsonNode pf = root.path("platformFields");
+
+            assertThat(pf.has("videoTitle")).isTrue();
+            assertThat(pf.path("chapterOutline").isArray()).isTrue();
+            assertThat(pf.path("chapterOutline").size()).isEqualTo(3);
+            assertThat(pf.path("tags").isArray()).isTrue();
+            assertThat(pf.path("tags").size()).isEqualTo(3);
+            assertThat(pf.has("pinnedCommentSuggestion")).isTrue();
+            assertThat(pf.has("thumbnailTextSuggestion")).isTrue();
+        }
+
+        @Test
+        @DisplayName("Copy text export videoTitle ve chapters içerir")
+        void copyTextShouldContainYtLfFields() {
+            PlatformPackageDraft draft = createApprovedYtLfDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.COPY_TEXT);
+
+            assertThat(response.getContent()).contains("=== VİDEO BAŞLIĞI ===");
+            assertThat(response.getContent()).contains("=== SABİTLENECEK YORUM ===");
+            assertThat(response.getContent()).contains("=== THUMBNAIL METNİ ===");
+        }
+
+        @Test
+        @DisplayName("Production brief copy-ready bölümde YT LF alanları var")
+        void productionBriefShouldContainYtLfFields() {
+            PlatformPackageDraft draft = createApprovedYtLfDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.PRODUCTION_BRIEF);
+
+            assertThat(response.getContent()).contains("### Başlık");
+            assertThat(response.getContent()).contains("### Bölümler");
+            assertThat(response.getContent()).contains("### Sabitlenecek Yorum");
+            assertThat(response.getContent()).contains("- [ ] Video başlığı kopyalandı");
+        }
+    }
+
+    // ═══ §16.1 #18: Shorts/Reels Platform Fields ═══
+
+    @Nested
+    @DisplayName("§16.1 #18 — Shorts/Reels export alanları")
+    class ShortsReelsFieldTests {
+
+        @Test
+        @DisplayName("Markdown export hook, overlay, short hashtags, duration guidance içerir")
+        void markdownShouldContainShortsFields() {
+            PlatformPackageDraft draft = createApprovedShortsDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.MARKDOWN_BRIEF);
+            String content = response.getContent();
+
+            assertThat(content).contains("Truva Atı aslında ne anlama geliyordu?"); // hook
+            assertThat(content).contains("TRUVA ATI"); // overlay
+            assertThat(content).contains("#shorts"); // short hashtags
+            assertThat(content).contains("45-55 saniye"); // duration guidance
+        }
+
+        @Test
+        @DisplayName("JSON export shortHook, overlays parsed, shortHashtags parsed")
+        void jsonShouldContainShortsFields() throws Exception {
+            PlatformPackageDraft draft = createApprovedShortsDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.JSON_PACKAGE);
+            JsonNode root = OBJECT_MAPPER.readTree(response.getContent());
+            JsonNode pf = root.path("platformFields");
+
+            assertThat(pf.has("shortHook")).isTrue();
+            assertThat(pf.path("overlayTextSuggestions").isArray()).isTrue();
+            assertThat(pf.path("overlayTextSuggestions").size()).isEqualTo(3);
+            assertThat(pf.path("shortHashtagSet").isArray()).isTrue();
+            assertThat(pf.path("shortHashtagSet").size()).isEqualTo(3);
+            assertThat(pf.has("durationGuidance")).isTrue();
+        }
+
+        @Test
+        @DisplayName("Copy text export hook ve overlay bölümleri içerir")
+        void copyTextShouldContainShortsFields() {
+            PlatformPackageDraft draft = createApprovedShortsDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.COPY_TEXT);
+
+            assertThat(response.getContent()).contains("=== HOOK ===");
+            assertThat(response.getContent()).contains("=== OVERLAY METİNLERİ ===");
+            assertThat(response.getContent()).contains("=== SÜRE YÖNLENDİRMESİ ===");
+        }
+
+        @Test
+        @DisplayName("Production brief short-form checklist'te hook ve overlay var")
+        void productionBriefShouldContainShortChecklist() {
+            PlatformPackageDraft draft = createApprovedShortsDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.PRODUCTION_BRIEF);
+
+            assertThat(response.getContent()).contains("- [ ] Hook metni hazırlandı");
+            assertThat(response.getContent()).contains("- [ ] Overlay metinleri eklendi");
+        }
+    }
+
+    // ═══ §16.1 #19: Null Optional Fields ═══
+
+    @Nested
+    @DisplayName("§16.1 #19 — Null optional alanlar → section omitted, error yok")
+    class NullOptionalFieldTests {
+
+        private PlatformPackageDraft createMinimalApprovedDraft() {
+            PlatformPackageDraft draft = PlatformPackageDraft.builder()
+                    .contentProject(project)
+                    .sourceStoryboardDraft(storyboardDraft)
+                    .packageType(PlatformPackageType.YOUTUBE_LONG_FORM)
+                    .status(PlatformPackageStatus.APPROVED)
+                    .version(1)
+                    .title("Minimal Paket")
+                    .captionOrDescription("Minimal açıklama")
+                    // Tüm opsiyonel alanlar null
+                    .build();
+            draft.setId(UUID.randomUUID());
+            return draft;
+        }
+
+        @ParameterizedTest
+        @EnumSource(PlatformPackageExportType.class)
+        @DisplayName("Minimal draft (null opsiyoneller) → hatasız export")
+        void shouldExportWithNullOptionalFields(PlatformPackageExportType exportType) {
+            PlatformPackageDraft draft = createMinimalApprovedDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), exportType);
+
+            assertThat(response.getContent()).isNotBlank();
+            assertThat(response.getExportType()).isEqualTo(exportType);
+        }
+
+        @Test
+        @DisplayName("Null videoTitle → 'Video Başlığı' bölümü yok (Markdown)")
+        void markdownShouldOmitNullVideoTitle() {
+            PlatformPackageDraft draft = createMinimalApprovedDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.MARKDOWN_BRIEF);
+
+            assertThat(response.getContent()).doesNotContain("## Video Başlığı");
+        }
+
+        @Test
+        @DisplayName("Null chapters → chapterOutline boş array (JSON)")
+        void jsonShouldOmitNullChapters() throws Exception {
+            PlatformPackageDraft draft = createMinimalApprovedDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.JSON_PACKAGE);
+            JsonNode root = OBJECT_MAPPER.readTree(response.getContent());
+
+            assertThat(root.path("platformFields").path("chapterOutline").size()).isEqualTo(0);
+        }
+
+        @Test
+        @DisplayName("Null sceneUsageNotes → copy text'te bölüm yok")
+        void copyTextShouldOmitNullNotes() {
+            PlatformPackageDraft draft = createMinimalApprovedDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.COPY_TEXT);
+
+            assertThat(response.getContent()).doesNotContain("=== SAHNE KULLANIM NOTLARI ===");
+        }
+    }
+
+    // ═══ §16.1 #13: JSON Shape Stability ═══
+
+    @Nested
+    @DisplayName("§16.1 #13 — JSON shape stability (source, package, platformFields, sceneUsages, metadata)")
+    class JsonShapeStabilityTests {
+
+        @Test
+        @DisplayName("JSON export stable top-level keys içerir")
+        void shouldHaveStableTopLevelKeys() throws Exception {
+            PlatformPackageDraft draft = createApprovedYtLfDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.JSON_PACKAGE);
+            JsonNode root = OBJECT_MAPPER.readTree(response.getContent());
+
+            assertThat(root.has("exportType")).isTrue();
+            assertThat(root.has("exportedAt")).isTrue();
+            assertThat(root.has("source")).isTrue();
+            assertThat(root.has("approval")).isTrue();
+            assertThat(root.has("metadata")).isTrue();
+            assertThat(root.has("package")).isTrue();
+            assertThat(root.has("platformFields")).isTrue();
+            assertThat(root.has("sceneUsages")).isTrue();
+        }
+
+        @Test
+        @DisplayName("JSON source bölümü doğru alanları içerir")
+        void shouldHaveCorrectSourceFields() throws Exception {
+            PlatformPackageDraft draft = createApprovedYtLfDraft();
+            when(repository.findById(draft.getId())).thenReturn(Optional.of(draft));
+
+            PlatformPackageExportResponse response = exportService.exportPackage(
+                    draft.getId(), PlatformPackageExportType.JSON_PACKAGE);
+            JsonNode source = OBJECT_MAPPER.readTree(response.getContent()).path("source");
+
+            assertThat(source.has("contentProjectId")).isTrue();
+            assertThat(source.has("sourceStoryboardDraftId")).isTrue();
+            assertThat(source.has("platformPackageDraftId")).isTrue();
+            assertThat(source.has("packageType")).isTrue();
+            assertThat(source.has("version")).isTrue();
+        }
+    }
 }
