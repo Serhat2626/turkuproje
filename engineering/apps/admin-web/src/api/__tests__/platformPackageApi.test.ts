@@ -72,7 +72,7 @@ describe('platformPackageApi', () => {
     const exportedFunctions = Object.keys(platformPackageApi).filter(
       k => typeof (platformPackageApi as Record<string, unknown>)[k] === 'function'
     )
-    expect(exportedFunctions).toHaveLength(7)
+    expect(exportedFunctions).toHaveLength(8)
     expect(exportedFunctions).toEqual(expect.arrayContaining([
       'generatePlatformPackagesForStoryboard',
       'listPlatformPackagesByContentProject',
@@ -81,6 +81,7 @@ describe('platformPackageApi', () => {
       'updatePlatformPackageDraft',
       'approvePlatformPackageDraft',
       'rejectPlatformPackageDraft',
+      'exportPlatformPackage',
     ]))
   })
 })

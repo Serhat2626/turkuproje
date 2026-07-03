@@ -7,7 +7,9 @@ import type {
   PlatformPackageDraftEditPayload,
   PlatformPackageGenerateResponse,
   PlatformPackageRejectRequest,
+  PlatformPackageExportResponse,
 } from '../types'
+import type { PlatformPackageExportType } from '../types'
 
 /**
  * FP-004: Platform Package Workflow API çağrıları.
@@ -67,4 +69,17 @@ export function rejectPlatformPackageDraft(
     method: 'POST',
     body: JSON.stringify(data),
   })
+}
+
+/**
+ * FP-005: Platform paketini belirtilen formatta export et.
+ * Read-only — status değiştirmez, side-effect yok.
+ */
+export function exportPlatformPackage(
+  packageId: string,
+  exportType: PlatformPackageExportType
+): Promise<ApiResponse<PlatformPackageExportResponse>> {
+  return request<PlatformPackageExportResponse>(
+    `/admin/platform-packages/${packageId}/exports/${exportType}`
+  )
 }

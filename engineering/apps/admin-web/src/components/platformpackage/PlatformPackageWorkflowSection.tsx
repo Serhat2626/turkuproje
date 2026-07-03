@@ -3,13 +3,15 @@ import {
   generatePlatformPackagesForStoryboard, listPlatformPackagesByContentProject,
   getPlatformPackageDetail, updatePlatformPackageDraft,
   approvePlatformPackageDraft, rejectPlatformPackageDraft,
+  exportPlatformPackage,
 } from '../../api/platformPackageApi'
 import type {
   PlatformPackageDraftSummaryResponse, PlatformPackageDraftResponse,
   PlatformPackageDraftEditPayload, PlatformPackageSceneUsageEditPayload,
   PlatformPackageGenerateResponse, PlatformPackageStatus,
+  PlatformPackageExportType,
 } from '../../types'
-import { PLATFORM_PACKAGE_TYPES } from '../../types'
+import { PLATFORM_PACKAGE_TYPES, PLATFORM_PACKAGE_EXPORT_TYPES } from '../../types'
 import FormCard from '../common/FormCard'
 import StatusBadge from '../common/StatusBadge'
 import LoadingSpinner from '../common/LoadingSpinner'
@@ -62,6 +64,10 @@ function PlatformPackageWorkflowSection({ contentProjectId, approvedStoryboardId
     action: (note: string) => Promise<void>;
   }>({ open: false, title: '', label: '', variant: 'primary', action: async () => {} })
   const [noteLoading, setNoteLoading] = useState(false)
+
+  // Export (FP-005)
+  const [exportLoading, setExportLoading] = useState<string | null>(null)
+  const [copiedType, setCopiedType] = useState<string | null>(null)
 
   // ── Data Loading ────────────────────────────────────────
   const loadList = useCallback(async () => {
@@ -247,6 +253,122 @@ function PlatformPackageWorkflowSection({ contentProjectId, approvedStoryboardId
     })
   }
 
+  // ── FP-005: Export Handlers ──────────────────────────────
+
+  async function handleExportDownload(packageId: string, exportType: PlatformPackageExportType) {
+    setExportLoading(exportType)
+    try {
+      const res = await exportPlatformPackage(packageId, exportType)
+      const data = res.data
+      if (!data) throw new Error('Export verisi alınamadı')
+
+      // Create blob and trigger download
+      const blob = new Blob([data.content], { type: data.contentType })
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = data.filename
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      URL.revokeObjectURL(url)
+      setAlert({ type: 'success', message: `${data.filename} indirildi` })
+    } catch (err) {
+      setAlert({ type: 'error', message: extractError(err) })
+    } finally {
+      setExportLoading(null)
+    }
+  }
+
+  async function handleExportCopy(packageId: string, exportType: PlatformPackageExportType) {
+    setExportLoading(exportType + '_copy')
+    try {
+      const res = await exportPlatformPackage(packageId, exportType)
+      const data = res.data
+      if (!data) throw new Error('Export verisi alınamadı')
+
+      await navigator.clipboard.writeText(data.content)
+      setCopiedType(exportType)
+      setTimeout(() => setCopiedType(null), 2000)
+    } catch (err) {
+      setAlert({ type: 'error', message: extractError(err) })
+    } finally {
+      setExportLoading(null)
+    }
+  }
+
+  // ── FP-005: Export Render Helpers ───────────────────────
+
+  function renderExportActions(packageId: string) {
+    return (
+      <>
+        {PLATFORM_PACKAGE_EXPORT_TYPES.map(et => (
+          <button
+            key={et.value}
+            className="btn-action"
+            data-testid={`export-btn-${et.value}`}
+            disabled={!!exportLoading}
+            onClick={() => handleExportDownload(packageId, et.value)}
+            title={`${et.label} olarak indir`}
+            style={{ fontSize: '0.75rem' }}
+          >
+            {exportLoading === et.value ? '⏳' : et.icon} {et.label}
+          </button>
+        ))}
+      </>
+    )
+  }
+
+  function renderExportSection(packageId: string) {
+    return (
+      <div style={{ marginTop: 16 }}>
+        <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: 8 }}>
+          📤 Export & Production Handoff
+        </h4>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 8 }}>
+          {PLATFORM_PACKAGE_EXPORT_TYPES.map(et => (
+            <div
+              key={et.value}
+              className="form-card"
+              data-testid={`export-card-${et.value}`}
+              style={{ padding: '10px 14px', display: 'flex', flexDirection: 'column', gap: 6 }}
+            >
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: '1.1rem' }}>{et.icon}</span>
+                <span style={{ fontWeight: 600, fontSize: '0.85rem' }}>{et.label}</span>
+                <span style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{et.ext}</span>
+              </div>
+              <div style={{ display: 'flex', gap: 6 }}>
+                <button
+                  className="btn-action"
+                  data-testid={`export-download-${et.value}`}
+                  disabled={!!exportLoading}
+                  onClick={() => handleExportDownload(packageId, et.value)}
+                  style={{ flex: 1, fontSize: '0.75rem', justifyContent: 'center' }}
+                >
+                  {exportLoading === et.value ? '⏳ İndiriliyor…' : '⬇️ İndir'}
+                </button>
+                <button
+                  className="btn-action"
+                  data-testid={`export-copy-${et.value}`}
+                  disabled={!!exportLoading}
+                  onClick={() => handleExportCopy(packageId, et.value)}
+                  style={{
+                    flex: 1, fontSize: '0.75rem', justifyContent: 'center',
+                    ...(copiedType === et.value ? { color: 'var(--success, #00c864)', fontWeight: 700 } : {}),
+                  }}
+                >
+                  {copiedType === et.value ? '✅ Kopyalandı!' :
+                   exportLoading === et.value + '_copy' ? '⏳ Kopyalanıyor…' : '📋 Kopyala'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
   // ── Render: Package List ────────────────────────────────
   function renderPackageList() {
     if (listLoading) return <LoadingSpinner text="Platform paketleri yükleniyor…" size="sm" />
@@ -374,6 +496,8 @@ function PlatformPackageWorkflowSection({ contentProjectId, approvedStoryboardId
                 </button>
               </>
             )}
+            {/* FP-005: Export buttons — APPROVED only */}
+            {detail.status === 'APPROVED' && renderExportActions(detail.id)}
           </div>
         </div>
 
@@ -523,6 +647,9 @@ function PlatformPackageWorkflowSection({ contentProjectId, approvedStoryboardId
             </div>
           ))}
         </div>
+
+        {/* FP-005: Export Section — APPROVED only */}
+        {detail.status === 'APPROVED' && renderExportSection(detail.id)}
       </div>
     )
   }

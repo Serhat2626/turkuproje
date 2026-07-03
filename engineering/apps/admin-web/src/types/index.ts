@@ -662,3 +662,47 @@ export interface PlatformPackageGenerateResponse {
 export interface PlatformPackageRejectRequest {
   reason: string
 }
+
+// ── Platform Package Export Domain (FP-005) ───────────────────
+
+export type PlatformPackageExportType = 'MARKDOWN_BRIEF' | 'JSON_PACKAGE' | 'COPY_TEXT' | 'PRODUCTION_BRIEF'
+
+export const PLATFORM_PACKAGE_EXPORT_TYPES: { value: PlatformPackageExportType; label: string; icon: string; ext: string }[] = [
+  { value: 'MARKDOWN_BRIEF', label: 'Markdown Brief', icon: '📝', ext: '.md' },
+  { value: 'JSON_PACKAGE', label: 'JSON Package', icon: '📦', ext: '.json' },
+  { value: 'COPY_TEXT', label: 'Copy Text', icon: '📋', ext: '.txt' },
+  { value: 'PRODUCTION_BRIEF', label: 'Production Brief', icon: '🎬', ext: '.md' },
+]
+
+export interface PlatformPackageExportSceneUsageDto {
+  sourceStoryboardSceneId: string | null
+  sceneNumber: number
+  usageType: string
+  included: boolean
+  adaptationNote: string | null
+}
+
+export interface PlatformPackageExportMetadata {
+  contentProjectId: string
+  sourceStoryboardDraftId: string
+  version: number
+  packageStatus: string
+  packageTitle: string
+  approvedAt: string | null
+  approvedBy: string | null
+  providerType: string | null
+  modelName: string | null
+  generatedBy: string | null
+  sceneUsages: PlatformPackageExportSceneUsageDto[]
+}
+
+export interface PlatformPackageExportResponse {
+  packageId: string
+  packageType: string
+  exportType: PlatformPackageExportType
+  filename: string
+  contentType: string
+  content: string
+  exportedAt: string
+  metadata: PlatformPackageExportMetadata
+}
