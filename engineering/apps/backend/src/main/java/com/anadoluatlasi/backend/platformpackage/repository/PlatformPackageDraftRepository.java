@@ -25,9 +25,19 @@ public interface PlatformPackageDraftRepository extends JpaRepository<PlatformPa
     List<PlatformPackageDraft> findByContentProjectIdOrderByVersionDesc(UUID contentProjectId);
 
     /**
+     * Belirli bir projeye ait paketleri packageType asc, version desc sıralı listeler.
+     */
+    List<PlatformPackageDraft> findByContentProjectIdOrderByPackageTypeAscVersionDesc(UUID contentProjectId);
+
+    /**
      * Belirli bir storyboard'a ait tüm platform paketlerini version'a göre listeler.
      */
     List<PlatformPackageDraft> findBySourceStoryboardDraftIdOrderByVersionDesc(UUID sourceStoryboardDraftId);
+
+    /**
+     * Belirli bir storyboard'a ait paketleri packageType asc, version desc sıralı listeler.
+     */
+    List<PlatformPackageDraft> findBySourceStoryboardDraftIdOrderByPackageTypeAscVersionDesc(UUID sourceStoryboardDraftId);
 
     /**
      * Belirli bir proje + platform tipi + status kombinasyonuna göre paketleri bulur.
