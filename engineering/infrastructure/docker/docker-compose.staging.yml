@@ -99,6 +99,10 @@ services:
         condition: service_healthy
       minio-staging:
         condition: service_started
+    networks:
+      default:
+        aliases:
+          - backend
 
   # ---- Staging Admin Web ----
   admin-web-staging:
