@@ -1,9 +1,11 @@
 package com.anadoluatlasi.backend.ai.config;
 
 import com.anadoluatlasi.backend.ai.gateway.AiContentAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.AiPlatformPackageAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiContentAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.mock.MockAiPlatformPackageAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
@@ -17,7 +19,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * FP-001 + FP-002 + FP-003: AI gateway bean konfigürasyonu.
+ * FP-001 + FP-002 + FP-003 + FP-004: AI gateway bean konfigürasyonu.
  *
  * <p>Provider seçimi {@code ai.provider} property ile yapılır:</p>
  * <ul>
@@ -123,6 +125,23 @@ public class AiGatewayConfig {
     public AiStoryboardAgentGateway mockAiStoryboardAgentGateway() {
         log.info("AI Storyboard Provider: MOCK (fallback) — deterministic scene üretir.");
         return new MockAiStoryboardAgentGateway();
+    }
+
+    // ── FP-004: Platform Package Agent Gateway ──────────────
+
+    /**
+     * Mock platform package gateway — fallback provider.
+     *
+     * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır. {@code ai.provider=openai}
+     * olduğunda gelecekteki {@code OpenAiPlatformPackageAgentGateway} bean'i mevcut olacağından,
+     * bu fallback devre dışı kalır. Henüz OpenAI implementasyonu olmadığından
+     * tüm konfigürasyonlarda aktiftir.</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean(AiPlatformPackageAgentGateway.class)
+    public AiPlatformPackageAgentGateway mockAiPlatformPackageAgentGateway() {
+        log.info("AI Platform Package Provider: MOCK (fallback) — deterministic 4 platform paketi üretir.");
+        return new MockAiPlatformPackageAgentGateway();
     }
 }
 
