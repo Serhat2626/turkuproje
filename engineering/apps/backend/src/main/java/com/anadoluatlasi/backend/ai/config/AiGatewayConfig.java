@@ -11,6 +11,7 @@ import com.anadoluatlasi.backend.ai.gateway.mock.MockAiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiStoryboardAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiPlatformPackageAgentGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -130,12 +131,23 @@ public class AiGatewayConfig {
     // ── FP-004: Platform Package Agent Gateway ──────────────
 
     /**
+     * OpenAI platform package gateway — gerçek AI provider.
+     * {@code ai.provider=openai} ayarlandığında aktifleşir.
+     */
+    @Bean
+    @ConditionalOnProperty(name = "ai.provider", havingValue = "openai")
+    public AiPlatformPackageAgentGateway openAiPlatformPackageAgentGateway(AiProviderProperties properties) {
+        log.info("AI Platform Package Provider: OPENAI — model={}",
+                properties.getOpenai().getModel());
+        return new OpenAiPlatformPackageAgentGateway(properties.getOpenai());
+    }
+
+    /**
      * Mock platform package gateway — fallback provider.
      *
      * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır. {@code ai.provider=openai}
-     * olduğunda gelecekteki {@code OpenAiPlatformPackageAgentGateway} bean'i mevcut olacağından,
-     * bu fallback devre dışı kalır. Henüz OpenAI implementasyonu olmadığından
-     * tüm konfigürasyonlarda aktiftir.</p>
+     * olduğunda {@code OpenAiPlatformPackageAgentGateway} bean'i mevcut olacağından,
+     * bu fallback devre dışı kalır.</p>
      */
     @Bean
     @ConditionalOnMissingBean(AiPlatformPackageAgentGateway.class)
