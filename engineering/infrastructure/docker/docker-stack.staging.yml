@@ -43,7 +43,7 @@ services:
           cpus: "0.25"
           memory: 384M
     environment:
-      SPRING_PROFILES_ACTIVE: local
+      SPRING_PROFILES_ACTIVE: staging
       # ── DB (host PostgreSQL via docker0 bridge) ──
       POSTGRES_HOST: 172.17.0.1
       POSTGRES_PORT: 5432
