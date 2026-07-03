@@ -24,7 +24,9 @@ import ConfirmDialog from '../components/common/ConfirmDialog'
 import NoteDialog from '../components/common/NoteDialog'
 import ScenarioWorkflowSection from '../components/scenario/ScenarioWorkflowSection'
 import StoryboardWorkflowSection from '../components/storyboard/StoryboardWorkflowSection'
+import PlatformPackageWorkflowSection from '../components/platformpackage/PlatformPackageWorkflowSection'
 import { listProjectScenarios } from '../api/scenarioApi'
+import { listStoryboardsByContentProject } from '../api/storyboardApi'
 
 type View = 'list' | 'create' | 'detail'
 
@@ -60,6 +62,9 @@ function ContentProjectsPage() {
 
   // FP-003: Storyboard için onaylanmış senaryo ID'si
   const [approvedScenarioId, setApprovedScenarioId] = useState<string | null>(null)
+
+  // FP-004: Platform paketi için onaylanmış storyboard ID'si
+  const [approvedStoryboardId, setApprovedStoryboardId] = useState<string | null>(null)
 
   const [alert, setAlert] = useState<{ type: 'success' | 'error'; message: string } | null>(null)
 
@@ -113,6 +118,14 @@ function ContentProjectsPage() {
       setApprovedScenarioId(approved?.id ?? null)
     } catch {
       setApprovedScenarioId(null)
+    }
+    // FP-004: Onaylanmış storyboard ID'sini yükle
+    try {
+      const storyboardRes = await listStoryboardsByContentProject(id)
+      const approvedSb = (storyboardRes.data ?? []).find(s => s.status === 'APPROVED')
+      setApprovedStoryboardId(approvedSb?.id ?? null)
+    } catch {
+      setApprovedStoryboardId(null)
     }
   }
 
@@ -632,6 +645,9 @@ function ContentProjectsPage() {
 
         {/* FP-003: Storyboard Workflow Section */}
         <StoryboardWorkflowSection contentProjectId={detail.id} projectStatus={s} approvedScenarioId={approvedScenarioId} />
+
+        {/* FP-004: Platform Package Workflow Section */}
+        <PlatformPackageWorkflowSection contentProjectId={detail.id} approvedStoryboardId={approvedStoryboardId} />
       </>
     )
   }

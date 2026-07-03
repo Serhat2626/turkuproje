@@ -512,3 +512,153 @@ export interface StoryboardGenerateResponse {
 export interface StoryboardRejectRequest {
   reason: string
 }
+
+// ── Platform Package Domain (FP-004) ──────────────────────────
+
+export type PlatformPackageType = 'YOUTUBE_LONG_FORM' | 'YOUTUBE_SHORTS' | 'INSTAGRAM_REELS' | 'FACEBOOK_REELS'
+
+export type PlatformPackageStatus = 'AI_GENERATED' | 'NEEDS_REVIEW' | 'APPROVED' | 'REJECTED' | 'FAILED'
+
+export const PLATFORM_PACKAGE_TYPES: { value: PlatformPackageType; label: string }[] = [
+  { value: 'YOUTUBE_LONG_FORM', label: 'YouTube Long-Form' },
+  { value: 'YOUTUBE_SHORTS', label: 'YouTube Shorts' },
+  { value: 'INSTAGRAM_REELS', label: 'Instagram Reels' },
+  { value: 'FACEBOOK_REELS', label: 'Facebook Reels' },
+]
+
+export const PLATFORM_PACKAGE_STATUSES: { value: PlatformPackageStatus; label: string }[] = [
+  { value: 'AI_GENERATED', label: 'AI Generated' },
+  { value: 'NEEDS_REVIEW', label: 'Needs Review' },
+  { value: 'APPROVED', label: 'Onaylandı' },
+  { value: 'REJECTED', label: 'Reddedildi' },
+  { value: 'FAILED', label: 'Başarısız' },
+]
+
+export interface PlatformPackageSceneUsageResponse {
+  id: string
+  sceneNumber: number
+  sourceStoryboardSceneId: string | null
+  usageType: string
+  included: boolean
+  adaptationNote: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface PlatformPackageDraftSummaryResponse {
+  id: string
+  contentProjectId: string
+  sourceStoryboardDraftId: string
+  packageType: PlatformPackageType
+  status: PlatformPackageStatus
+  version: number
+  title: string | null
+  captionOrDescription: string | null
+  generatedBy: string | null
+  providerType: string | null
+  targetDurationSeconds: number | null
+  aspectRatio: string | null
+  createdAt: string
+  editedAt: string | null
+  approvedAt: string | null
+  rejectedAt: string | null
+}
+
+export interface PlatformPackageDraftResponse {
+  id: string
+  contentProjectId: string
+  sourceStoryboardDraftId: string
+  packageType: PlatformPackageType
+  status: PlatformPackageStatus
+  version: number
+  // Common
+  title: string | null
+  captionOrDescription: string | null
+  hashtagsJson: string | null
+  callToAction: string | null
+  targetDurationSeconds: number | null
+  aspectRatio: string | null
+  contentStructureNotes: string | null
+  sceneUsageNotes: string | null
+  reviewNotes: string | null
+  // YouTube Long-Form
+  videoTitle: string | null
+  longDescription: string | null
+  chapterOutlineJson: string | null
+  pinnedCommentSuggestion: string | null
+  thumbnailTextSuggestion: string | null
+  tagsJson: string | null
+  // Short-Form / Reels
+  shortHook: string | null
+  shortCaption: string | null
+  overlayTextSuggestionsJson: string | null
+  shortHashtagSetJson: string | null
+  shortCta: string | null
+  durationGuidance: string | null
+  // AI Metadata (safe)
+  providerType: string | null
+  modelName: string | null
+  generatedBy: string | null
+  // Review Lifecycle
+  editedAt: string | null
+  editedBy: string | null
+  approvedAt: string | null
+  approvedBy: string | null
+  rejectedAt: string | null
+  rejectedBy: string | null
+  rejectionReason: string | null
+  // Timestamps
+  createdAt: string
+  updatedAt: string | null
+  // Scene Usages
+  sceneUsages: PlatformPackageSceneUsageResponse[]
+}
+
+export interface PlatformPackageSceneUsageEditPayload {
+  sceneNumber: number
+  usageType?: string
+  included?: boolean
+  adaptationNote?: string
+}
+
+export interface PlatformPackageDraftEditPayload {
+  // Common
+  title?: string
+  captionOrDescription?: string
+  hashtagsJson?: string
+  callToAction?: string
+  targetDurationSeconds?: number | null
+  aspectRatio?: string
+  contentStructureNotes?: string
+  sceneUsageNotes?: string
+  reviewNotes?: string
+  // YouTube Long-Form
+  videoTitle?: string
+  longDescription?: string
+  chapterOutlineJson?: string
+  pinnedCommentSuggestion?: string
+  thumbnailTextSuggestion?: string
+  // Short-Form / Reels
+  shortHook?: string
+  shortCaption?: string
+  overlayTextSuggestionsJson?: string
+  shortHashtagSetJson?: string
+  shortCta?: string
+  durationGuidance?: string
+  // Scene Usages
+  sceneUsages?: PlatformPackageSceneUsageEditPayload[]
+}
+
+export interface PlatformPackageGenerateResponse {
+  success: boolean
+  contentProjectId: string
+  sourceStoryboardDraftId: string | null
+  generatedPackageIds: string[] | null
+  packageCount: number | null
+  message: string | null
+  errorCode: string | null
+}
+
+export interface PlatformPackageRejectRequest {
+  reason: string
+}
