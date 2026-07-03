@@ -26,7 +26,10 @@ public class StoryboardQueryService {
      */
     @Transactional(readOnly = true)
     public List<StoryboardDraft> listByContentProject(UUID contentProjectId) {
-        return storyboardDraftRepository.findByContentProjectIdOrderByVersionDesc(contentProjectId);
+        List<StoryboardDraft> drafts = storyboardDraftRepository.findByContentProjectIdOrderByVersionDesc(contentProjectId);
+        // Force lazy load: controller'da open-in-view=false, session kapanır
+        drafts.forEach(d -> d.getScenes().size());
+        return drafts;
     }
 
     /**
@@ -36,8 +39,11 @@ public class StoryboardQueryService {
     public StoryboardDraft getDetail(UUID storyboardDraftId) {
         StoryboardDraft draft = storyboardDraftRepository.findById(storyboardDraftId)
                 .orElseThrow(() -> new NotFoundException("StoryboardDraft", storyboardDraftId));
-        // Force lazy load
+        // Force lazy load: controller'da open-in-view=false, session kapanır
         draft.getScenes().size();
+        draft.getContentProject().getId();
+        draft.getSourceDraft().getId();
+        draft.getSourceScenarioDraft().getId();
         return draft;
     }
 }
