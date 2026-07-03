@@ -59,7 +59,15 @@ CREATE INDEX idx_storyboard_drafts_project_version ON storyboard_drafts(content_
 
 -- ============================================================
 -- 2. STORYBOARD SCENE - Alt Tablo
+--    V2'de oluşturulan eski FP-001 storyboard_scenes tablosu
+--    farklı bir şemaya sahipti (storyboard_id FK → storyboards).
+--    FP-003 tamamen farklı bir yapı kullandığı için eski tabloları
+--    kaldırıp yeniden oluşturuyoruz.
 -- ============================================================
+
+-- Eski FP-001 tabloları temizle (V2'de oluşturulmuştu)
+DROP TABLE IF EXISTS storyboard_scenes CASCADE;
+DROP TABLE IF EXISTS storyboards CASCADE;
 
 CREATE TABLE storyboard_scenes (
     id                          UUID PRIMARY KEY,
@@ -78,6 +86,8 @@ CREATE TABLE storyboard_scenes (
     characters                  TEXT,
     estimated_duration_seconds  INTEGER NOT NULL,
     media_generation_notes      TEXT,
+    created_at                  TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    updated_at                  TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     CONSTRAINT fk_storyboard_scenes_storyboard_draft
         FOREIGN KEY (storyboard_draft_id)
         REFERENCES storyboard_drafts(id)
@@ -85,3 +95,4 @@ CREATE TABLE storyboard_scenes (
 );
 
 CREATE INDEX idx_storyboard_scenes_draft_id ON storyboard_scenes(storyboard_draft_id);
+
