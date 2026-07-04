@@ -2,6 +2,7 @@ package com.anadoluatlasi.backend.imagegen.controller;
 
 import com.anadoluatlasi.backend.common.api.ApiResponse;
 import com.anadoluatlasi.backend.imagegen.controller.dto.*;
+import com.anadoluatlasi.backend.imagegen.service.ImageGenerationOrchestrationService;
 import com.anadoluatlasi.backend.imagegen.service.ImageGenerationRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -37,6 +38,7 @@ import java.util.UUID;
 public class AdminImageGenerationController {
 
     private final ImageGenerationRequestService requestService;
+    private final ImageGenerationOrchestrationService orchestrationService;
 
     // ── Generation Request Endpoints ────────────────────────────────
 
@@ -80,6 +82,24 @@ public class AdminImageGenerationController {
     public ResponseEntity<ApiResponse<ImageGenerationRequestResponse>> getRequest(
             @PathVariable UUID requestId) {
         ImageGenerationRequestResponse response = requestService.getRequestDetail(requestId);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── Mock Generation Execution ───────────────────────────────────
+
+    /**
+     * REQUESTED request için mock provider ile generation çalıştırır.
+     *
+     * <p>Status akışı: REQUESTED → GENERATING → GENERATED_PENDING_REVIEW veya FAILED.</p>
+     * <p>Bu endpoint açıkça mock/controlled generation action'dır.
+     * Generic status update değildir. GeneratedAsset/MediaAsset oluşturmaz.</p>
+     */
+    @PostMapping("/requests/{requestId}/execute-generation")
+    @Operation(summary = "Generation çalıştır (mock provider)",
+               description = "REQUESTED request için mock provider ile image generation execute eder")
+    public ResponseEntity<ApiResponse<ImageGenerationResultResponse>> executeGeneration(
+            @PathVariable UUID requestId) {
+        ImageGenerationResultResponse response = orchestrationService.executeGeneration(requestId);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
