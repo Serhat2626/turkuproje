@@ -9,19 +9,28 @@ import lombok.NoArgsConstructor;
 import lombok.experimental.SuperBuilder;
 
 /**
- * FP-007: Image media asset entity.
+ * FP-007/FP-008: Image media asset entity.
  *
  * <p>Image generation sonucu storage'a kaydedilen gerçek dosyanın
  * metadata ve storage referansı. storageObjectKey ve storageBucket
  * admin-facing API response'a dahil edilmez.</p>
+ *
+ * <p>FP-008 storage handoff alanları (storageHandoffStatus, previewStatus,
+ * storageErrorCode, storageErrorMessage, storedAt) migration V11 ile
+ * eklenir. Bu alanlar compile eder ama runtime V11 migration gerektirir.</p>
  *
  * <p>Güvenlik kuralları:</p>
  * <ul>
  *   <li>Public URL alanı yoktur.</li>
  *   <li>Signed URL kalıcı alanı yoktur.</li>
  *   <li>CDN URL alanı yoktur.</li>
+ *   <li>Provider image URL kalıcı alanı yoktur.</li>
+ *   <li>Base64/binary alanı yoktur.</li>
  *   <li>Publish/export status alanı yoktur.</li>
+ *   <li>READY_FOR_PUBLISH alanı yoktur.</li>
  *   <li>Video/audio metadata yoktur.</li>
+ *   <li>storageHandoffStatus approval status değildir.</li>
+ *   <li>previewStatus approval status değildir.</li>
  * </ul>
  */
 @Data
@@ -75,4 +84,26 @@ public class ImageMediaAsset extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "review_status", length = 30)
     private ImageMediaAssetReviewStatus reviewStatus;
+
+    // ── FP-008: Storage Handoff Status ──────────────────────────────
+    // Migration V11 gerektirir. Storage status review status değildir.
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "storage_handoff_status", length = 30)
+    private ImageStorageHandoffStatus storageHandoffStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "preview_status", length = 30)
+    private ImagePreviewStatus previewStatus;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "storage_error_code", length = 60)
+    private ImageStorageErrorCode storageErrorCode;
+
+    @Column(name = "storage_error_message", columnDefinition = "TEXT")
+    private String storageErrorMessage;
+
+    @Column(name = "stored_at")
+    private java.time.LocalDateTime storedAt;
 }
+
