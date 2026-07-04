@@ -4,10 +4,12 @@ import com.anadoluatlasi.backend.ai.gateway.AiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiPlatformPackageAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiStoryboardAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.AiVisualAssetAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiPlatformPackageAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiStoryboardAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.mock.MockAiVisualAssetAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiStoryboardAgentGateway;
@@ -20,7 +22,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
 /**
- * FP-001 + FP-002 + FP-003 + FP-004: AI gateway bean konfigürasyonu.
+ * FP-001 + FP-002 + FP-003 + FP-004 + FP-006: AI gateway bean konfigürasyonu.
  *
  * <p>Provider seçimi {@code ai.provider} property ile yapılır:</p>
  * <ul>
@@ -39,6 +41,9 @@ import org.springframework.context.annotation.Configuration;
  * <p><strong>FP-003 Storyboard Gateway:</strong> {@code ai.provider=openai} olduğunda
  * {@link OpenAiStoryboardAgentGateway} aktifleşir. Aksi halde
  * {@link MockAiStoryboardAgentGateway} fallback olarak devreye girer.</p>
+ *
+ * <p><strong>FP-006 Visual Asset Gateway:</strong> Mock fallback via
+ * {@code @ConditionalOnMissingBean}. OpenAI provider Task 09'da eklenecektir.</p>
  */
 @Slf4j
 @Configuration
@@ -155,6 +160,21 @@ public class AiGatewayConfig {
         log.info("AI Platform Package Provider: MOCK (fallback) — deterministic 4 platform paketi üretir.");
         return new MockAiPlatformPackageAgentGateway();
     }
+
+    // ── FP-006: Visual Asset Agent Gateway ──────────────────
+
+    /**
+     * Mock visual asset gateway — fallback provider.
+     *
+     * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır.
+     * OpenAI provider Task 09'da eklenecektir.</p>
+     *
+     * <p>Bu gateway yalnızca metin prompt üretir — image API çağırmaz.</p>
+     */
+    @Bean
+    @ConditionalOnMissingBean(AiVisualAssetAgentGateway.class)
+    public AiVisualAssetAgentGateway mockAiVisualAssetAgentGateway() {
+        log.info("AI Visual Asset Provider: MOCK (fallback) — deterministic görsel plan prompt üretir.");
+        return new MockAiVisualAssetAgentGateway();
+    }
 }
-
-
