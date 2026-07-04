@@ -3,6 +3,7 @@ package com.anadoluatlasi.backend.imagegen.controller;
 import com.anadoluatlasi.backend.common.api.ApiResponse;
 import com.anadoluatlasi.backend.imagegen.controller.dto.*;
 import com.anadoluatlasi.backend.imagegen.service.ImageGeneratedAssetQueryService;
+import com.anadoluatlasi.backend.imagegen.service.ImageGeneratedAssetReviewService;
 import com.anadoluatlasi.backend.imagegen.service.ImageGenerationOrchestrationService;
 import com.anadoluatlasi.backend.imagegen.service.ImageGenerationRequestService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -25,8 +26,8 @@ import java.util.UUID;
  * READY_FOR_PUBLISH, publish, export endpoint yoktur.
  * Raw provider payload/response, internal prompt, API key/secret döndürülmez.</p>
  *
- * <p>Generation request ve generated asset endpoint'leri aktif.
- * Approve/reject/preview henüz 501 Not Implemented döner.</p>
+ * <p>Generation request, generated asset ve review endpoint'leri aktif.
+ * Preview henüz 501 Not Implemented döner.</p>
  *
  * <p>Human review explicit approve/reject action ile yapılır.
  * AI output hiçbir zaman otomatik APPROVED olamaz.</p>
@@ -41,6 +42,7 @@ public class AdminImageGenerationController {
     private final ImageGenerationRequestService requestService;
     private final ImageGenerationOrchestrationService orchestrationService;
     private final ImageGeneratedAssetQueryService queryService;
+    private final ImageGeneratedAssetReviewService reviewService;
 
     // ── Generation Request Endpoints ────────────────────────────────
 
@@ -163,9 +165,9 @@ public class AdminImageGenerationController {
     public ResponseEntity<ApiResponse<ImageGeneratedAssetResponse>> approveGeneratedAsset(
             @PathVariable UUID generatedAssetId,
             @Valid @RequestBody(required = false) ApproveGeneratedAssetRequest request) {
-        // TODO: FP-007 Task 10 — Human Review Workflow
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Approve review servisi henüz uygulanmadı");
+        ImageGeneratedAssetResponse response = reviewService.approveGeneratedAsset(
+                generatedAssetId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     /**
@@ -180,9 +182,9 @@ public class AdminImageGenerationController {
     public ResponseEntity<ApiResponse<ImageGeneratedAssetResponse>> rejectGeneratedAsset(
             @PathVariable UUID generatedAssetId,
             @Valid @RequestBody RejectGeneratedAssetRequest request) {
-        // TODO: FP-007 Task 10 — Human Review Workflow
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Reject review servisi henüz uygulanmadı");
+        ImageGeneratedAssetResponse response = reviewService.rejectGeneratedAsset(
+                generatedAssetId, request);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // ── Preview Endpoint ────────────────────────────────────────────

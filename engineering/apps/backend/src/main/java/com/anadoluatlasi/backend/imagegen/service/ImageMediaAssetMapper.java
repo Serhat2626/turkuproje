@@ -24,6 +24,7 @@ public final class ImageMediaAssetMapper {
                 .height(entity.getHeight())
                 .fileSizeBytes(entity.getFileSizeBytes())
                 .checksumSha256(entity.getChecksumSha256())
+                .reviewStatus(entity.getReviewStatus() != null ? entity.getReviewStatus().name() : null)
                 // storageObjectKey intentionally excluded — internal-only
                 // storageBucket intentionally excluded — internal-only
                 // storageProvider intentionally excluded — internal-only

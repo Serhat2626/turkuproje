@@ -69,4 +69,10 @@ public class ImageMediaAsset extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "asset_kind", nullable = false, length = 30)
     private ImageMediaAssetKind assetKind;
+
+    // ── Review Status ──────────────────────────────────────────────
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "review_status", length = 30)
+    private ImageMediaAssetReviewStatus reviewStatus;
 }

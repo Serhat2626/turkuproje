@@ -32,6 +32,7 @@ public class ImageMediaAssetResponse {
     private Integer height;
     private Long fileSizeBytes;
     private String checksumSha256;
+    private String reviewStatus;
     // storageObjectKey intentionally excluded — internal-only
     // storageBucket intentionally excluded — internal-only
     // storageProvider intentionally excluded — internal-only
