@@ -37,3 +37,18 @@ management:
 # Gerçek provider için: ai.provider=openai ve ai.openai.api-key env variable
 ai:
   provider: mock
+
+# ── Image Generation Provider ────────────────────────
+# FP-007: Image generation provider config.
+# Default: mock — external call yapılmaz.
+# OpenAI için: imagegen.provider.mode=openai
+# API key: IMAGEGEN_PROVIDER_OPENAI_API_KEY env variable ile verilmelidir.
+# API key bu dosyaya YAZILMAZ.
+imagegen:
+  provider:
+    mode: mock
+    timeout-ms: 60000
+    max-output-count: 1
+    model-name: dall-e-3
+    image-size: 1024x1024
+    openai-api-key: ${IMAGEGEN_PROVIDER_OPENAI_API_KEY:}

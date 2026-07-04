@@ -2,7 +2,6 @@ package com.anadoluatlasi.backend.imagegen.provider;
 
 import com.anadoluatlasi.backend.imagegen.entity.ImageGenerationErrorCode;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 
@@ -19,7 +18,6 @@ import java.time.LocalDateTime;
  * image binary, base64, storage reference üretmez.</p>
  */
 @Slf4j
-@Component
 public class MockImageGenerationProviderGateway implements ImageGenerationProviderGateway {
 
     private static final String PROVIDER_ALIAS = "MOCK";
