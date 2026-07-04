@@ -187,6 +187,30 @@ public class AdminImageGenerationController {
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 
+    // ── Storage Handoff Endpoint ──────────────────────────────────────
+
+    /**
+     * FP-008: Explicit storage handoff action.
+     *
+     * <p>Generated asset için storage handoff başlatır.
+     * Generic status update değildir — explicit action endpoint.</p>
+     *
+     * <p>Bu endpoint henüz provider output retrieval/bytes source
+     * implementation olmadığı için 501 döner. Admin request body'den
+     * base64/binary/providerUrl kabul etmez.</p>
+     *
+     * <p>Provider output retrieval ve real handoff FP-008 Task 10+ ile aktif edilecek.</p>
+     */
+    @PostMapping("/generated-assets/{generatedAssetId}/storage-handoff")
+    @Operation(summary = "Storage handoff başlat (FP-008)",
+               description = "Explicit action — provider output retrieval henüz yok, 501")
+    public ResponseEntity<ApiResponse<StorageHandoffResponse>> startStorageHandoff(
+            @PathVariable UUID generatedAssetId) {
+        // TODO: FP-008 Task 10+ — Provider output retrieval ve gerçek handoff
+        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
+                "Storage handoff servisi henüz provider output retrieval desteklemiyor");
+    }
+
     // ── Preview Endpoint ────────────────────────────────────────────
 
     /**
@@ -200,14 +224,14 @@ public class AdminImageGenerationController {
     @Operation(summary = "Generated image preview",
                description = "Backend proxy — storage key/URL expose edilmez")
     public ResponseEntity<byte[]> getPreview(@PathVariable UUID generatedAssetId) {
-        // TODO: FP-007 Task 09 — Storage Handoff / Preview
+        // TODO: FP-008 Task 10 — Backend-Controlled Preview Proxy
         throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
                 "Preview servisi henüz uygulanmadı");
     }
 
     // ── NOT IMPLEMENTED: Forbidden Endpoints ────────────────────────
     //
-    // The following endpoints are EXPLICITLY excluded per FP-007 governance:
+    // The following endpoints are EXPLICITLY excluded per FP-007/FP-008 governance:
     //
     // PATCH  /generated-assets/{id}/status      → NO generic status update
     // PUT    /generated-assets/{id}              → NO generic update
@@ -217,4 +241,8 @@ public class AdminImageGenerationController {
     // GET    .../raw-provider-response            → NO raw provider data
     // GET    .../internal-prompt                  → NO internal prompt
     // GET    .../signed-url                       → NO signed URL exposure
+    // GET    .../public-url                       → NO public URL exposure
+    // POST   .../base64                           → NO base64 request/response
+    // GET    .../storage-key                      → NO storage key exposure
 }
+

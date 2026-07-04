@@ -25,6 +25,15 @@ public final class ImageMediaAssetMapper {
                 .fileSizeBytes(entity.getFileSizeBytes())
                 .checksumSha256(entity.getChecksumSha256())
                 .reviewStatus(entity.getReviewStatus() != null ? entity.getReviewStatus().name() : null)
+                // FP-008: Safe storage/preview status fields
+                .storageHandoffStatus(entity.getStorageHandoffStatus() != null
+                        ? entity.getStorageHandoffStatus().name() : null)
+                .previewStatus(entity.getPreviewStatus() != null
+                        ? entity.getPreviewStatus().name() : null)
+                .storageErrorCode(entity.getStorageErrorCode() != null
+                        ? entity.getStorageErrorCode().name() : null)
+                .storageErrorMessage(entity.getStorageErrorMessage())
+                .storedAt(entity.getStoredAt())
                 // storageObjectKey intentionally excluded — internal-only
                 // storageBucket intentionally excluded — internal-only
                 // storageProvider intentionally excluded — internal-only
