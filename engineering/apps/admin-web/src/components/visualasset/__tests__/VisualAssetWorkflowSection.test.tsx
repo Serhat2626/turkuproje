@@ -490,9 +490,11 @@ describe('VisualAssetWorkflowSection', () => {
       await waitFor(() => {
         const html = container.innerHTML
         const forbidden = [
-          'rawPrompt', 'internalPrompt', 'providerRequest', 'providerResponse',
-          'providerPayload', 'apiKey', 'secret', 'imageUrl', 'objectKey',
-          'bucket', 'mediaAssetId', 'generatedAssetId',
+          'rawPrompt', 'internalPrompt', 'orchestrationPrompt',
+          'providerRequest', 'providerResponse', 'providerPayload',
+          'apiKey', 'secret', 'imageUrl', 'filePath',
+          'objectKey', 'bucket', 'mediaAssetId', 'generatedAssetId',
+          'publishUrl', 'uploadUrl',
         ]
         forbidden.forEach(field => {
           expect(html).not.toContain(field)
@@ -500,4 +502,250 @@ describe('VisualAssetWorkflowSection', () => {
       })
     })
   })
+
+  // ── Generate Workflow ──────────────────────────────────
+
+  describe('Generate iş akışı', () => {
+    it('generate başarılı olunca API çağrılır ve liste yenilenir', async () => {
+      mockApi.generateVisualAssetPlan.mockReturnValue(apiSuccess({
+        success: true, contentProjectId: PROJECT_ID, storyboardDraftId: STORYBOARD_ID,
+        visualAssetPlanId: 'vap-new', version: 1, status: 'AI_GENERATED',
+        planTitle: 'Yeni Plan', scenePlanCount: 3, hasThumbnailPlan: true,
+        message: null, errorCode: null,
+      }))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText(/Görsel Plan Üret/)).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText(/Görsel Plan Üret/))
+
+      await waitFor(() => {
+        expect(mockApi.generateVisualAssetPlan).toHaveBeenCalledWith(STORYBOARD_ID)
+        // List refreshed after generate
+        expect(mockApi.listVisualAssetPlansByContentProject).toHaveBeenCalledTimes(2)
+      })
+    })
+
+    it('generate başarısız olunca güvenli hata mesajı gösterir', async () => {
+      mockApi.generateVisualAssetPlan.mockRejectedValue({
+        message: 'Storyboard onaylı değil', errors: null,
+      })
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText(/Görsel Plan Üret/)).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText(/Görsel Plan Üret/))
+
+      await waitFor(() => {
+        expect(screen.getByText(/Storyboard onaylı değil/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  // ── NEEDS_REVIEW Status ────────────────────────────────
+
+  describe('NEEDS_REVIEW durumu', () => {
+    it('NEEDS_REVIEW statusunda onayla/reddet butonları gösterilir', async () => {
+      const detail = makeDetail({ status: 'NEEDS_REVIEW' })
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess([makeSummary({ status: 'NEEDS_REVIEW' })]))
+      mockApi.getVisualAssetPlanDetail.mockReturnValue(apiSuccess(detail))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => { screen.getByText('Detay') })
+      await userEvent.click(screen.getByText('Detay'))
+
+      await waitFor(() => {
+        expect(screen.getByText('✓ Onayla')).toBeInTheDocument()
+        expect(screen.getByText('✕ Reddet')).toBeInTheDocument()
+      })
+    })
+
+    it('NEEDS_REVIEW statusunda düzenle butonları gösterilir', async () => {
+      const detail = makeDetail({ status: 'NEEDS_REVIEW' })
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess([makeSummary({ status: 'NEEDS_REVIEW' })]))
+      mockApi.getVisualAssetPlanDetail.mockReturnValue(apiSuccess(detail))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => { screen.getByText('Detay') })
+      await userEvent.click(screen.getByText('Detay'))
+
+      await waitFor(() => {
+        const editButtons = screen.getAllByText(/Düzenle/)
+        expect(editButtons.length).toBeGreaterThan(0)
+      })
+    })
+  })
+
+  // ── REJECTED Status ────────────────────────────────────
+
+  describe('REJECTED durumu', () => {
+    it('REJECTED statusunda düzenle butonları gösterilmez (approve/reject gizli)', async () => {
+      const detail = makeDetail({ status: 'REJECTED', rejectionReason: 'Kalite yetersiz' })
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess([makeSummary({ status: 'REJECTED' })]))
+      mockApi.getVisualAssetPlanDetail.mockReturnValue(apiSuccess(detail))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => { screen.getByText('Detay') })
+      await userEvent.click(screen.getByText('Detay'))
+
+      await waitFor(() => {
+        expect(screen.queryByText('✓ Onayla')).not.toBeInTheDocument()
+        expect(screen.queryByText('✕ Reddet')).not.toBeInTheDocument()
+        // Rejection reason gösterilir
+        expect(screen.getByText(/Kalite yetersiz/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  // ── Edit API Calls ─────────────────────────────────────
+
+  describe('Edit API çağrıları', () => {
+    it('parent plan düzenleme updateVisualAssetPlan çağırır', async () => {
+      const detail = makeDetail({ status: 'AI_GENERATED' })
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess([makeSummary()]))
+      mockApi.getVisualAssetPlanDetail.mockReturnValue(apiSuccess(detail))
+      mockApi.updateVisualAssetPlan.mockReturnValue(apiSuccess(makeDetail({ status: 'NEEDS_REVIEW' })))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => { screen.getByText('Detay') })
+      await userEvent.click(screen.getByText('Detay'))
+
+      // Find and click the parent edit button
+      await waitFor(() => {
+        const editButtons = screen.getAllByText('✏️ Düzenle')
+        expect(editButtons.length).toBeGreaterThan(0)
+      })
+
+      // Click first edit button (parent plan)
+      const editButtons = screen.getAllByText('✏️ Düzenle')
+      await userEvent.click(editButtons[0])
+
+      // Form should appear with Kaydet button
+      await waitFor(() => {
+        expect(screen.getByText('Kaydet')).toBeInTheDocument()
+      })
+
+      await userEvent.click(screen.getByText('Kaydet'))
+
+      await waitFor(() => {
+        expect(mockApi.updateVisualAssetPlan).toHaveBeenCalledWith('vap-001', expect.any(Object))
+      })
+    })
+  })
+
+  // ── Plan List Detail ───────────────────────────────────
+
+  describe('Plan listesi detayları', () => {
+    it('plan listesi versiyon bilgisini gösterir', async () => {
+      const summaries = [
+        makeSummary({ id: 'vap-1', version: 3, title: 'V3 Plan' }),
+      ]
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess(summaries))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText('v3')).toBeInTheDocument()
+      })
+    })
+
+    it('plan listesi sahne sayısını gösterir', async () => {
+      const summaries = [
+        makeSummary({ id: 'vap-1', scenePlanCount: 7 }),
+      ]
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess(summaries))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText(/7 sahne/)).toBeInTheDocument()
+      })
+    })
+
+    it('thumbnail göstergesini listede gösterir', async () => {
+      const summaries = [
+        makeSummary({ id: 'vap-1', hasThumbnailPlan: true }),
+      ]
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess(summaries))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => {
+        expect(screen.getByText(/🖼️/)).toBeInTheDocument()
+      })
+    })
+  })
+
+  // ── Extended Forbidden Fields ──────────────────────────
+
+  describe('Genişletilmiş güvenlik kontrolleri', () => {
+    it('image preview/media UI bileşenleri yok', async () => {
+      const detail = makeDetail()
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess([makeSummary()]))
+      mockApi.getVisualAssetPlanDetail.mockReturnValue(apiSuccess(detail))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => { screen.getByText('Detay') })
+      await userEvent.click(screen.getByText('Detay'))
+
+      await waitFor(() => {
+        // No img tags with src (image preview)
+        const imgs = document.querySelectorAll('img[src]')
+        imgs.forEach(img => {
+          const src = img.getAttribute('src') ?? ''
+          expect(src).not.toMatch(/\.(png|jpg|jpeg|webp|gif)$/i)
+        })
+      })
+    })
+
+    it('select/dropdown element yok (no generic status)', async () => {
+      const detail = makeDetail()
+      mockApi.listVisualAssetPlansByContentProject.mockReturnValue(apiSuccess([makeSummary()]))
+      mockApi.getVisualAssetPlanDetail.mockReturnValue(apiSuccess(detail))
+
+      render(
+        <VisualAssetWorkflowSection contentProjectId={PROJECT_ID} approvedStoryboardId={STORYBOARD_ID} />
+      )
+
+      await waitFor(() => { screen.getByText('Detay') })
+      await userEvent.click(screen.getByText('Detay'))
+
+      await waitFor(() => {
+        expect(screen.queryAllByRole('combobox')).toHaveLength(0)
+        expect(document.querySelectorAll('select')).toHaveLength(0)
+      })
+    })
+  })
 })
+
