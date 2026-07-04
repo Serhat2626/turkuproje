@@ -2,15 +2,14 @@ package com.anadoluatlasi.backend.imagegen.controller;
 
 import com.anadoluatlasi.backend.common.api.ApiResponse;
 import com.anadoluatlasi.backend.imagegen.controller.dto.*;
-import com.anadoluatlasi.backend.imagegen.service.ImageGeneratedAssetQueryService;
-import com.anadoluatlasi.backend.imagegen.service.ImageGeneratedAssetReviewService;
-import com.anadoluatlasi.backend.imagegen.service.ImageGenerationOrchestrationService;
-import com.anadoluatlasi.backend.imagegen.service.ImageGenerationRequestService;
+import com.anadoluatlasi.backend.imagegen.service.*;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
@@ -43,6 +42,7 @@ public class AdminImageGenerationController {
     private final ImageGenerationOrchestrationService orchestrationService;
     private final ImageGeneratedAssetQueryService queryService;
     private final ImageGeneratedAssetReviewService reviewService;
+    private final ImagePreviewProxyService previewProxyService;
 
     // ── Generation Request Endpoints ────────────────────────────────
 
@@ -214,19 +214,35 @@ public class AdminImageGenerationController {
     // ── Preview Endpoint ────────────────────────────────────────────
 
     /**
-     * Generated image preview — backend proxy.
+     * FP-008: Generated image preview — backend proxy.
      *
      * <p>Storage'dan serve edilen gerçek image. Admin-facing URL,
      * kalıcı public URL veya signed URL döndürülmez.
      * Image data backend üzerinden proxy edilir.</p>
+     *
+     * <p>Response headers'da storage key, provider URL,
+     * signed/public URL kesinlikle yer almaz.</p>
      */
     @GetMapping("/generated-assets/{generatedAssetId}/preview")
-    @Operation(summary = "Generated image preview",
+    @Operation(summary = "Generated image preview (FP-008)",
                description = "Backend proxy — storage key/URL expose edilmez")
     public ResponseEntity<byte[]> getPreview(@PathVariable UUID generatedAssetId) {
-        // TODO: FP-008 Task 10 — Backend-Controlled Preview Proxy
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Preview servisi henüz uygulanmadı");
+        ImagePreviewProxyResult result = previewProxyService.getPreview(generatedAssetId);
+
+        if (!result.isSuccess()) {
+            throw new ResponseStatusException(HttpStatus.NOT_FOUND,
+                    result.getErrorMessage() != null
+                            ? result.getErrorMessage()
+                            : "Önizleme mevcut değil");
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.parseMediaType(result.getMimeType()));
+        headers.setContentLength(result.getFileSizeBytes());
+        headers.setCacheControl("no-store");
+        // storageObjectKey, signedUrl, publicUrl, providerUrl — NEVER in headers
+
+        return new ResponseEntity<>(result.getImageBytes(), headers, HttpStatus.OK);
     }
 
     // ── NOT IMPLEMENTED: Forbidden Endpoints ────────────────────────
