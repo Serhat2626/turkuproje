@@ -25,6 +25,7 @@ import NoteDialog from '../components/common/NoteDialog'
 import ScenarioWorkflowSection from '../components/scenario/ScenarioWorkflowSection'
 import StoryboardWorkflowSection from '../components/storyboard/StoryboardWorkflowSection'
 import PlatformPackageWorkflowSection from '../components/platformpackage/PlatformPackageWorkflowSection'
+import VisualAssetWorkflowSection from '../components/visualasset/VisualAssetWorkflowSection'
 import { listProjectScenarios } from '../api/scenarioApi'
 import { listStoryboardsByContentProject } from '../api/storyboardApi'
 
@@ -648,6 +649,9 @@ function ContentProjectsPage() {
 
         {/* FP-004: Platform Package Workflow Section */}
         <PlatformPackageWorkflowSection contentProjectId={detail.id} approvedStoryboardId={approvedStoryboardId} />
+
+        {/* FP-006: Visual Asset Planning Section */}
+        <VisualAssetWorkflowSection contentProjectId={detail.id} approvedStoryboardId={approvedStoryboardId} />
       </>
     )
   }

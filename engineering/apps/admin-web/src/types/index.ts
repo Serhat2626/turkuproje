@@ -706,3 +706,164 @@ export interface PlatformPackageExportResponse {
   exportedAt: string
   metadata: PlatformPackageExportMetadata
 }
+
+// ── Visual Asset Planning Domain (FP-006) ─────────────────────
+
+export type VisualAssetPlanStatus = 'AI_GENERATED' | 'NEEDS_REVIEW' | 'APPROVED' | 'REJECTED' | 'FAILED'
+
+export const VISUAL_ASSET_PLAN_STATUSES: { value: VisualAssetPlanStatus; label: string }[] = [
+  { value: 'AI_GENERATED', label: 'AI Generated' },
+  { value: 'NEEDS_REVIEW', label: 'Needs Review' },
+  { value: 'APPROVED', label: 'Onaylandı' },
+  { value: 'REJECTED', label: 'Reddedildi' },
+  { value: 'FAILED', label: 'Başarısız' },
+]
+
+export interface SceneVisualPlanResponse {
+  id: string
+  sourceStoryboardSceneId: string | null
+  sceneNumber: number
+  sourceBeatType: string | null
+  sceneTitle: string | null
+  turkishVisualContext: string | null
+  englishImagePrompt: string | null
+  negativePrompt: string | null
+  styleDirective: string | null
+  aspectRatio: string | null
+  compositionNotes: string | null
+  cameraFraming: string | null
+  lightingNotes: string | null
+  colorPalette: string | null
+  mood: string | null
+  location: string | null
+  characters: string | null
+  culturalDetails: string | null
+  textOverlayGuidance: string | null
+  imageGenerationToolNotes: string | null
+  safetyNotes: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface ThumbnailPlanResponse {
+  id: string
+  sourceStoryboardSceneId: string | null
+  sourceSceneNumber: number | null
+  thumbnailPrompt: string | null
+  negativePrompt: string | null
+  textOverlayGuidance: string | null
+  compositionNotes: string | null
+  emotionalHook: string | null
+  aspectRatio: string | null
+  styleDirective: string | null
+  colorPalette: string | null
+  createdAt: string
+  updatedAt: string | null
+}
+
+export interface VisualAssetPlanResponse {
+  id: string
+  sourceStoryboardDraftId: string
+  contentProjectId: string
+  version: number
+  status: VisualAssetPlanStatus
+  title: string | null
+  summary: string | null
+  overallVisualStyle: string | null
+  aspectRatioStrategy: string | null
+  culturalAuthenticityGuidance: string | null
+  characterContinuityGuidance: string | null
+  locationContinuityGuidance: string | null
+  colorPaletteGuidance: string | null
+  reviewNotes: string | null
+  generatedBy: string | null
+  providerType: string | null
+  modelName: string | null
+  approvedAt: string | null
+  approvedBy: string | null
+  rejectedAt: string | null
+  rejectedBy: string | null
+  rejectionReason: string | null
+  editedAt: string | null
+  editedBy: string | null
+  createdAt: string
+  updatedAt: string | null
+  scenePlans: SceneVisualPlanResponse[]
+  thumbnailPlan: ThumbnailPlanResponse | null
+}
+
+export interface VisualAssetPlanSummaryResponse {
+  id: string
+  sourceStoryboardDraftId: string
+  contentProjectId: string
+  version: number
+  status: VisualAssetPlanStatus
+  title: string | null
+  scenePlanCount: number
+  hasThumbnailPlan: boolean
+  providerType: string | null
+  createdAt: string
+  approvedAt: string | null
+  rejectedAt: string | null
+  editedAt: string | null
+}
+
+export interface VisualAssetPlanEditRequest {
+  title?: string
+  summary?: string
+  overallVisualStyle?: string
+  aspectRatioStrategy?: string
+  culturalAuthenticityGuidance?: string
+  characterContinuityGuidance?: string
+  locationContinuityGuidance?: string
+  colorPaletteGuidance?: string
+  reviewNotes?: string
+}
+
+export interface SceneVisualPlanEditRequest {
+  englishImagePrompt?: string
+  turkishVisualContext?: string
+  negativePrompt?: string
+  styleDirective?: string
+  aspectRatio?: string
+  compositionNotes?: string
+  cameraFraming?: string
+  lightingNotes?: string
+  colorPalette?: string
+  mood?: string
+  location?: string
+  characters?: string
+  culturalDetails?: string
+  textOverlayGuidance?: string
+  imageGenerationToolNotes?: string
+  safetyNotes?: string
+}
+
+export interface ThumbnailPlanEditRequest {
+  thumbnailPrompt?: string
+  negativePrompt?: string
+  textOverlayGuidance?: string
+  compositionNotes?: string
+  emotionalHook?: string
+  aspectRatio?: string
+  styleDirective?: string
+  colorPalette?: string
+}
+
+export interface VisualAssetPlanGenerateResponse {
+  success: boolean
+  contentProjectId: string
+  storyboardDraftId: string | null
+  visualAssetPlanId: string | null
+  version: number | null
+  status: string | null
+  planTitle: string | null
+  scenePlanCount: number | null
+  hasThumbnailPlan: boolean | null
+  message: string | null
+  errorCode: string | null
+}
+
+export interface VisualAssetPlanRejectRequest {
+  reason: string
+}
