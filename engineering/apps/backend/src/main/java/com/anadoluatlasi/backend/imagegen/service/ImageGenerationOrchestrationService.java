@@ -3,6 +3,7 @@ package com.anadoluatlasi.backend.imagegen.service;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
 import com.anadoluatlasi.backend.imagegen.controller.dto.ImageGenerationResultResponse;
+import com.anadoluatlasi.backend.imagegen.entity.ImageGenerationErrorCode;
 import com.anadoluatlasi.backend.imagegen.entity.ImageGenerationRequest;
 import com.anadoluatlasi.backend.imagegen.entity.ImageGenerationRequestStatus;
 import com.anadoluatlasi.backend.imagegen.entity.ImageGenerationResult;
@@ -102,8 +103,8 @@ public class ImageGenerationOrchestrationService {
         try {
             providerResult = providerGateway.generate(providerRequest);
         } catch (Exception e) {
-            log.error("Provider gateway çağrısı başarısız: requestId={}, error={}",
-                    requestId, e.getMessage());
+            log.error("Provider gateway çağrısı başarısız: requestId={}, correlationId={}, errorType={}",
+                    requestId, request.getCorrelationId(), e.getClass().getSimpleName());
             return handleProviderFailure(request, e);
         }
 
@@ -181,8 +182,8 @@ public class ImageGenerationOrchestrationService {
         request.setCompletedAt(providerResult.getCompletedAt());
         requestRepository.save(request);
 
-        log.warn("Generation başarısız: requestId={}, resultId={}, errorCode={}, status=FAILED",
-                request.getId(), result.getId(), providerResult.getErrorCode());
+        log.warn("Generation başarısız: requestId={}, resultId={}, errorCode={}, correlationId={}, status=FAILED",
+                request.getId(), result.getId(), providerResult.getErrorCode(), request.getCorrelationId());
 
         return ImageGenerationResultMapper.toResponse(result);
     }
@@ -191,26 +192,29 @@ public class ImageGenerationOrchestrationService {
             ImageGenerationRequest request, Exception e) {
 
         // Unexpected exception → FAILED with UNKNOWN error
+        ImageGenerationErrorCode failureCode = ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE;
+        String safeMessage = ImageGenerationErrorNormalizer.safeMessage(failureCode);
+
         ImageGenerationResult result = ImageGenerationResult.builder()
                 .imageGenerationRequestId(request.getId())
                 .visualAssetPlanId(request.getVisualAssetPlanId())
                 .visualAssetItemId(request.getVisualAssetItemId())
                 .providerType(providerGateway.getProviderAlias())
-                .errorCode(com.anadoluatlasi.backend.imagegen.entity.ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE)
-                .errorMessage("Provider gateway hatası: " + e.getMessage())
+                .errorCode(failureCode)
+                .errorMessage(safeMessage)
                 .correlationId(request.getCorrelationId())
                 .build();
 
         result = resultRepository.save(result);
 
         request.setStatus(ImageGenerationRequestStatus.FAILED);
-        request.setErrorCode(com.anadoluatlasi.backend.imagegen.entity.ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE);
-        request.setErrorMessage("Provider gateway hatası: " + e.getMessage());
+        request.setErrorCode(failureCode);
+        request.setErrorMessage(safeMessage);
         request.setCompletedAt(LocalDateTime.now());
         requestRepository.save(request);
 
-        log.error("Generation exception: requestId={}, resultId={}, status=FAILED",
-                request.getId(), result.getId());
+        log.error("Generation exception: requestId={}, resultId={}, correlationId={}, status=FAILED",
+                request.getId(), result.getId(), request.getCorrelationId());
 
         return ImageGenerationResultMapper.toResponse(result);
     }
