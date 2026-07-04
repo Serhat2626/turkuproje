@@ -43,6 +43,9 @@ class ImageGenerationOrchestrationServiceTest {
     @Mock
     private ImageGenerationResultRepository resultRepository;
 
+    @Mock
+    private ImageGeneratedAssetHandoffService handoffService;
+
     private MockImageGenerationProviderGateway mockProvider;
     private ImageGenerationOrchestrationService orchestrationService;
 
@@ -56,7 +59,7 @@ class ImageGenerationOrchestrationServiceTest {
     void setUp() {
         mockProvider = new MockImageGenerationProviderGateway();
         orchestrationService = new ImageGenerationOrchestrationService(
-                requestRepository, resultRepository, mockProvider);
+                requestRepository, resultRepository, mockProvider, handoffService);
     }
 
     private ImageGenerationRequest createRequestedRequest() {
@@ -364,6 +367,51 @@ class ImageGenerationOrchestrationServiceTest {
             assertThat(request.getStatus().name()).doesNotContain("READY_FOR_PUBLISH");
             assertThat(request.getStatus().name()).doesNotContain("COMPLETED");
             assertThat(request.getStatus().name()).doesNotContain("APPROVED");
+        }
+    }
+
+    // ── Handoff Integration Tests ───────────────────────────────────
+
+    @Nested
+    @DisplayName("executeGeneration — Handoff entegrasyonu")
+    class HandoffIntegration {
+
+        @Test
+        @DisplayName("Success akışında handoff service çağrılır")
+        void shouldCallHandoffOnSuccess() {
+            ImageGenerationRequest request = createRequestedRequest();
+
+            when(requestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+            when(requestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(resultRepository.save(any())).thenAnswer(inv -> {
+                ImageGenerationResult result = inv.getArgument(0);
+                result.setId(UUID.randomUUID());
+                return result;
+            });
+
+            orchestrationService.executeGeneration(REQUEST_ID);
+
+            verify(handoffService, times(1)).createAssetHandoff(
+                    eq(request), any(ImageGenerationResult.class), any());
+        }
+
+        @Test
+        @DisplayName("Failure akışında handoff service çağrılmaz")
+        void shouldNotCallHandoffOnFailure() {
+            ImageGenerationRequest request = createRequestedRequest();
+            request.setSafePromptSummary("MOCK_FAIL");
+
+            when(requestRepository.findById(REQUEST_ID)).thenReturn(Optional.of(request));
+            when(requestRepository.save(any())).thenAnswer(inv -> inv.getArgument(0));
+            when(resultRepository.save(any())).thenAnswer(inv -> {
+                ImageGenerationResult result = inv.getArgument(0);
+                result.setId(UUID.randomUUID());
+                return result;
+            });
+
+            orchestrationService.executeGeneration(REQUEST_ID);
+
+            verify(handoffService, never()).createAssetHandoff(any(), any(), any());
         }
     }
 }

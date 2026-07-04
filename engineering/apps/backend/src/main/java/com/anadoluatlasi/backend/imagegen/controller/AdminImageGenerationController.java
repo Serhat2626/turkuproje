@@ -2,6 +2,7 @@ package com.anadoluatlasi.backend.imagegen.controller;
 
 import com.anadoluatlasi.backend.common.api.ApiResponse;
 import com.anadoluatlasi.backend.imagegen.controller.dto.*;
+import com.anadoluatlasi.backend.imagegen.service.ImageGeneratedAssetQueryService;
 import com.anadoluatlasi.backend.imagegen.service.ImageGenerationOrchestrationService;
 import com.anadoluatlasi.backend.imagegen.service.ImageGenerationRequestService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -24,8 +25,8 @@ import java.util.UUID;
  * READY_FOR_PUBLISH, publish, export endpoint yoktur.
  * Raw provider payload/response, internal prompt, API key/secret döndürülmez.</p>
  *
- * <p>Generation request endpoint'leri aktif, diğer endpoint'ler
- * henüz 501 Not Implemented döner.</p>
+ * <p>Generation request ve generated asset endpoint'leri aktif.
+ * Approve/reject/preview henüz 501 Not Implemented döner.</p>
  *
  * <p>Human review explicit approve/reject action ile yapılır.
  * AI output hiçbir zaman otomatik APPROVED olamaz.</p>
@@ -39,6 +40,7 @@ public class AdminImageGenerationController {
 
     private final ImageGenerationRequestService requestService;
     private final ImageGenerationOrchestrationService orchestrationService;
+    private final ImageGeneratedAssetQueryService queryService;
 
     // ── Generation Request Endpoints ────────────────────────────────
 
@@ -91,8 +93,8 @@ public class AdminImageGenerationController {
      * REQUESTED request için mock provider ile generation çalıştırır.
      *
      * <p>Status akışı: REQUESTED → GENERATING → GENERATED_PENDING_REVIEW veya FAILED.</p>
-     * <p>Bu endpoint açıkça mock/controlled generation action'dır.
-     * Generic status update değildir. GeneratedAsset/MediaAsset oluşturmaz.</p>
+     * <p>Başarılı generation sonrasında ImageMediaAsset ve ImageGeneratedAsset oluşturulur.
+     * Generic status update değildir.</p>
      */
     @PostMapping("/requests/{requestId}/execute-generation")
     @Operation(summary = "Generation çalıştır (mock provider)",
@@ -112,9 +114,8 @@ public class AdminImageGenerationController {
     @GetMapping("/generated-assets/pending-review")
     @Operation(summary = "Review bekleyen generated asset'leri listele")
     public ResponseEntity<ApiResponse<List<ImageGeneratedAssetResponse>>> listPendingReview() {
-        // TODO: FP-007 Task 10 — Human Review Workflow
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Pending review listesi henüz uygulanmadı");
+        List<ImageGeneratedAssetResponse> responses = queryService.listPendingReview();
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     /**
@@ -127,9 +128,9 @@ public class AdminImageGenerationController {
             @RequestParam(required = false) String status,
             @RequestParam(required = false) UUID visualAssetPlanId,
             @RequestParam(required = false) UUID contentProjectId) {
-        // TODO: FP-007 Task 09 — GeneratedAsset Service
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Generated asset listesi henüz uygulanmadı");
+        List<ImageGeneratedAssetResponse> responses = queryService.listGeneratedAssets(
+                status, visualAssetPlanId, contentProjectId);
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     /**
@@ -144,9 +145,8 @@ public class AdminImageGenerationController {
                description = "Asset, request, result, review geçmişi ve lineage — safe metadata only")
     public ResponseEntity<ApiResponse<GeneratedAssetReviewDetailResponse>> getReviewDetail(
             @PathVariable UUID generatedAssetId) {
-        // TODO: FP-007 Task 10 — Human Review Workflow
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Review detail servisi henüz uygulanmadı");
+        GeneratedAssetReviewDetailResponse response = queryService.getReviewDetail(generatedAssetId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // ── Review Action Endpoints ─────────────────────────────────────

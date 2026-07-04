@@ -25,10 +25,11 @@ import java.util.UUID;
  * <p>REQUESTED ImageGenerationRequest için provider gateway'i çalıştırır.
  * Status akışı: REQUESTED → GENERATING → GENERATED_PENDING_REVIEW veya FAILED</p>
  *
+ * <p>Başarılı generation sonrasında handoff service aracılığıyla
+ * ImageMediaAsset ve ImageGeneratedAsset oluşturulur.</p>
+ *
  * <p>Bu service asla:</p>
  * <ul>
- *   <li>ImageGeneratedAsset oluşturmaz</li>
- *   <li>ImageMediaAsset oluşturmaz</li>
  *   <li>Storage upload/download yapmaz</li>
  *   <li>Review approve/reject yapmaz</li>
  *   <li>APPROVED/REJECTED/COMPLETED/READY_FOR_PUBLISH status atamaz</li>
@@ -46,6 +47,7 @@ public class ImageGenerationOrchestrationService {
     private final ImageGenerationRequestRepository requestRepository;
     private final ImageGenerationResultRepository resultRepository;
     private final ImageGenerationProviderGateway providerGateway;
+    private final ImageGeneratedAssetHandoffService handoffService;
 
     /**
      * REQUESTED request için provider generation çalıştırır.
@@ -137,6 +139,9 @@ public class ImageGenerationOrchestrationService {
                 .build();
 
         result = resultRepository.save(result);
+
+        // Asset handoff — MediaAsset + GeneratedAsset oluştur
+        handoffService.createAssetHandoff(request, result, providerResult);
 
         // Request status → GENERATED_PENDING_REVIEW
         request.setStatus(ImageGenerationRequestStatus.GENERATED_PENDING_REVIEW);
