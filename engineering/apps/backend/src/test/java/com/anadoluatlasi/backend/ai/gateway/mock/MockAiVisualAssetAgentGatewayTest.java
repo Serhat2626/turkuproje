@@ -428,16 +428,15 @@ class MockAiVisualAssetAgentGatewayTest {
         }
 
         @Test
-        @DisplayName("OpenAI provider sınıfı bu task'ta oluşturulmadı")
-        void openAiProviderShouldNotExistYet() {
-            // OpenAI provider Task 09'da eklenecek — henüz mevcut değil
+        @DisplayName("OpenAI provider sınıfı Task 09'da oluşturuldu")
+        void openAiProviderShouldExist() {
+            // OpenAI provider Task 09'da eklendi — sınıf mevcut olmalı
             try {
                 Class.forName("com.anadoluatlasi.backend.ai.gateway.openai.OpenAiVisualAssetAgentGateway");
-                // Eğer sınıf bulunursa test başarısız
-                assertThat(false).as("OpenAI Visual Asset provider should not exist yet").isTrue();
-            } catch (ClassNotFoundException e) {
-                // Beklenen durum — sınıf henüz yok
+                // Sınıf bulundu — beklenen durum
                 assertThat(true).isTrue();
+            } catch (ClassNotFoundException e) {
+                assertThat(false).as("OpenAI Visual Asset provider should exist after Task 09").isTrue();
             }
         }
 

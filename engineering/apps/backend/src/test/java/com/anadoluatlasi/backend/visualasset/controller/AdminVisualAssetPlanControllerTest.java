@@ -821,13 +821,13 @@ class AdminVisualAssetPlanControllerTest {
         }
 
         @Test
-        @DisplayName("OpenAI provider sınıfı oluşturulmadı")
-        void noOpenAiProviderCreated() {
+        @DisplayName("OpenAI provider sınıfı Task 09'da oluşturuldu")
+        void openAiProviderExists() {
             try {
                 Class.forName("com.anadoluatlasi.backend.ai.gateway.openai.OpenAiVisualAssetAgentGateway");
-                assertThat(false).as("OpenAI provider should not exist").isTrue();
+                assertThat(true).isTrue();
             } catch (ClassNotFoundException e) {
-                // Expected
+                assertThat(false).as("OpenAI provider should exist after Task 09").isTrue();
             }
         }
 

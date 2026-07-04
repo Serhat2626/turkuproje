@@ -14,6 +14,7 @@ import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiPlatformPackageAgentGateway;
+import com.anadoluatlasi.backend.ai.gateway.openai.OpenAiVisualAssetAgentGateway;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -42,8 +43,10 @@ import org.springframework.context.annotation.Configuration;
  * {@link OpenAiStoryboardAgentGateway} aktifleşir. Aksi halde
  * {@link MockAiStoryboardAgentGateway} fallback olarak devreye girer.</p>
  *
- * <p><strong>FP-006 Visual Asset Gateway:</strong> Mock fallback via
- * {@code @ConditionalOnMissingBean}. OpenAI provider Task 09'da eklenecektir.</p>
+ * <p><strong>FP-006 Visual Asset Gateway:</strong> {@code ai.provider=openai} olduğunda
+ * {@link OpenAiVisualAssetAgentGateway} aktifleşir. Aksi halde
+ * {@link MockAiVisualAssetAgentGateway} fallback olarak devreye girer.
+ * Bu gateway yalnızca metin prompt planı üretir — image API çağırmaz.</p>
  */
 @Slf4j
 @Configuration
@@ -164,10 +167,26 @@ public class AiGatewayConfig {
     // ── FP-006: Visual Asset Agent Gateway ──────────────────
 
     /**
+     * OpenAI visual asset gateway — gerçek AI provider.
+     * {@code ai.provider=openai} ayarlandığında aktifleşir.
+     *
+     * <p>Bu gateway yalnızca metin prompt planı üretir — image API çağırmaz.
+     * DALL-E, Midjourney, Stable Diffusion çağrısı yapmaz.</p>
+     */
+    @Bean
+    @ConditionalOnProperty(name = "ai.provider", havingValue = "openai")
+    public AiVisualAssetAgentGateway openAiVisualAssetAgentGateway(AiProviderProperties properties) {
+        log.info("AI Visual Asset Provider: OPENAI — model={}",
+                properties.getOpenai().getModel());
+        return new OpenAiVisualAssetAgentGateway(properties.getOpenai());
+    }
+
+    /**
      * Mock visual asset gateway — fallback provider.
      *
-     * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır.
-     * OpenAI provider Task 09'da eklenecektir.</p>
+     * <p>{@code @ConditionalOnMissingBean} ile kayıtlıdır. {@code ai.provider=openai}
+     * olduğunda {@code OpenAiVisualAssetAgentGateway} bean'i mevcut olacağından,
+     * bu fallback devre dışı kalır.</p>
      *
      * <p>Bu gateway yalnızca metin prompt üretir — image API çağırmaz.</p>
      */
