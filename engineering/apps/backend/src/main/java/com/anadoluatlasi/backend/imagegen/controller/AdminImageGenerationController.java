@@ -2,6 +2,7 @@ package com.anadoluatlasi.backend.imagegen.controller;
 
 import com.anadoluatlasi.backend.common.api.ApiResponse;
 import com.anadoluatlasi.backend.imagegen.controller.dto.*;
+import com.anadoluatlasi.backend.imagegen.service.ImageGenerationRequestService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -17,13 +18,13 @@ import java.util.UUID;
 /**
  * FP-007: Admin Image Generation Workflow REST controller.
  *
- * <p>Thin controller skeleton — explicit action endpoint'ler.
+ * <p>Thin controller — explicit action endpoint'ler.
  * Generic status update endpoint yoktur.
  * READY_FOR_PUBLISH, publish, export endpoint yoktur.
  * Raw provider payload/response, internal prompt, API key/secret döndürülmez.</p>
  *
- * <p>Service layer henüz oluşturulmadığı için tüm endpoint'ler
- * 501 Not Implemented döner. Gerçek implementasyon sonraki tasklarda yapılacaktır.</p>
+ * <p>Generation request endpoint'leri aktif, diğer endpoint'ler
+ * henüz 501 Not Implemented döner.</p>
  *
  * <p>Human review explicit approve/reject action ile yapılır.
  * AI output hiçbir zaman otomatik APPROVED olamaz.</p>
@@ -34,6 +35,8 @@ import java.util.UUID;
 @Tag(name = "Admin Image Generation Workflow",
      description = "FP-007: Image generation ve review aksiyonları (Admin)")
 public class AdminImageGenerationController {
+
+    private final ImageGenerationRequestService requestService;
 
     // ── Generation Request Endpoints ────────────────────────────────
 
@@ -48,9 +51,8 @@ public class AdminImageGenerationController {
                description = "APPROVED VisualAssetPlan için image generation request oluşturur")
     public ResponseEntity<ApiResponse<ImageGenerationRequestResponse>> startGeneration(
             @Valid @RequestBody StartImageGenerationRequest request) {
-        // TODO: FP-007 Task 07 — Generation Request Service
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Image generation request service henüz uygulanmadı");
+        ImageGenerationRequestResponse response = requestService.startGeneration(request);
+        return ResponseEntity.status(HttpStatus.CREATED).body(ApiResponse.success(response));
     }
 
     /**
@@ -65,9 +67,9 @@ public class AdminImageGenerationController {
             @RequestParam(required = false) UUID visualAssetItemId,
             @RequestParam(required = false) UUID contentProjectId,
             @RequestParam(required = false) UUID correlationId) {
-        // TODO: FP-007 Task 07 — Generation Request Service
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Generation request listesi henüz uygulanmadı");
+        List<ImageGenerationRequestResponse> responses = requestService.listRequests(
+                status, visualAssetPlanId, visualAssetItemId, contentProjectId, correlationId);
+        return ResponseEntity.ok(ApiResponse.success(responses));
     }
 
     /**
@@ -77,9 +79,8 @@ public class AdminImageGenerationController {
     @Operation(summary = "Generation request detayı")
     public ResponseEntity<ApiResponse<ImageGenerationRequestResponse>> getRequest(
             @PathVariable UUID requestId) {
-        // TODO: FP-007 Task 07 — Generation Request Service
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Generation request detay servisi henüz uygulanmadı");
+        ImageGenerationRequestResponse response = requestService.getRequestDetail(requestId);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // ── Generated Asset Endpoints ───────────────────────────────────
