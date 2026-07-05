@@ -68,4 +68,53 @@ public final class AdminReviewDtoMapper {
                 .sanitizedNote(ReviewTextSafety.sanitize(entity.getSanitizedNote()))
                 .build();
     }
+
+    // ── FP-012 Task 10: Worklist & Target Context Mapping ───────────
+
+    /**
+     * Map ReviewRecordEntity to AdminReviewWorklistItem.
+     * Safe display title derived from target type + ID.
+     */
+    public static AdminReviewWorklistItem toWorklistItem(ReviewRecordEntity entity) {
+        return AdminReviewWorklistItem.builder()
+                .targetType(entity.getReviewTargetType())
+                .targetId(entity.getReviewTargetId())
+                .currentState(entity.getCurrentState())
+                .currentReviewerActorReference(entity.getCurrentReviewerActorReference())
+                .lastActionType(entity.getLastActionType())
+                .lastActionAt(entity.getLastActionAt())
+                .lastActionByActorReference(entity.getLastActionByActorReference())
+                .safeReasonCode(ReviewTextSafety.sanitizeReasonCode(entity.getSafeReasonCode()))
+                .safeMessage(ReviewTextSafety.sanitize(entity.getSafeMessage()))
+                .displayTitle(safeDisplayTitle(entity))
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    /**
+     * Map ReviewRecordEntity to AdminReviewTargetContext.
+     * No external lookup — derived from review record only.
+     */
+    public static AdminReviewTargetContext toTargetContext(ReviewRecordEntity entity) {
+        return AdminReviewTargetContext.builder()
+                .targetType(entity.getReviewTargetType())
+                .targetId(entity.getReviewTargetId())
+                .currentState(entity.getCurrentState())
+                .displayTitle(safeDisplayTitle(entity))
+                .displaySubtitle(entity.getReviewTargetType().name())
+                .safePreviewAvailable(false)
+                .safePreviewLabel("Önizleme henüz desteklenmiyor")
+                .createdAt(entity.getCreatedAt())
+                .updatedAt(entity.getUpdatedAt())
+                .build();
+    }
+
+    /**
+     * Generate safe display title from entity — no sensitive data.
+     */
+    private static String safeDisplayTitle(ReviewRecordEntity entity) {
+        return entity.getReviewTargetType().name() + " — " +
+                entity.getReviewTargetId().toString().substring(0, 8);
+    }
 }

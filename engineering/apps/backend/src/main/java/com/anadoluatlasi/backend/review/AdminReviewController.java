@@ -129,23 +129,44 @@ public class AdminReviewController {
 
     // ── Query Endpoints ─────────────────────────────────────────────
 
+    @GetMapping("/worklist")
+    @Operation(summary = "Get review worklist")
+    public ResponseEntity<ApiResponse<List<AdminReviewWorklistItem>>> getWorklist(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) ReviewState state,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) ReviewTargetType targetType,
+            @org.springframework.web.bind.annotation.RequestParam(required = false) String reviewer,
+            @org.springframework.web.bind.annotation.RequestParam(defaultValue = "50") int limit) {
+        List<AdminReviewWorklistItem> items = reviewApplicationService.listWorkItems(
+                state, targetType, reviewer, limit);
+        return ResponseEntity.ok(ApiResponse.success(items));
+    }
+
+    @GetMapping("/{targetType}/{targetId}/context")
+    @Operation(summary = "Get review target context")
+    public ResponseEntity<ApiResponse<AdminReviewTargetContext>> getTargetContext(
+            @PathVariable ReviewTargetType targetType,
+            @PathVariable UUID targetId) {
+        Optional<AdminReviewTargetContext> context =
+                reviewApplicationService.getTargetContext(targetType, targetId);
+        if (context.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Review target context not found"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(context.get()));
+    }
+
     @GetMapping("/{targetType}/{targetId}/state")
-    @Operation(summary = "Get current review state")
+    @Operation(summary = "Get current review state summary")
     public ResponseEntity<ApiResponse<AdminReviewStateSummary>> getReviewState(
             @PathVariable ReviewTargetType targetType,
             @PathVariable UUID targetId) {
-        Optional<ReviewState> state = reviewApplicationService.getReviewState(targetType, targetId);
-        if (state.isEmpty()) {
+        Optional<AdminReviewStateSummary> summary =
+                reviewApplicationService.getReviewStateSummary(targetType, targetId);
+        if (summary.isEmpty()) {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .body(ApiResponse.error("Review record not found"));
         }
-        // Build minimal summary from available state
-        AdminReviewStateSummary summary = AdminReviewStateSummary.builder()
-                .targetType(targetType)
-                .targetId(targetId)
-                .currentState(state.get())
-                .build();
-        return ResponseEntity.ok(ApiResponse.success(summary));
+        return ResponseEntity.ok(ApiResponse.success(summary.get()));
     }
 
     @GetMapping("/{targetType}/{targetId}/audit")
@@ -158,6 +179,21 @@ public class AdminReviewController {
                 .map(AdminReviewDtoMapper::toTimelineItem)
                 .collect(Collectors.toList());
         return ResponseEntity.ok(ApiResponse.success(timeline));
+    }
+
+    @GetMapping("/{targetType}/{targetId}/actions")
+    @Operation(summary = "Get available review actions for actor role")
+    public ResponseEntity<ApiResponse<AdminReviewActionAvailability>> getAvailableActions(
+            @PathVariable ReviewTargetType targetType,
+            @PathVariable UUID targetId,
+            @org.springframework.web.bind.annotation.RequestParam ReviewActorRole actorRole) {
+        Optional<AdminReviewActionAvailability> availability =
+                reviewApplicationService.getAvailableActions(targetType, targetId, actorRole);
+        if (availability.isEmpty()) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                    .body(ApiResponse.error("Review record not found"));
+        }
+        return ResponseEntity.ok(ApiResponse.success(availability.get()));
     }
 
     // ── Request Validation ──────────────────────────────────────────

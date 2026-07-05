@@ -172,8 +172,11 @@ class AdminReviewControllerTest {
         @Test
         @DisplayName("getReviewState returns safe summary")
         void getState() {
-            when(reviewApplicationService.getReviewState(TARGET_TYPE, TARGET_ID))
-                    .thenReturn(Optional.of(ReviewState.IN_REVIEW));
+            AdminReviewStateSummary summary = AdminReviewStateSummary.builder()
+                    .targetType(TARGET_TYPE).targetId(TARGET_ID)
+                    .currentState(ReviewState.IN_REVIEW).build();
+            when(reviewApplicationService.getReviewStateSummary(TARGET_TYPE, TARGET_ID))
+                    .thenReturn(Optional.of(summary));
 
             var response = controller.getReviewState(TARGET_TYPE, TARGET_ID);
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
@@ -183,7 +186,7 @@ class AdminReviewControllerTest {
         @Test
         @DisplayName("getReviewState returns 404 when not found")
         void getStateMissing() {
-            when(reviewApplicationService.getReviewState(TARGET_TYPE, TARGET_ID))
+            when(reviewApplicationService.getReviewStateSummary(TARGET_TYPE, TARGET_ID))
                     .thenReturn(Optional.empty());
 
             var response = controller.getReviewState(TARGET_TYPE, TARGET_ID);

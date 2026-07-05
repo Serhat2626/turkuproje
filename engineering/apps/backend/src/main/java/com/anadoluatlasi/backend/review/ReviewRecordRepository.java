@@ -35,4 +35,15 @@ public interface ReviewRecordRepository extends JpaRepository<ReviewRecordEntity
      */
     boolean existsByReviewTargetTypeAndReviewTargetId(
             ReviewTargetType reviewTargetType, UUID reviewTargetId);
+
+    /**
+     * FP-012 Task 10: Find records by target type.
+     */
+    List<ReviewRecordEntity> findByReviewTargetType(ReviewTargetType reviewTargetType);
+
+    /**
+     * FP-012 Task 10: Find records by state and target type.
+     */
+    List<ReviewRecordEntity> findByCurrentStateAndReviewTargetType(
+            ReviewState currentState, ReviewTargetType reviewTargetType);
 }

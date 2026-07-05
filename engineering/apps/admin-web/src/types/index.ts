@@ -867,3 +867,183 @@ export interface VisualAssetPlanGenerateResponse {
 export interface VisualAssetPlanRejectRequest {
   reason: string
 }
+
+// ── FP-012 Admin Review Workflow ────────────────────────────
+
+/**
+ * Safe review target types.
+ * No publish/export/CDN/public media targets.
+ */
+export type ReviewTargetType =
+  | 'CONTENT_PROJECT'
+  | 'SCENARIO'
+  | 'STORYBOARD'
+  | 'IMAGE_ASSET'
+
+/**
+ * Safe review states.
+ * No READY_FOR_PUBLISH / COMPLETED / PUBLISHED / EXPORTED.
+ */
+export type ReviewState =
+  | 'DRAFT'
+  | 'NEEDS_REVIEW'
+  | 'IN_REVIEW'
+  | 'CHANGES_REQUESTED'
+  | 'APPROVED_FOR_INTERNAL_USE'
+  | 'REJECTED'
+
+/**
+ * Explicit review action types — no generic status update.
+ * No PUBLISH / EXPORT / MARK_COMPLETED / AUTO_APPROVE.
+ */
+export type ReviewActionType =
+  | 'SUBMIT_FOR_REVIEW'
+  | 'START_REVIEW'
+  | 'REQUEST_CHANGES'
+  | 'APPROVE_FOR_INTERNAL_USE'
+  | 'REJECT'
+  | 'RETURN_TO_DRAFT'
+  | 'ADD_REVIEW_NOTE'
+
+export type ReviewActorRole =
+  | 'CREATOR'
+  | 'REVIEWER'
+  | 'ADMIN'
+  | 'SYSTEM'
+
+export type ReviewAuditEventType =
+  | 'REVIEW_SUBMITTED'
+  | 'REVIEW_STARTED'
+  | 'CHANGES_REQUESTED'
+  | 'INTERNAL_APPROVAL_GRANTED'
+  | 'REVIEW_REJECTED'
+  | 'RETURNED_TO_DRAFT'
+  | 'REVIEW_NOTE_ADDED'
+
+/**
+ * Safe admin review action request.
+ * No provider URL, storage key, raw payload, base64, secret, public/signed URL.
+ */
+export interface AdminReviewActionRequest {
+  targetType: ReviewTargetType
+  targetId: string
+  actionType: ReviewActionType
+  actorRole: ReviewActorRole
+  actorReference: string
+  reasonCode?: string
+  note?: string
+}
+
+/**
+ * Safe admin review action response.
+ * No provider URL, storage key, raw payload, base64, secret, public/signed URL,
+ * publish/export semantics.
+ */
+export interface AdminReviewActionResponse {
+  targetType: ReviewTargetType
+  targetId: string
+  previousState: ReviewState
+  currentState: ReviewState
+  actionType: ReviewActionType
+  actorRole: ReviewActorRole
+  auditEventType: ReviewAuditEventType
+  changed: boolean
+  safeMessage: string | null
+  safeReasonCode: string | null
+  occurredAt: string
+}
+
+/**
+ * Safe admin review state summary.
+ * No raw notes, no provider/storage/publish/export fields.
+ */
+export interface AdminReviewStateSummary {
+  targetType: ReviewTargetType
+  targetId: string
+  currentState: ReviewState
+  currentReviewerActorReference: string | null
+  lastActionType: ReviewActionType | null
+  lastActionAt: string | null
+  lastActionByActorReference: string | null
+  safeMessage: string | null
+  safeReasonCode: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+/**
+ * Safe admin review audit timeline item.
+ * Sanitized note only. No raw payload/URL/key/secret.
+ */
+export interface AdminReviewAuditTimelineItem {
+  eventType: ReviewAuditEventType
+  fromState: ReviewState
+  toState: ReviewState
+  actionType: ReviewActionType
+  actorRole: ReviewActorRole
+  actorReference: string
+  occurredAt: string
+  safeReasonCode: string | null
+  safeMessage: string | null
+  sanitizedNote: string | null
+}
+
+/**
+ * FP-012 Task 10: Safe admin review worklist item.
+ * No provider URL/storage key/raw payload/secret/public URL.
+ */
+export interface AdminReviewWorklistItem {
+  targetType: ReviewTargetType
+  targetId: string
+  currentState: ReviewState
+  currentReviewerActorReference: string | null
+  lastActionType: ReviewActionType | null
+  lastActionAt: string | null
+  lastActionByActorReference: string | null
+  safeReasonCode: string | null
+  safeMessage: string | null
+  displayTitle: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+/**
+ * FP-012 Task 10: Safe admin review target context.
+ * No provider URL/storage key/raw payload/secret/public URL.
+ */
+export interface AdminReviewTargetContext {
+  targetType: ReviewTargetType
+  targetId: string
+  currentState: ReviewState
+  displayTitle: string | null
+  displaySubtitle: string | null
+  safePreviewAvailable: boolean
+  safePreviewLabel: string | null
+  createdAt: string | null
+  updatedAt: string | null
+}
+
+/**
+ * FP-012 Task 11: Safe single action availability.
+ * No publish/export/provider/storage fields.
+ */
+export interface AdminReviewAvailableAction {
+  actionType: ReviewActionType
+  enabled: boolean
+  disabledReasonCode: string | null
+  safeLabel: string | null
+  safeDescription: string | null
+}
+
+/**
+ * FP-012 Task 11: Safe action availability container.
+ * No publish/export/provider/storage fields.
+ */
+export interface AdminReviewActionAvailability {
+  targetType: ReviewTargetType
+  targetId: string
+  currentState: ReviewState
+  actorRole: ReviewActorRole
+  availableActions: AdminReviewAvailableAction[]
+  safeMessage: string | null
+}
