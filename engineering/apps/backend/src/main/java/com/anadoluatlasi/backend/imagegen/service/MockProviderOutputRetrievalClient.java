@@ -2,6 +2,7 @@ package com.anadoluatlasi.backend.imagegen.service;
 
 import com.anadoluatlasi.backend.imagegen.entity.ImageStorageErrorCode;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -21,9 +22,13 @@ import java.time.LocalDateTime;
  * - Does not require config/secrets.
  * - Does not persist, log, or expose the provider URL.
  * - Returns sanitized error messages only.
+ *
+ * FP-010 Task 02: Now uses @ConditionalOnMissingBean — active only when
+ * HttpProviderOutputRetrievalClient is not enabled.
  */
 @Slf4j
 @Component
+@ConditionalOnMissingBean(HttpProviderOutputRetrievalClient.class)
 public class MockProviderOutputRetrievalClient implements ProviderOutputRetrievalClient {
 
     /**

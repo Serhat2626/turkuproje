@@ -46,4 +46,30 @@ public class S3PrivateStorageProperties {
     /** S3 secret key — NEVER logged, serialized, or exposed. */
     @ToString.Exclude
     private String secretKey = "";
+
+    /**
+     * FP-010 Task 02: Returns true if S3 is enabled AND has minimum required config.
+     * Does not validate credentials — that is handled at connection time.
+     */
+    public boolean isEnabledAndConfigured() {
+        return enabled
+                && bucket != null && !bucket.isBlank()
+                && endpoint != null && !endpoint.isBlank()
+                && region != null && !region.isBlank();
+    }
+
+    /**
+     * FP-010 Task 02: Validates config for production use.
+     * Returns null if valid, safe error message if invalid.
+     * Never includes secret values in the message.
+     */
+    public String validateForProduction() {
+        if (!enabled) return "S3 storage is disabled";
+        if (bucket == null || bucket.isBlank()) return "S3 bucket is not configured";
+        if (endpoint == null || endpoint.isBlank()) return "S3 endpoint is not configured";
+        if (region == null || region.isBlank()) return "S3 region is not configured";
+        if (accessKey == null || accessKey.isBlank()) return "S3 credentials are not configured";
+        if (secretKey == null || secretKey.isBlank()) return "S3 credentials are not configured";
+        return null; // valid
+    }
 }
