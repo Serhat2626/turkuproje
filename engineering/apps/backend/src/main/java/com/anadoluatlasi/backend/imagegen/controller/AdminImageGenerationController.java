@@ -43,6 +43,7 @@ public class AdminImageGenerationController {
     private final ImageGeneratedAssetQueryService queryService;
     private final ImageGeneratedAssetReviewService reviewService;
     private final ImagePreviewProxyService previewProxyService;
+    private final ControlledStorageHandoffOrchestrationService controlledHandoffService;
 
     // ── Generation Request Endpoints ────────────────────────────────
 
@@ -190,25 +191,64 @@ public class AdminImageGenerationController {
     // ── Storage Handoff Endpoint ──────────────────────────────────────
 
     /**
-     * FP-008: Explicit storage handoff action.
+     * FP-009: Explicit controlled storage handoff action.
      *
-     * <p>Generated asset için storage handoff başlatır.
-     * Generic status update değildir — explicit action endpoint.</p>
+     * <p>Generated asset için controlled storage handoff başlatır.
+     * Generic status update değildir — explicit command endpoint.</p>
      *
-     * <p>Bu endpoint henüz provider output retrieval/bytes source
-     * implementation olmadığı için 501 döner. Admin request body'den
-     * base64/binary/providerUrl kabul etmez.</p>
+     * <p>Bu endpoint admin tarafından tetiklenir. Provider output URL
+     * admin'den GELmez — backend-internal olarak elde edilir.
+     * Endpoint'ten direkt tetikleme durumunda provider URL yoksa
+     * safe failure döner (PROVIDER_OUTPUT_UNAVAILABLE).</p>
      *
-     * <p>Provider output retrieval ve real handoff FP-008 Task 10+ ile aktif edilecek.</p>
+     * <p>Full immediate handoff akışı generation sonrası backend-internal
+     * olarak tetiklenir (provider URL transient olarak iletilir).</p>
+     *
+     * <p>Response'ta storageObjectKey, providerUrl, signedUrl, publicUrl,
+     * base64, raw payload döndürülmez.</p>
      */
     @PostMapping("/generated-assets/{generatedAssetId}/storage-handoff")
-    @Operation(summary = "Storage handoff başlat (FP-008)",
-               description = "Explicit action — provider output retrieval henüz yok, 501")
+    @Operation(summary = "Storage handoff başlat (FP-009)",
+               description = "Explicit command action — controlled retrieval → validation → storage")
     public ResponseEntity<ApiResponse<StorageHandoffResponse>> startStorageHandoff(
             @PathVariable UUID generatedAssetId) {
-        // TODO: FP-008 Task 10+ — Provider output retrieval ve gerçek handoff
-        throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED,
-                "Storage handoff servisi henüz provider output retrieval desteklemiyor");
+
+        String correlationId = UUID.randomUUID().toString();
+
+        // Endpoint-triggered handoff — provider URL is backend-internal only
+        // Admin never sends provider URL. If no transient URL is available,
+        // the orchestration will return safe PROVIDER_OUTPUT_UNAVAILABLE failure.
+        ImageStorageHandoffResult result = controlledHandoffService.executeControlledHandoff(
+                generatedAssetId, null, correlationId);
+
+        StorageHandoffResponse response = mapToSafeResponse(result);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    /**
+     * Maps internal handoff result to safe admin-facing DTO.
+     * Intentionally excludes: storageObjectKey, providerUrl, signedUrl,
+     * publicUrl, base64, raw payload, secrets.
+     */
+    private StorageHandoffResponse mapToSafeResponse(ImageStorageHandoffResult result) {
+        return StorageHandoffResponse.builder()
+                .success(result.isSuccess())
+                .mediaAssetId(result.getMediaAssetId())
+                .generatedAssetId(result.getGeneratedAssetId())
+                .storageHandoffStatus(result.getStorageHandoffStatus() != null
+                        ? result.getStorageHandoffStatus().name() : null)
+                .previewStatus(result.getPreviewStatus() != null
+                        ? result.getPreviewStatus().name() : null)
+                .mimeType(result.getMimeType())
+                .width(result.getWidth() > 0 ? result.getWidth() : null)
+                .height(result.getHeight() > 0 ? result.getHeight() : null)
+                .fileSizeBytes(result.getFileSizeBytes() > 0 ? result.getFileSizeBytes() : null)
+                .checksumSha256(result.getChecksumSha256())
+                .storedAt(result.getStoredAt())
+                .errorCode(result.getErrorCode() != null ? result.getErrorCode().name() : null)
+                .errorMessage(result.getErrorMessage())
+                .correlationId(result.getCorrelationId())
+                .build();
     }
 
     // ── Preview Endpoint ────────────────────────────────────────────
