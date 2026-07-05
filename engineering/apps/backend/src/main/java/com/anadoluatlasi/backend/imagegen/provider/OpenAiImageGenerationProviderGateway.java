@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 /**
  * FP-007: OpenAI DALL-E image generation provider adapter.
@@ -64,15 +65,39 @@ public class OpenAiImageGenerationProviderGateway implements ImageGenerationProv
 
     @Override
     public ImageProviderGenerationResult generate(ImageProviderGenerationRequest request) {
+        // Delegate to internal method, discard transient URL reference
+        ProviderOutputReference ref = generateWithOutputReference(request);
+        return ref.generationResult();
+    }
+
+    /**
+     * FP-009: Generate image and return transient provider output reference.
+     *
+     * <p>The returned {@link ProviderOutputReference} contains:
+     * <ul>
+     *   <li>The safe {@link ImageProviderGenerationResult} (no URL/base64/raw data)</li>
+     *   <li>The transient provider output URL (internal-only, never persisted/logged/DTO-exposed)</li>
+     * </ul>
+     *
+     * <p>The provider URL is extracted from the OpenAI response data[0].url as a
+     * local variable and passed into the ProviderOutputReference. It is used once
+     * for retrieval by the handoff service and then discarded via garbage collection.</p>
+     *
+     * @param request generation request
+     * @return transient reference containing safe result + provider URL
+     */
+    public ProviderOutputReference generateWithOutputReference(ImageProviderGenerationRequest request) {
         // API key validation — safe error, key value never logged
         if (apiKey == null || apiKey.isBlank()) {
             log.error("OpenAI API key yapılandırılmamış — generation yapılamıyor: " +
                     "requestId={}, correlationId={}",
                     request.getRequestId(), request.getCorrelationId());
-            return buildFailureResult(request,
-                    ImageGenerationErrorCode.PROVIDER_UNAVAILABLE,
-                    ImageGenerationErrorNormalizer.safeMessage(
-                            ImageGenerationErrorCode.PROVIDER_UNAVAILABLE));
+            return new ProviderOutputReference(
+                    buildFailureResult(request,
+                            ImageGenerationErrorCode.PROVIDER_UNAVAILABLE,
+                            ImageGenerationErrorNormalizer.safeMessage(
+                                    ImageGenerationErrorCode.PROVIDER_UNAVAILABLE)),
+                    null);
         }
 
         log.info("OpenAI image generation başlatıldı: requestId={}, correlationId={}, model={}",
@@ -106,8 +131,21 @@ public class OpenAiImageGenerationProviderGateway implements ImageGenerationProv
 
             long durationMs = System.currentTimeMillis() - startMs;
 
+            // FP-009: Extract transient URL from response as local variable
+            // URL is NEVER persisted, logged, or added to the safe result model
+            String transientProviderUrl = extractProviderOutputUrl(response);
+
             // Extract only safe metadata from response — no URL/base64 persisted
-            return extractSafeResult(request, response, durationMs, startTime);
+            ImageProviderGenerationResult safeResult =
+                    extractSafeResult(request, response, durationMs, startTime);
+
+            // Log only safe metadata — URL is intentionally excluded
+            log.info("OpenAI generation completed with output reference: " +
+                            "requestId={}, correlationId={}, hasOutputUrl={}",
+                    request.getRequestId(), request.getCorrelationId(),
+                    transientProviderUrl != null && !transientProviderUrl.isBlank());
+
+            return new ProviderOutputReference(safeResult, transientProviderUrl);
 
         } catch (RestClientException e) {
             long durationMs = System.currentTimeMillis() - startMs;
@@ -119,8 +157,10 @@ public class OpenAiImageGenerationProviderGateway implements ImageGenerationProv
                     request.getRequestId(), request.getCorrelationId(),
                     e.getClass().getSimpleName(), durationMs);
 
-            return buildFailureResult(request, errorCode,
-                    ImageGenerationErrorNormalizer.safeMessage(errorCode));
+            return new ProviderOutputReference(
+                    buildFailureResult(request, errorCode,
+                            ImageGenerationErrorNormalizer.safeMessage(errorCode)),
+                    null);
 
         } catch (Exception e) {
             long durationMs = System.currentTimeMillis() - startMs;
@@ -130,10 +170,12 @@ public class OpenAiImageGenerationProviderGateway implements ImageGenerationProv
                     request.getRequestId(), request.getCorrelationId(),
                     e.getClass().getSimpleName(), durationMs);
 
-            return buildFailureResult(request,
-                    ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE,
-                    ImageGenerationErrorNormalizer.safeMessage(
-                            ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE));
+            return new ProviderOutputReference(
+                    buildFailureResult(request,
+                            ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE,
+                            ImageGenerationErrorNormalizer.safeMessage(
+                                    ImageGenerationErrorCode.UNKNOWN_GENERATION_FAILURE)),
+                    null);
         }
     }
 
@@ -143,6 +185,32 @@ public class OpenAiImageGenerationProviderGateway implements ImageGenerationProv
     }
 
     // ── Private Helpers ─────────────────────────────────────────────
+
+    /**
+     * FP-009: Extract provider output URL from OpenAI response.
+     *
+     * <p>Reads data[0].url as a transient local value.
+     * This URL is NEVER persisted, logged, or added to any result/DTO/entity.</p>
+     *
+     * @param response raw OpenAI API response map
+     * @return transient provider URL, or null if not present
+     */
+    @SuppressWarnings("unchecked")
+    String extractProviderOutputUrl(Map<String, Object> response) {
+        if (response == null || !response.containsKey("data")) {
+            return null;
+        }
+        Object data = response.get("data");
+        if (!(data instanceof List<?> dataList) || dataList.isEmpty()) {
+            return null;
+        }
+        Object firstItem = dataList.get(0);
+        if (!(firstItem instanceof Map<?, ?> itemMap)) {
+            return null;
+        }
+        Object urlValue = itemMap.get("url");
+        return urlValue instanceof String url && !url.isBlank() ? url : null;
+    }
 
     @SuppressWarnings("unchecked")
     private ImageProviderGenerationResult extractSafeResult(
