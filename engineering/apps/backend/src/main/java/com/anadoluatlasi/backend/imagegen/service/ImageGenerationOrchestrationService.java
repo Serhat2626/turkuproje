@@ -10,6 +10,7 @@ import com.anadoluatlasi.backend.imagegen.entity.ImageGenerationResult;
 import com.anadoluatlasi.backend.imagegen.provider.ImageGenerationProviderGateway;
 import com.anadoluatlasi.backend.imagegen.provider.ImageProviderGenerationRequest;
 import com.anadoluatlasi.backend.imagegen.provider.ImageProviderGenerationResult;
+import com.anadoluatlasi.backend.imagegen.provider.ProviderOutputReference;
 import com.anadoluatlasi.backend.imagegen.repository.ImageGenerationRequestRepository;
 import com.anadoluatlasi.backend.imagegen.repository.ImageGenerationResultRepository;
 import lombok.RequiredArgsConstructor;
@@ -49,6 +50,7 @@ public class ImageGenerationOrchestrationService {
     private final ImageGenerationResultRepository resultRepository;
     private final ImageGenerationProviderGateway providerGateway;
     private final ImageGeneratedAssetHandoffService handoffService;
+    private final ImmediateStorageHandoffService immediateStorageHandoffService;
 
     /**
      * REQUESTED request için provider generation çalıştırır.
@@ -99,9 +101,10 @@ public class ImageGenerationOrchestrationService {
                 .requestedAt(request.getRequestedAt())
                 .build();
 
-        ImageProviderGenerationResult providerResult;
+        // FP-010 Task 04: Use generateWithOutputReference for transient URL extraction
+        ProviderOutputReference outputReference;
         try {
-            providerResult = providerGateway.generate(providerRequest);
+            outputReference = providerGateway.generateWithOutputReference(providerRequest);
         } catch (Exception e) {
             log.error("Provider gateway çağrısı başarısız: requestId={}, correlationId={}, errorType={}",
                     requestId, request.getCorrelationId(), e.getClass().getSimpleName());
@@ -109,8 +112,9 @@ public class ImageGenerationOrchestrationService {
         }
 
         // 5. Result oluştur ve request status güncelle
+        ImageProviderGenerationResult providerResult = outputReference.generationResult();
         if (providerResult.isSuccess()) {
-            return handleProviderSuccess(request, providerResult);
+            return handleProviderSuccess(request, providerResult, outputReference);
         } else {
             return handleProviderError(request, providerResult);
         }
@@ -120,7 +124,8 @@ public class ImageGenerationOrchestrationService {
 
     private ImageGenerationResultResponse handleProviderSuccess(
             ImageGenerationRequest request,
-            ImageProviderGenerationResult providerResult) {
+            ImageProviderGenerationResult providerResult,
+            ProviderOutputReference outputReference) {
 
         // ImageGenerationResult oluştur
         ImageGenerationResult result = ImageGenerationResult.builder()
@@ -142,7 +147,11 @@ public class ImageGenerationOrchestrationService {
         result = resultRepository.save(result);
 
         // Asset handoff — MediaAsset + GeneratedAsset oluştur
-        handoffService.createAssetHandoff(request, result, providerResult);
+        var generatedAsset = handoffService.createAssetHandoff(request, result, providerResult);
+
+        // FP-010 Task 04: Immediate storage handoff (non-fatal)
+        // Provider URL is transient — used once then discarded via GC
+        immediateStorageHandoffService.attemptImmediateHandoff(generatedAsset, outputReference);
 
         // Request status → GENERATED_PENDING_REVIEW
         request.setStatus(ImageGenerationRequestStatus.GENERATED_PENDING_REVIEW);

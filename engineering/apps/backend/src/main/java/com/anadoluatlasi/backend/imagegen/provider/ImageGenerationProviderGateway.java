@@ -27,6 +27,19 @@ public interface ImageGenerationProviderGateway {
     ImageProviderGenerationResult generate(ImageProviderGenerationRequest request);
 
     /**
+     * FP-010 Task 04: Generate image and return transient provider output reference.
+     *
+     * <p>Default implementation wraps generate() with null provider URL.
+     * OpenAI gateway overrides this to extract transient URL from response.</p>
+     *
+     * @param request provider-agnostic safe request
+     * @return transient reference containing safe result + optional provider URL
+     */
+    default ProviderOutputReference generateWithOutputReference(ImageProviderGenerationRequest request) {
+        return new ProviderOutputReference(generate(request), null);
+    }
+
+    /**
      * Provider alias — log/metadata için kullanılır.
      * Örn: "MOCK", "OPENAI", "REPLICATE"
      */

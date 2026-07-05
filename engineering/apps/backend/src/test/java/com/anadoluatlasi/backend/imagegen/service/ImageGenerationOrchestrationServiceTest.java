@@ -58,8 +58,18 @@ class ImageGenerationOrchestrationServiceTest {
     @BeforeEach
     void setUp() {
         mockProvider = new MockImageGenerationProviderGateway();
+        ImmediateStorageHandoffService immediateHandoff = new ImmediateStorageHandoffService(
+                new ImmediateStorageHandoffProperties(),
+                org.mockito.Mockito.mock(ControlledStorageHandoffOrchestrationService.class));
         orchestrationService = new ImageGenerationOrchestrationService(
-                requestRepository, resultRepository, mockProvider, handoffService);
+                requestRepository, resultRepository, mockProvider, handoffService, immediateHandoff);
+
+        // FP-010 Task 04: Stub handoff to return valid asset (immediate handoff needs getId())
+        ImageGeneratedAsset stubAsset = new ImageGeneratedAsset();
+        stubAsset.setId(UUID.randomUUID());
+        stubAsset.setStatus(GeneratedAssetStatus.GENERATED_PENDING_REVIEW);
+        org.mockito.Mockito.lenient().when(handoffService.createAssetHandoff(any(), any(), any()))
+                .thenReturn(stubAsset);
     }
 
     private ImageGenerationRequest createRequestedRequest() {

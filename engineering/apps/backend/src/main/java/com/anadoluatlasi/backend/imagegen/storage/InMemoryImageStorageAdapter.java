@@ -3,6 +3,7 @@ package com.anadoluatlasi.backend.imagegen.storage;
 import com.anadoluatlasi.backend.imagegen.entity.ImageStorageErrorCode;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
@@ -29,8 +30,12 @@ import java.util.concurrent.ConcurrentHashMap;
  *   <li>External HTTP çağrısı yapılmaz.</li>
  *   <li>Storage object key loglanmaz.</li>
  * </ul>
+ *
+ * <p>FP-010 Task 03: Now uses @ConditionalOnMissingBean — active only when
+ * S3ImageStorageAdapter is not enabled.</p>
  */
 @Component
+@ConditionalOnMissingBean(S3ImageStorageAdapter.class)
 public class InMemoryImageStorageAdapter implements ImageStorageAdapter {
 
     private static final Logger log = LoggerFactory.getLogger(InMemoryImageStorageAdapter.class);

@@ -43,7 +43,7 @@ class S3ImageStorageAdapterTest {
         properties.setPathPrefix("imagegen/");
         properties.setAccessKey("FAKE_ACCESS_KEY");
         properties.setSecretKey("FAKE_SECRET_KEY");
-        adapter = new S3ImageStorageAdapter(properties);
+        adapter = new S3ImageStorageAdapter(properties, org.mockito.Mockito.mock(S3StorageClient.class));
     }
 
     // ── A. Migration/Schema Safety ──────────────────────────────────
@@ -125,9 +125,10 @@ class S3ImageStorageAdapterTest {
 
             ImageStorageWriteResult result = adapter.write(request);
 
-            assertThat(result.isSuccess()).isFalse();
+            // FP-010 Task 03: Real adapter with mocked client succeeds
+            assertThat(result.isSuccess()).isTrue();
             assertThat(result.getStorageObjectKey()).isNotBlank();
-            assertThat(result.getErrorCode()).isEqualTo(ImageStorageErrorCode.STORAGE_WRITE_FAILED);
+            assertThat(result.getStorageProviderAlias()).isEqualTo("s3");
         }
 
         @Test
@@ -179,9 +180,9 @@ class S3ImageStorageAdapterTest {
                     .requestedAt(LocalDateTime.now())
                     .build();
 
-            // No real S3 endpoint — would fail if actually called
+            // FP-010 Task 03: Real adapter with mocked S3 client — succeeds without real call
             ImageStorageWriteResult result = adapter.write(request);
-            assertThat(result.isSuccess()).isFalse(); // Shell — no real call
+            assertThat(result.isSuccess()).isTrue(); // Mocked client — no real external call
         }
 
         @Test
