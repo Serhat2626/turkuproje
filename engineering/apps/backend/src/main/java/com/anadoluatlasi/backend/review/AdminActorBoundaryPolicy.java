@@ -33,26 +33,37 @@ public final class AdminActorBoundaryPolicy {
         /** Submit for review */
         SUBMIT_FOR_REVIEW,
         /** Add review note */
-        ADD_REVIEW_NOTE
+        ADD_REVIEW_NOTE,
+        /** FP-019: Türkü video project bootstrap */
+        TURKU_PROJECT_BOOTSTRAP
     }
 
-    private static final Map<ActionCategory, Set<ReviewActorRole>> ALLOWED_ROLES = Map.of(
-            ActionCategory.REVIEW_ACTION, Set.of(ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN),
-            ActionCategory.INTERNAL_HANDOFF, Set.of(ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN, ReviewActorRole.SYSTEM),
-            ActionCategory.INTERNAL_REVISION_REQUEST, Set.of(ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN),
-            ActionCategory.READ_ONLY_VISIBILITY, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN, ReviewActorRole.SYSTEM),
-            ActionCategory.SUBMIT_FOR_REVIEW, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN),
-            ActionCategory.ADD_REVIEW_NOTE, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN)
-    );
+    private static final Map<ActionCategory, Set<ReviewActorRole>> ALLOWED_ROLES;
+    private static final Map<ActionCategory, Set<AdminActorResolutionMode>> ALLOWED_MODES;
 
-    private static final Map<ActionCategory, Set<AdminActorResolutionMode>> ALLOWED_MODES = Map.of(
-            ActionCategory.REVIEW_ACTION, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT),
-            ActionCategory.INTERNAL_HANDOFF, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT, AdminActorResolutionMode.SYSTEM_INTERNAL),
-            ActionCategory.INTERNAL_REVISION_REQUEST, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT),
-            ActionCategory.READ_ONLY_VISIBILITY, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT, AdminActorResolutionMode.SYSTEM_INTERNAL),
-            ActionCategory.SUBMIT_FOR_REVIEW, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT),
-            ActionCategory.ADD_REVIEW_NOTE, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT)
-    );
+    static {
+        var roles = new java.util.HashMap<ActionCategory, Set<ReviewActorRole>>();
+        roles.put(ActionCategory.REVIEW_ACTION, Set.of(ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN));
+        roles.put(ActionCategory.INTERNAL_HANDOFF, Set.of(ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN, ReviewActorRole.SYSTEM));
+        roles.put(ActionCategory.INTERNAL_REVISION_REQUEST, Set.of(ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN));
+        roles.put(ActionCategory.READ_ONLY_VISIBILITY, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN, ReviewActorRole.SYSTEM));
+        roles.put(ActionCategory.SUBMIT_FOR_REVIEW, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN));
+        roles.put(ActionCategory.ADD_REVIEW_NOTE, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN));
+        // FP-019: ADMIN, REVIEWER, CREATOR can bootstrap; SYSTEM blocked
+        roles.put(ActionCategory.TURKU_PROJECT_BOOTSTRAP, Set.of(ReviewActorRole.CREATOR, ReviewActorRole.REVIEWER, ReviewActorRole.ADMIN));
+        ALLOWED_ROLES = Map.copyOf(roles);
+
+        var modes = new java.util.HashMap<ActionCategory, Set<AdminActorResolutionMode>>();
+        modes.put(ActionCategory.REVIEW_ACTION, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT));
+        modes.put(ActionCategory.INTERNAL_HANDOFF, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT, AdminActorResolutionMode.SYSTEM_INTERNAL));
+        modes.put(ActionCategory.INTERNAL_REVISION_REQUEST, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT));
+        modes.put(ActionCategory.READ_ONLY_VISIBILITY, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT, AdminActorResolutionMode.SYSTEM_INTERNAL));
+        modes.put(ActionCategory.SUBMIT_FOR_REVIEW, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT));
+        modes.put(ActionCategory.ADD_REVIEW_NOTE, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT));
+        // FP-019: bootstrap uses TEST_FALLBACK or AUTHENTICATED_CONTEXT
+        modes.put(ActionCategory.TURKU_PROJECT_BOOTSTRAP, Set.of(AdminActorResolutionMode.TEST_FALLBACK, AdminActorResolutionMode.AUTHENTICATED_CONTEXT));
+        ALLOWED_MODES = Map.copyOf(modes);
+    }
 
     /**
      * Check if a resolved actor is allowed for a given action category.

@@ -494,13 +494,14 @@ class FP018HandoffRevisionBoundaryHardeningTest {
         }
 
         @Test
-        @DisplayName("CREATOR only allowed in READ_ONLY, SUBMIT, and ADD_NOTE")
+        @DisplayName("CREATOR only allowed in READ_ONLY, SUBMIT, ADD_NOTE, and TURKU_BOOTSTRAP")
         void creatorOnlyInReadSubmitNote() {
             for (var cat : AdminActorBoundaryPolicy.allCategories()) {
                 Set<ReviewActorRole> roles = AdminActorBoundaryPolicy.getAllowedRoles(cat);
                 if (cat == AdminActorBoundaryPolicy.ActionCategory.READ_ONLY_VISIBILITY
                         || cat == AdminActorBoundaryPolicy.ActionCategory.SUBMIT_FOR_REVIEW
-                        || cat == AdminActorBoundaryPolicy.ActionCategory.ADD_REVIEW_NOTE) {
+                        || cat == AdminActorBoundaryPolicy.ActionCategory.ADD_REVIEW_NOTE
+                        || cat == AdminActorBoundaryPolicy.ActionCategory.TURKU_PROJECT_BOOTSTRAP) {
                     assertThat(roles).as("CREATOR in %s", cat).contains(ReviewActorRole.CREATOR);
                 } else {
                     assertThat(roles).as("CREATOR not in %s", cat).doesNotContain(ReviewActorRole.CREATOR);

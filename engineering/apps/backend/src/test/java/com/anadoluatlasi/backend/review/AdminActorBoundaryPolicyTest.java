@@ -169,9 +169,9 @@ class AdminActorBoundaryPolicyTest {
     class AllCategories {
 
         @Test
-        @DisplayName("6 action categories")
+        @DisplayName("7 action categories")
         void sixCategories() {
-            assertThat(AdminActorBoundaryPolicy.allCategories()).hasSize(6);
+            assertThat(AdminActorBoundaryPolicy.allCategories()).hasSize(7);
         }
 
         @Test
