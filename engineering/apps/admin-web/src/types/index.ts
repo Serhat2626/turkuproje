@@ -878,6 +878,7 @@ export type ReviewTargetType =
   | 'CONTENT_PROJECT'
   | 'SCENARIO'
   | 'STORYBOARD'
+  | 'PACKAGE'
   | 'IMAGE_ASSET'
 
 /**
@@ -1046,4 +1047,97 @@ export interface AdminReviewActionAvailability {
   actorRole: ReviewActorRole
   availableActions: AdminReviewAvailableAction[]
   safeMessage: string | null
+}
+
+// ── FP-013 Task 04: Handoff & Preview Types ─────────────────────
+
+/**
+ * Safe review handoff sources.
+ * No PUBLISH/EXPORT/PUBLIC_DELIVERY/CDN/SIGNED_URL values.
+ */
+export type ReviewHandoffSource =
+  | 'CONTENT_PROJECT_GENERATION'
+  | 'SCENARIO_GENERATION'
+  | 'STORYBOARD_GENERATION'
+  | 'PACKAGE_GENERATION'
+  | 'IMAGE_GENERATION'
+  | 'STORAGE_HANDOFF'
+
+/**
+ * Safe admin review handoff request.
+ * No provider URL, storage key, raw payload, base64, secret, public/signed URL.
+ */
+export interface AdminReviewHandoffRequest {
+  targetType: ReviewTargetType
+  targetId: string
+  source: ReviewHandoffSource
+  actorRole: ReviewActorRole
+  actorReference: string
+  safeTitle?: string
+  safeSummary?: string
+  safeReasonCode?: string
+  safeMessage?: string
+}
+
+/**
+ * Safe admin review handoff response.
+ * No provider/storage/publish/export fields.
+ */
+export interface AdminReviewHandoffResponse {
+  targetType: ReviewTargetType
+  targetId: string
+  previousState: ReviewState | null
+  currentState: ReviewState
+  created: boolean
+  updated: boolean
+  preserved: boolean
+  auditEventType: ReviewAuditEventType | null
+  safeReasonCode: string | null
+  safeMessage: string | null
+}
+
+/**
+ * Safe admin preview modes.
+ * No PUBLIC_URL, SIGNED_URL, CDN, RAW_PAYLOAD, BASE64 values.
+ */
+export type AdminPreviewMode =
+  | 'TEXT_SUMMARY'
+  | 'IMAGE_ASSET'
+  | 'PACKAGE_SUMMARY'
+  | 'STORYBOARD_SUMMARY'
+  | 'SCENARIO_SUMMARY'
+  | 'UNAVAILABLE'
+
+/**
+ * Safe admin preview availability states.
+ * No provider/storage internal detail.
+ */
+export type AdminPreviewAvailability =
+  | 'AVAILABLE'
+  | 'UNAVAILABLE'
+  | 'NOT_REVIEWABLE'
+  | 'MISSING_TARGET'
+  | 'UNSAFE_TARGET'
+  | 'STORAGE_UNAVAILABLE'
+  | 'PROVIDER_UNAVAILABLE'
+
+/**
+ * Safe admin preview DTO.
+ * No provider URL, storage key, raw payload, base64, secret,
+ * public/signed URL, rawImageBytes, rawContent.
+ */
+export interface SafeAdminPreview {
+  targetType: ReviewTargetType
+  targetId: string
+  previewMode: AdminPreviewMode
+  availability: AdminPreviewAvailability
+  previewAvailable: boolean
+  safeTitle: string | null
+  safeSummary: string | null
+  safeMessage: string | null
+  safeReasonCode: string | null
+  safePreviewLabel: string | null
+  safeThumbnailAvailable: boolean
+  currentReviewState: ReviewState | null
+  updatedAt: string | null
 }

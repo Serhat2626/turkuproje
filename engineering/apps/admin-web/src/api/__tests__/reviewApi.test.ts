@@ -2,13 +2,14 @@ import { describe, it, expect } from 'vitest'
 import * as reviewApi from '../reviewApi'
 
 /**
- * FP-012 Task 09: Review API client tests.
+ * FP-012 + FP-013 Task 04: Review API client tests.
  *
  * Kontrol noktaları:
  * - Sadece explicit action function'lar mevcut
  * - Generic status update function yok
  * - Publish/export/public URL/signed URL function yok
  * - Provider/storage inspection function yok
+ * - FP-013 Task 04: handoffReview ve getPreview function'lar mevcut
  */
 
 describe('reviewApi', () => {
@@ -50,13 +51,21 @@ describe('reviewApi', () => {
     expect(typeof reviewApi.getAuditTimeline).toBe('function')
   })
 
+  it('handoffReview fonksiyonu mevcut', () => {
+    expect(typeof reviewApi.handoffReview).toBe('function')
+  })
+
+  it('getPreview fonksiyonu mevcut', () => {
+    expect(typeof reviewApi.getPreview).toBe('function')
+  })
+
   // ── Exact Export Count ──────────────────────────────────
 
-  it('sadece 12 explicit function export ediyor', () => {
+  it('sadece 14 explicit function export ediyor', () => {
     const exportedFunctions = Object.keys(reviewApi).filter(
       k => typeof (reviewApi as Record<string, unknown>)[k] === 'function'
     )
-    expect(exportedFunctions).toHaveLength(12)
+    expect(exportedFunctions).toHaveLength(14)
     expect(exportedFunctions).toEqual(expect.arrayContaining([
       'submitForReview',
       'startReview',
@@ -70,6 +79,8 @@ describe('reviewApi', () => {
       'getWorklist',
       'getTargetContext',
       'getAvailableActions',
+      'handoffReview',
+      'getPreview',
     ]))
   })
 

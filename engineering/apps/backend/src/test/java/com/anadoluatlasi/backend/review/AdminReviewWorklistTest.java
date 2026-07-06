@@ -39,6 +39,10 @@ class AdminReviewWorklistTest {
 
     @Mock
     private ReviewApplicationService reviewApplicationService;
+    @Mock
+    private ReviewHandoffService reviewHandoffService;
+    @Mock
+    private AdminPreviewService adminPreviewService;
 
     private AdminReviewController controller;
 
@@ -54,7 +58,7 @@ class AdminReviewWorklistTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationService);
+        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
     }
 
     // ── 1. Worklist Endpoint ────────────────────────────────────────
@@ -179,14 +183,14 @@ class AdminReviewWorklistTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("Controller has exactly 12 endpoints (7 POST + 5 GET)")
+        @DisplayName("Controller has exactly 14 endpoints (8 POST + 6 GET)")
         void exactEndpointCount() {
             long postCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long getCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
-            assertThat(postCount).isEqualTo(7);
-            assertThat(getCount).isEqualTo(5);
+            assertThat(postCount).isEqualTo(8);
+            assertThat(getCount).isEqualTo(6);
         }
 
         @Test
@@ -229,7 +233,7 @@ class AdminReviewWorklistTest {
             ReviewApplicationService realService = mock(ReviewApplicationService.class);
             when(realService.listWorkItems(any(), any(), any(), anyInt())).thenCallRealMethod();
             // We verify the method exists and handles limit
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
             when(reviewApplicationService.listWorkItems(any(), any(), any(), eq(200)))
                     .thenReturn(List.of());
             ctrl.getWorklist(null, null, null, 999);

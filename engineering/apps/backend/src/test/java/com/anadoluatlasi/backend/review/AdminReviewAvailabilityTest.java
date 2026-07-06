@@ -39,6 +39,10 @@ class AdminReviewAvailabilityTest {
     private ReviewAuditEventRepository auditEventRepository;
     @Mock
     private ReviewApplicationService reviewApplicationServiceMock;
+    @Mock
+    private ReviewHandoffService reviewHandoffService;
+    @Mock
+    private AdminPreviewService adminPreviewService;
 
     private AdminReviewController controller;
     private ReviewApplicationService realService;
@@ -54,7 +58,7 @@ class AdminReviewAvailabilityTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationServiceMock);
+        controller = new AdminReviewController(reviewApplicationServiceMock, reviewHandoffService, adminPreviewService);
         realService = new ReviewApplicationService(reviewRecordRepository, auditEventRepository);
     }
 
@@ -242,18 +246,18 @@ class AdminReviewAvailabilityTest {
     // ── 4. Updated Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("4. Endpoint Inventory — 12 total")
+    @DisplayName("4. Endpoint Inventory — 14 total")
     class EndpointInventory {
 
         @Test
-        @DisplayName("Controller has 7 POST + 5 GET = 12 endpoints")
+        @DisplayName("Controller has 8 POST + 6 GET = 14 endpoints")
         void exactCount() {
             long post = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long get = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
-            assertThat(post).isEqualTo(7);
-            assertThat(get).isEqualTo(5);
+            assertThat(post).isEqualTo(8);
+            assertThat(get).isEqualTo(6);
         }
 
         @Test

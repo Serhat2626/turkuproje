@@ -128,4 +128,18 @@ describe('ReviewWorklist Safety Regression', () => {
   it('worklist APPROVED_FOR_INTERNAL_USE dahili olarak gösteriliyor', () => {
     expect(WORKLIST_SOURCE).toContain('Dahili Onay')
   })
+
+  // ── FP-013 Task 04: Preview Integration ─────────────────
+
+  it('worklist PACKAGE hedef tipi seçeneği mevcut', () => {
+    expect(WORKLIST_SOURCE).toContain("'PACKAGE'")
+  })
+
+  it('worklist ReviewPreviewPanel import ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain("import ReviewPreviewPanel from './ReviewPreviewPanel'")
+  })
+
+  it('worklist ReviewPreviewPanel render ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain('<ReviewPreviewPanel')
+  })
 })

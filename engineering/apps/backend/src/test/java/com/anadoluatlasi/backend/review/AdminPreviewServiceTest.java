@@ -432,14 +432,14 @@ class AdminPreviewServiceTest {
     class BoundaryRegression {
 
         @Test
-        @DisplayName("AdminReviewController endpoint count unchanged (12)")
+        @DisplayName("AdminReviewController endpoint count unchanged (14)")
         void endpointCountUnchanged() {
             long post = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long get = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
-            assertThat(post).isEqualTo(7);
-            assertThat(get).isEqualTo(5);
+            assertThat(post).isEqualTo(8);
+            assertThat(get).isEqualTo(6);
         }
 
         @Test

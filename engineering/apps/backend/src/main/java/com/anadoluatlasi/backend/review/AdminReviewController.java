@@ -21,11 +21,15 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * FP-012 Task 07: Internal admin review workflow controller.
+ * FP-012 Task 07 + FP-013 Task 04: Internal admin review workflow controller.
  *
  * <p>Explicit action endpoints — no generic status update.
  * No publish/export, no public/signed URL, no provider/storage inspection.
  * APPROVED_FOR_INTERNAL_USE is NOT publish/export approval.</p>
+ *
+ * <p>FP-013 Task 04: Handoff and safe preview endpoints added.
+ * Handoff is idempotent. Preview returns safe metadata only — no bytes/URL/base64.
+ * Total endpoints: 14 (8 POST + 6 GET).</p>
  *
  * <p>Safe error handling — no stack trace, no secrets, no raw payloads.</p>
  */
@@ -36,6 +40,8 @@ import java.util.stream.Collectors;
 public class AdminReviewController {
 
     private final ReviewApplicationService reviewApplicationService;
+    private final ReviewHandoffService reviewHandoffService;
+    private final AdminPreviewService adminPreviewService;
 
     // ── Explicit Action Endpoints ───────────────────────────────────
 
@@ -127,6 +133,18 @@ public class AdminReviewController {
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
 
+    // ── FP-013 Task 04: Handoff & Preview Endpoints ─────────────────
+
+    @PostMapping("/handoff")
+    @Operation(summary = "Hand off generated output to review workflow — idempotent, no auto-approval")
+    public ResponseEntity<ApiResponse<AdminReviewHandoffResponse>> handoffForReview(
+            @Valid @RequestBody AdminReviewHandoffRequest request) {
+        validateHandoffRequest(request);
+        ReviewHandoffRequest internalRequest = AdminReviewDtoMapper.toHandoffRequest(request);
+        ReviewHandoffResult result = reviewHandoffService.handoffForReview(internalRequest);
+        return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toHandoffResponse(result)));
+    }
+
     // ── Query Endpoints ─────────────────────────────────────────────
 
     @GetMapping("/worklist")
@@ -196,6 +214,15 @@ public class AdminReviewController {
         return ResponseEntity.ok(ApiResponse.success(availability.get()));
     }
 
+    @GetMapping("/{targetType}/{targetId}/preview")
+    @Operation(summary = "Get safe preview metadata — no bytes/URL/base64/storage key")
+    public ResponseEntity<ApiResponse<SafeAdminPreview>> getPreview(
+            @PathVariable ReviewTargetType targetType,
+            @PathVariable UUID targetId) {
+        SafeAdminPreview preview = adminPreviewService.getPreview(targetType, targetId);
+        return ResponseEntity.ok(ApiResponse.success(preview));
+    }
+
     // ── Request Validation ──────────────────────────────────────────
 
     private void validateActionRequest(AdminReviewActionRequest request) {
@@ -204,6 +231,24 @@ public class AdminReviewController {
         }
         if (request.getTargetId() == null) {
             throw new IllegalArgumentException("targetId is required");
+        }
+        if (request.getActorRole() == null) {
+            throw new IllegalArgumentException("actorRole is required");
+        }
+        if (request.getActorReference() == null || request.getActorReference().isBlank()) {
+            throw new IllegalArgumentException("actorReference is required");
+        }
+    }
+
+    private void validateHandoffRequest(AdminReviewHandoffRequest request) {
+        if (request.getTargetType() == null) {
+            throw new IllegalArgumentException("targetType is required");
+        }
+        if (request.getTargetId() == null) {
+            throw new IllegalArgumentException("targetId is required");
+        }
+        if (request.getSource() == null) {
+            throw new IllegalArgumentException("source is required");
         }
         if (request.getActorRole() == null) {
             throw new IllegalArgumentException("actorRole is required");
@@ -224,6 +269,18 @@ public class AdminReviewController {
     @ExceptionHandler(ReviewTransitionViolationException.class)
     public ResponseEntity<ApiResponse<Void>> handleTransitionViolation(ReviewTransitionViolationException ex) {
         return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(ReviewHandoffException.class)
+    public ResponseEntity<ApiResponse<Void>> handleHandoffException(ReviewHandoffException ex) {
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AdminPreviewException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePreviewException(AdminPreviewException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 

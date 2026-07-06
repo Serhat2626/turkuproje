@@ -37,6 +37,10 @@ class AdminReviewApiBoundaryRegressionTest {
 
     @Mock
     private ReviewApplicationService reviewApplicationService;
+    @Mock
+    private ReviewHandoffService reviewHandoffService;
+    @Mock
+    private AdminPreviewService adminPreviewService;
 
     private static final Set<String> FORBIDDEN_FIELDS = Set.of(
             "providerUrl", "storageKey", "bucketName", "bucketPath",
@@ -58,14 +62,14 @@ class AdminReviewApiBoundaryRegressionTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("Controller has exactly 12 mapped endpoints")
+        @DisplayName("Controller has exactly 14 mapped endpoints")
         void exactEndpointCount() {
             long postCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long getCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
-            assertThat(postCount).isEqualTo(7);
-            assertThat(getCount).isEqualTo(5);
+            assertThat(postCount).isEqualTo(8);
+            assertThat(getCount).isEqualTo(6);
         }
 
         @Test
@@ -77,11 +81,11 @@ class AdminReviewApiBoundaryRegressionTest {
                     .collect(Collectors.toSet());
             assertThat(postPaths).containsExactlyInAnyOrder(
                     "/submit", "/start", "/request-changes",
-                    "/approve-internal", "/reject", "/return-to-draft", "/note");
+                    "/approve-internal", "/reject", "/return-to-draft", "/note", "/handoff");
         }
 
         @Test
-        @DisplayName("GET endpoints contain state, audit, worklist, context, and actions")
+        @DisplayName("GET endpoints contain state, audit, worklist, context, actions, and preview")
         void getEndpoints() {
             Set<String> getPaths = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class))
@@ -92,6 +96,7 @@ class AdminReviewApiBoundaryRegressionTest {
             assertThat(getPaths).anyMatch(p -> p.contains("worklist"));
             assertThat(getPaths).anyMatch(p -> p.contains("context"));
             assertThat(getPaths).anyMatch(p -> p.contains("actions"));
+            assertThat(getPaths).anyMatch(p -> p.contains("preview"));
         }
 
         @Test
@@ -190,7 +195,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     eq(ReviewActorRole.CREATOR), any(), any()))
                     .thenThrow(new ReviewTransitionViolationException("CREATOR cannot approve"));
 
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
             AdminReviewActionRequest req = buildRequest(ReviewActorRole.CREATOR);
             assertThatThrownBy(() -> ctrl.approveForInternalUse(req))
                     .isInstanceOf(ReviewTransitionViolationException.class);
@@ -203,7 +208,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     eq(ReviewActorRole.SYSTEM), any(), any()))
                     .thenThrow(new ReviewTransitionViolationException("SYSTEM cannot approve"));
 
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
             AdminReviewActionRequest req = buildRequest(ReviewActorRole.SYSTEM);
             assertThatThrownBy(() -> ctrl.approveForInternalUse(req))
                     .isInstanceOf(ReviewTransitionViolationException.class);
@@ -266,7 +271,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for ApplicationException returns safe body")
         void controllerAppErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
             var resp = ctrl.handleReviewApplicationException(
                     new ReviewApplicationException("Not found"));
             assertThat(resp.getBody().isSuccess()).isFalse();
@@ -276,7 +281,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for TransitionViolation returns safe body")
         void controllerTransitionErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
             var resp = ctrl.handleTransitionViolation(
                     new ReviewTransitionViolationException("Invalid transition"));
             assertThat(resp.getBody().isSuccess()).isFalse();
@@ -286,7 +291,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for validation returns safe body")
         void controllerValidationErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
             var resp = ctrl.handleValidation(new IllegalArgumentException("targetType is required"));
             assertThat(resp.getBody().isSuccess()).isFalse();
             assertSafeMessage(resp.getBody().getMessage());

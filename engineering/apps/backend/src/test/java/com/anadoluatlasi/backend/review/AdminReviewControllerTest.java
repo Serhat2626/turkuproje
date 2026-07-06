@@ -41,6 +41,10 @@ class AdminReviewControllerTest {
 
     @Mock
     private ReviewApplicationService reviewApplicationService;
+    @Mock
+    private ReviewHandoffService reviewHandoffService;
+    @Mock
+    private AdminPreviewService adminPreviewService;
 
     private AdminReviewController controller;
 
@@ -50,7 +54,7 @@ class AdminReviewControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationService);
+        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
     }
 
     // ── 1. Action Endpoints Happy Path ──────────────────────────────

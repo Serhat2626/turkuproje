@@ -8,6 +8,9 @@ import type {
   AdminReviewWorklistItem,
   AdminReviewTargetContext,
   AdminReviewActionAvailability,
+  AdminReviewHandoffRequest,
+  AdminReviewHandoffResponse,
+  SafeAdminPreview,
   ReviewTargetType,
   ReviewState,
   ReviewActorRole,
@@ -136,5 +139,25 @@ export function getAvailableActions(
 ): Promise<ApiResponse<AdminReviewActionAvailability>> {
   return request<AdminReviewActionAvailability>(
     `/admin/reviews/${targetType}/${targetId}/actions?actorRole=${actorRole}`
+  )
+}
+
+// ── FP-013 Task 04: Handoff & Preview ────────────────────────
+
+export function handoffReview(
+  data: AdminReviewHandoffRequest
+): Promise<ApiResponse<AdminReviewHandoffResponse>> {
+  return request<AdminReviewHandoffResponse>('/admin/reviews/handoff', {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getPreview(
+  targetType: ReviewTargetType,
+  targetId: string
+): Promise<ApiResponse<SafeAdminPreview>> {
+  return request<SafeAdminPreview>(
+    `/admin/reviews/${targetType}/${targetId}/preview`
   )
 }

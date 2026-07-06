@@ -7,6 +7,7 @@ import type {
 } from '../../types'
 import * as reviewApi from '../../api/reviewApi'
 import ReviewConsole from './ReviewConsole'
+import ReviewPreviewPanel from './ReviewPreviewPanel'
 
 /**
  * FP-012 Task 10: Admin Review Worklist with console integration.
@@ -31,7 +32,7 @@ const STATE_OPTIONS: ReviewState[] = [
 ]
 
 const TARGET_TYPE_OPTIONS: ReviewTargetType[] = [
-  'CONTENT_PROJECT', 'SCENARIO', 'STORYBOARD', 'IMAGE_ASSET',
+  'CONTENT_PROJECT', 'SCENARIO', 'STORYBOARD', 'PACKAGE', 'IMAGE_ASSET',
 ]
 
 interface ReviewWorklistProps {
@@ -181,6 +182,12 @@ export default function ReviewWorklist({
               )}
             </div>
           )}
+
+          {/* FP-013 Task 04: Safe Preview Panel */}
+          <ReviewPreviewPanel
+            targetType={selectedItem.targetType}
+            targetId={selectedItem.targetId}
+          />
 
           {/* Integrated Console */}
           <ReviewConsole

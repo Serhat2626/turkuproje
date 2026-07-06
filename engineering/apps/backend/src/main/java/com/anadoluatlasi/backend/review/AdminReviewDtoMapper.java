@@ -117,4 +117,43 @@ public final class AdminReviewDtoMapper {
         return entity.getReviewTargetType().name() + " — " +
                 entity.getReviewTargetId().toString().substring(0, 8);
     }
+
+    // ── FP-013 Task 04: Handoff Mapping ─────────────────────────────
+
+    /**
+     * Map AdminReviewHandoffRequest to internal ReviewHandoffRequest.
+     * Applies ReviewTextSafety sanitization on all text fields.
+     */
+    public static ReviewHandoffRequest toHandoffRequest(AdminReviewHandoffRequest dto) {
+        return ReviewHandoffRequest.builder()
+                .targetType(dto.getTargetType())
+                .targetId(dto.getTargetId())
+                .source(dto.getSource())
+                .actorRole(dto.getActorRole())
+                .actorReference(dto.getActorReference())
+                .safeTitle(ReviewTextSafety.sanitize(dto.getSafeTitle()))
+                .safeSummary(ReviewTextSafety.sanitize(dto.getSafeSummary()))
+                .safeReasonCode(ReviewTextSafety.sanitizeReasonCode(dto.getSafeReasonCode()))
+                .safeMessage(ReviewTextSafety.sanitize(dto.getSafeMessage()))
+                .build();
+    }
+
+    /**
+     * Map ReviewHandoffResult to AdminReviewHandoffResponse.
+     * Safe immutable response — no provider/storage/publish/export fields.
+     */
+    public static AdminReviewHandoffResponse toHandoffResponse(ReviewHandoffResult result) {
+        return AdminReviewHandoffResponse.builder()
+                .targetType(result.getTargetType())
+                .targetId(result.getTargetId())
+                .previousState(result.getPreviousState())
+                .currentState(result.getCurrentState())
+                .created(result.isCreated())
+                .updated(result.isUpdated())
+                .preserved(result.isPreserved())
+                .auditEventType(result.getAuditEventType())
+                .safeReasonCode(ReviewTextSafety.sanitizeReasonCode(result.getSafeReasonCode()))
+                .safeMessage(ReviewTextSafety.sanitize(result.getSafeMessage()))
+                .build();
+    }
 }
