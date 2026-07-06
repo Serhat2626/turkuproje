@@ -52,6 +52,9 @@ class AdminReviewHandoffPreviewControllerTest {
     @Mock
     private AdminPreviewService adminPreviewService;
 
+    @Mock
+    private InternalApprovalReadinessService internalApprovalReadinessService;
+
     private AdminReviewController controller;
 
     private static final UUID TARGET_ID = UUID.randomUUID();
@@ -59,7 +62,8 @@ class AdminReviewHandoffPreviewControllerTest {
     @BeforeEach
     void setUp() {
         controller = new AdminReviewController(
-                reviewApplicationService, reviewHandoffService, adminPreviewService);
+                reviewApplicationService, reviewHandoffService, adminPreviewService,
+                internalApprovalReadinessService);
     }
 
     // ── A. Handoff Endpoint Happy Paths ──────────────────────────────
@@ -501,7 +505,7 @@ class AdminReviewHandoffPreviewControllerTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("AdminReviewController has exactly 14 endpoints (8 POST + 6 GET)")
+        @DisplayName("AdminReviewController has exactly 16 endpoints (8 POST + 8 GET)")
         void shouldHave14Endpoints() {
             long post = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
@@ -509,8 +513,8 @@ class AdminReviewHandoffPreviewControllerTest {
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
 
             assertThat(post).isEqualTo(8);
-            assertThat(get).isEqualTo(6);
-            assertThat(post + get).isEqualTo(14);
+            assertThat(get).isEqualTo(8);
+            assertThat(post + get).isEqualTo(16);
         }
 
         @Test

@@ -21,15 +21,18 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * FP-012 Task 07 + FP-013 Task 04: Internal admin review workflow controller.
+ * FP-012 Task 07 + FP-013 Task 04 + FP-014 Task 03: Internal admin review workflow controller.
  *
  * <p>Explicit action endpoints — no generic status update.
  * No publish/export, no public/signed URL, no provider/storage inspection.
  * APPROVED_FOR_INTERNAL_USE is NOT publish/export approval.</p>
  *
  * <p>FP-013 Task 04: Handoff and safe preview endpoints added.
- * Handoff is idempotent. Preview returns safe metadata only — no bytes/URL/base64.
- * Total endpoints: 14 (8 POST + 6 GET).</p>
+ * Handoff is idempotent. Preview returns safe metadata only — no bytes/URL/base64.</p>
+ *
+ * <p>FP-014 Task 03: Internal approval readiness endpoints added.
+ * Read-only derived views — no state mutation, no external calls.
+ * Total endpoints: 16 (8 POST + 8 GET).</p>
  *
  * <p>Safe error handling — no stack trace, no secrets, no raw payloads.</p>
  */
@@ -42,6 +45,7 @@ public class AdminReviewController {
     private final ReviewApplicationService reviewApplicationService;
     private final ReviewHandoffService reviewHandoffService;
     private final AdminPreviewService adminPreviewService;
+    private final InternalApprovalReadinessService internalApprovalReadinessService;
 
     // ── Explicit Action Endpoints ───────────────────────────────────
 
@@ -223,6 +227,27 @@ public class AdminReviewController {
         return ResponseEntity.ok(ApiResponse.success(preview));
     }
 
+    // ── FP-014 Task 03: Internal Approval Readiness Endpoints ────────
+
+    @GetMapping("/{targetType}/{targetId}/internal-readiness")
+    @Operation(summary = "Get internal approval readiness — read-only, no publish/export")
+    public ResponseEntity<ApiResponse<SafeInternalApprovalReadiness>> getInternalReadiness(
+            @PathVariable ReviewTargetType targetType,
+            @PathVariable UUID targetId) {
+        SafeInternalApprovalReadiness readiness =
+                internalApprovalReadinessService.getReadiness(targetType, targetId);
+        return ResponseEntity.ok(ApiResponse.success(readiness));
+    }
+
+    @GetMapping("/approved/internal-readiness")
+    @Operation(summary = "List approved internal readiness candidates — read-only, no publish/export")
+    public ResponseEntity<ApiResponse<List<SafeInternalApprovalReadiness>>> getApprovedReadinessList(
+            @org.springframework.web.bind.annotation.RequestParam(required = false) ReviewTargetType targetType) {
+        List<SafeInternalApprovalReadiness> readinessList =
+                internalApprovalReadinessService.getApprovedReadinessList(targetType);
+        return ResponseEntity.ok(ApiResponse.success(readinessList));
+    }
+
     // ── Request Validation ──────────────────────────────────────────
 
     private void validateActionRequest(AdminReviewActionRequest request) {
@@ -280,6 +305,12 @@ public class AdminReviewController {
 
     @ExceptionHandler(AdminPreviewException.class)
     public ResponseEntity<ApiResponse<Void>> handlePreviewException(AdminPreviewException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InternalApprovalReadinessException.class)
+    public ResponseEntity<ApiResponse<Void>> handleReadinessException(InternalApprovalReadinessException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
                 .body(ApiResponse.error(ex.getMessage()));
     }

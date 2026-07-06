@@ -595,8 +595,8 @@ class InternalApprovalReadinessServiceTest {
     class EndpointMigrationRegression {
 
         @Test
-        @DisplayName("AdminReviewController still has exactly 14 endpoints")
-        void adminReviewControllerHas14Endpoints() {
+        @DisplayName("AdminReviewController has exactly 16 endpoints")
+        void adminReviewControllerHas16Endpoints() {
             long endpointCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m ->
                             m.isAnnotationPresent(org.springframework.web.bind.annotation.PostMapping.class) ||
@@ -606,8 +606,8 @@ class InternalApprovalReadinessServiceTest {
                     .count();
 
             assertThat(endpointCount)
-                    .as("Admin review endpoints must remain 14 (FP-013 baseline)")
-                    .isEqualTo(14);
+                    .as("Admin review endpoints must be 16 (FP-014 baseline)")
+                    .isEqualTo(16);
         }
 
         @Test

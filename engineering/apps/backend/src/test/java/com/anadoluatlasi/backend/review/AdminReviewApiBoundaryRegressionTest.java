@@ -41,6 +41,8 @@ class AdminReviewApiBoundaryRegressionTest {
     private ReviewHandoffService reviewHandoffService;
     @Mock
     private AdminPreviewService adminPreviewService;
+    @Mock
+    private InternalApprovalReadinessService internalApprovalReadinessService;
 
     private static final Set<String> FORBIDDEN_FIELDS = Set.of(
             "providerUrl", "storageKey", "bucketName", "bucketPath",
@@ -69,7 +71,7 @@ class AdminReviewApiBoundaryRegressionTest {
             long getCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
             assertThat(postCount).isEqualTo(8);
-            assertThat(getCount).isEqualTo(6);
+            assertThat(getCount).isEqualTo(8);
         }
 
         @Test
@@ -195,7 +197,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     eq(ReviewActorRole.CREATOR), any(), any()))
                     .thenThrow(new ReviewTransitionViolationException("CREATOR cannot approve"));
 
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
             AdminReviewActionRequest req = buildRequest(ReviewActorRole.CREATOR);
             assertThatThrownBy(() -> ctrl.approveForInternalUse(req))
                     .isInstanceOf(ReviewTransitionViolationException.class);
@@ -208,7 +210,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     eq(ReviewActorRole.SYSTEM), any(), any()))
                     .thenThrow(new ReviewTransitionViolationException("SYSTEM cannot approve"));
 
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
             AdminReviewActionRequest req = buildRequest(ReviewActorRole.SYSTEM);
             assertThatThrownBy(() -> ctrl.approveForInternalUse(req))
                     .isInstanceOf(ReviewTransitionViolationException.class);
@@ -271,7 +273,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for ApplicationException returns safe body")
         void controllerAppErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
             var resp = ctrl.handleReviewApplicationException(
                     new ReviewApplicationException("Not found"));
             assertThat(resp.getBody().isSuccess()).isFalse();
@@ -281,7 +283,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for TransitionViolation returns safe body")
         void controllerTransitionErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
             var resp = ctrl.handleTransitionViolation(
                     new ReviewTransitionViolationException("Invalid transition"));
             assertThat(resp.getBody().isSuccess()).isFalse();
@@ -291,7 +293,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for validation returns safe body")
         void controllerValidationErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
             var resp = ctrl.handleValidation(new IllegalArgumentException("targetType is required"));
             assertThat(resp.getBody().isSuccess()).isFalse();
             assertSafeMessage(resp.getBody().getMessage());

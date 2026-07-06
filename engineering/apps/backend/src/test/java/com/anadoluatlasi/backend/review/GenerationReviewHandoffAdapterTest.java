@@ -423,16 +423,16 @@ class GenerationReviewHandoffAdapterTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("AdminReviewController still has exactly 14 endpoints")
-        void shouldStillHave14Endpoints() {
+        @DisplayName("AdminReviewController still has exactly 16 endpoints")
+        void shouldStillHave16Endpoints() {
             long post = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long get = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
 
             assertThat(post).isEqualTo(8);
-            assertThat(get).isEqualTo(6);
-            assertThat(post + get).isEqualTo(14);
+            assertThat(get).isEqualTo(8);
+            assertThat(post + get).isEqualTo(16);
         }
 
         @Test

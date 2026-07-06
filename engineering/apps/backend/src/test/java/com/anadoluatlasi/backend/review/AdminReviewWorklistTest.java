@@ -43,6 +43,8 @@ class AdminReviewWorklistTest {
     private ReviewHandoffService reviewHandoffService;
     @Mock
     private AdminPreviewService adminPreviewService;
+    @Mock
+    private InternalApprovalReadinessService internalApprovalReadinessService;
 
     private AdminReviewController controller;
 
@@ -58,7 +60,7 @@ class AdminReviewWorklistTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
     }
 
     // ── 1. Worklist Endpoint ────────────────────────────────────────
@@ -190,7 +192,7 @@ class AdminReviewWorklistTest {
             long getCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
             assertThat(postCount).isEqualTo(8);
-            assertThat(getCount).isEqualTo(6);
+            assertThat(getCount).isEqualTo(8);
         }
 
         @Test
@@ -233,7 +235,7 @@ class AdminReviewWorklistTest {
             ReviewApplicationService realService = mock(ReviewApplicationService.class);
             when(realService.listWorkItems(any(), any(), any(), anyInt())).thenCallRealMethod();
             // We verify the method exists and handles limit
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
             when(reviewApplicationService.listWorkItems(any(), any(), any(), eq(200)))
                     .thenReturn(List.of());
             ctrl.getWorklist(null, null, null, 999);

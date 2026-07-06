@@ -439,7 +439,7 @@ class AdminPreviewServiceTest {
             long get = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
             assertThat(post).isEqualTo(8);
-            assertThat(get).isEqualTo(6);
+            assertThat(get).isEqualTo(8);
         }
 
         @Test
