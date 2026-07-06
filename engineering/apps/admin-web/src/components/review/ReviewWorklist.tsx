@@ -8,12 +8,13 @@ import type {
 import * as reviewApi from '../../api/reviewApi'
 import ReviewConsole from './ReviewConsole'
 import ReviewPreviewPanel from './ReviewPreviewPanel'
+import InternalApprovalReadinessPanel from './InternalApprovalReadinessPanel'
 
 /**
- * FP-012 Task 10: Admin Review Worklist with console integration.
+ * FP-012 Task 10 + FP-014 Task 04: Admin Review Worklist with console integration.
  *
  * Safe rendering. No publish/export. No unsafe HTML.
- * Selects worklist item to open ReviewConsole.
+ * Selects worklist item to open ReviewConsole + Preview + Internal Readiness.
  */
 
 /** Safe state labels */
@@ -185,6 +186,12 @@ export default function ReviewWorklist({
 
           {/* FP-013 Task 04: Safe Preview Panel */}
           <ReviewPreviewPanel
+            targetType={selectedItem.targetType}
+            targetId={selectedItem.targetId}
+          />
+
+          {/* FP-014 Task 04: Internal Approval Readiness Panel */}
+          <InternalApprovalReadinessPanel
             targetType={selectedItem.targetType}
             targetId={selectedItem.targetId}
           />

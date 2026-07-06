@@ -1141,3 +1141,53 @@ export interface SafeAdminPreview {
   currentReviewState: ReviewState | null
   updatedAt: string | null
 }
+
+// ── FP-014 Task 04: Internal Approval Readiness ─────────────
+
+/**
+ * Safe internal-only next action hints for approved review targets.
+ * No PUBLISH, EXPORT, PUBLIC_DELIVERY, CREATE_PUBLIC_URL, CREATE_SIGNED_URL,
+ * CDN_DELIVERY, USER_MEDIA_LIBRARY, READY_FOR_PUBLISH, PUBLISHED, EXPORTED, COMPLETED.
+ */
+export type SafeInternalAction =
+  | 'VIEW_SAFE_PREVIEW'
+  | 'REVIEW_APPROVAL_DETAILS'
+  | 'REQUEST_INTERNAL_REVISION'
+  | 'PREPARE_FOR_FUTURE_EXPORT'
+  | 'MARK_AS_INTERNAL_READY_CANDIDATE'
+
+/**
+ * Safe availability states for internal approval readiness.
+ * No PUBLISHABLE, EXPORTABLE, PUBLICLY_AVAILABLE, CDN_READY, SIGNED_URL_READY.
+ */
+export type InternalApprovalReadinessAvailability =
+  | 'READY'
+  | 'NOT_APPROVED'
+  | 'REJECTED'
+  | 'MISSING_TARGET'
+  | 'UNSAFE_TARGET'
+  | 'PREVIEW_UNAVAILABLE'
+  | 'UNAVAILABLE'
+
+/**
+ * Safe immutable DTO for internal approval readiness.
+ * No provider URL, storage key, bucket, raw payload, base64, secret,
+ * public/signed URL, publish/export, bytes, or stack trace fields.
+ */
+export interface SafeInternalApprovalReadiness {
+  targetType: ReviewTargetType
+  targetId: string
+  reviewState: ReviewState | null
+  availability: InternalApprovalReadinessAvailability
+  safeTitle: string | null
+  safeSummary: string | null
+  safeReasonCode: string | null
+  safeMessage: string | null
+  safePreviewAvailable: boolean
+  approvedAt: string | null
+  approvedByRole: string | null
+  safeNextInternalActions: SafeInternalAction[]
+  safeWarnings: string[]
+  updatedAt: string | null
+}
+

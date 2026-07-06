@@ -11,6 +11,7 @@ import type {
   AdminReviewHandoffRequest,
   AdminReviewHandoffResponse,
   SafeAdminPreview,
+  SafeInternalApprovalReadiness,
   ReviewTargetType,
   ReviewState,
   ReviewActorRole,
@@ -161,3 +162,26 @@ export function getPreview(
     `/admin/reviews/${targetType}/${targetId}/preview`
   )
 }
+
+// ── FP-014 Task 04: Internal Approval Readiness ────────────
+
+export function getInternalReadiness(
+  targetType: ReviewTargetType,
+  targetId: string
+): Promise<ApiResponse<SafeInternalApprovalReadiness>> {
+  return request<SafeInternalApprovalReadiness>(
+    `/admin/reviews/${targetType}/${targetId}/internal-readiness`
+  )
+}
+
+export function getApprovedInternalReadiness(
+  targetType?: ReviewTargetType
+): Promise<ApiResponse<SafeInternalApprovalReadiness[]>> {
+  const query = new URLSearchParams()
+  if (targetType) query.set('targetType', targetType)
+  const qs = query.toString()
+  return request<SafeInternalApprovalReadiness[]>(
+    `/admin/reviews/approved/internal-readiness${qs ? '?' + qs : ''}`
+  )
+}
+
