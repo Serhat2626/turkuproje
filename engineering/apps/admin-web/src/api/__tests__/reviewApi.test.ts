@@ -85,11 +85,11 @@ describe('reviewApi', () => {
 
   // ── Exact Export Count ──────────────────────────────────
 
-  it('sadece 19 explicit function export ediyor', () => {
+  it('sadece 21 explicit function export ediyor', () => {
     const exportedFunctions = Object.keys(reviewApi).filter(
       k => typeof (reviewApi as Record<string, unknown>)[k] === 'function'
     )
-    expect(exportedFunctions).toHaveLength(19)
+    expect(exportedFunctions).toHaveLength(21)
     expect(exportedFunctions).toEqual(expect.arrayContaining([
       'submitForReview',
       'startReview',
@@ -110,6 +110,8 @@ describe('reviewApi', () => {
       'requestInternalRevision',
       'getPipelineOverview',
       'getPipelineDetail',
+      'getWorkflowObservabilitySummary',
+      'getWorkflowObservabilityDiagnostics',
     ]))
   })
 

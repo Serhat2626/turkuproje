@@ -201,4 +201,18 @@ describe('ReviewWorklist Safety Regression', () => {
   it('worklist FP-016 açıklaması mevcut', () => {
     expect(WORKLIST_SOURCE).toContain('FP-016')
   })
+
+  // ── FP-017 Task 04: Workflow Observability Integration ───
+
+  it('worklist WorkflowObservabilityPanel import ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain("import WorkflowObservabilityPanel from './WorkflowObservabilityPanel'")
+  })
+
+  it('worklist WorkflowObservabilityPanel render ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain('<WorkflowObservabilityPanel')
+  })
+
+  it('worklist FP-017 açıklaması mevcut', () => {
+    expect(WORKLIST_SOURCE).toContain('FP-017')
+  })
 })

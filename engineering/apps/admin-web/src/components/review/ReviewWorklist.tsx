@@ -13,9 +13,10 @@ import InternalApprovalReadinessPanel from './InternalApprovalReadinessPanel'
 import ApprovedInternalInventoryPanel from './ApprovedInternalInventoryPanel'
 import InternalRevisionRequestPanel from './InternalRevisionRequestPanel'
 import PipelineOverviewPanel from './PipelineOverviewPanel'
+import WorkflowObservabilityPanel from './WorkflowObservabilityPanel'
 
 /**
- * FP-012 Task 10 + FP-014 Task 04 + FP-015 Task 04 + FP-016 Task 04:
+ * FP-012 Task 10 + FP-014 Task 04 + FP-015 Task 04 + FP-016 Task 04 + FP-017 Task 04:
  * Admin Review Worklist with console, preview, internal readiness,
  * inventory, revision request, and pipeline overview.
  *
@@ -129,6 +130,9 @@ export default function ReviewWorklist({
   return (
     <div className="review-worklist" data-testid="review-worklist">
       <h2 className="review-worklist__title">İnceleme İş Listesi</h2>
+
+      {/* FP-017 Task 04: Dahili İş Akışı Gözlemi */}
+      <WorkflowObservabilityPanel />
 
       {/* FP-016 Task 04: Dahili Pipeline Görünümü */}
       <PipelineOverviewPanel />

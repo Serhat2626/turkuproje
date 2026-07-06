@@ -17,6 +17,8 @@ import type {
   SafePipelineOverview,
   SafePipelineAggregateItem,
   SafePipelineStage,
+  SafeWorkflowObservabilitySummary,
+  SafeWorkflowDiagnosticItem,
   ReviewTargetType,
   ReviewState,
   ReviewActorRole,
@@ -229,5 +231,24 @@ export function getPipelineDetail(
 ): Promise<ApiResponse<SafePipelineAggregateItem>> {
   return request<SafePipelineAggregateItem>(
     `/admin/pipeline/${targetType}/${targetId}`
+  )
+}
+
+// ── FP-017 Task 04: Workflow Observability ──────────────────────
+
+export function getWorkflowObservabilitySummary(): Promise<ApiResponse<SafeWorkflowObservabilitySummary>> {
+  return request<SafeWorkflowObservabilitySummary>(
+    '/admin/workflow-observability/summary'
+  )
+}
+
+export function getWorkflowObservabilityDiagnostics(params?: {
+  targetType?: ReviewTargetType
+}): Promise<ApiResponse<SafeWorkflowDiagnosticItem[]>> {
+  const query = new URLSearchParams()
+  if (params?.targetType) query.set('targetType', params.targetType)
+  const qs = query.toString()
+  return request<SafeWorkflowDiagnosticItem[]>(
+    `/admin/workflow-observability/diagnostics${qs ? '?' + qs : ''}`
   )
 }

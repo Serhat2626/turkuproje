@@ -1272,3 +1272,66 @@ export interface SafePipelineOverview {
   safeWarnings: string[]
   updatedAt: string | null
 }
+
+// ── FP-017 Task 04: Workflow Observability ──────────────────────
+
+/**
+ * Safe internal-only workflow diagnostic types.
+ * No forbidden exposure.
+ */
+export type SafeWorkflowDiagnosticType =
+  | 'STALE_REVIEW'
+  | 'PREVIEW_UNAVAILABLE'
+  | 'READINESS_UNAVAILABLE'
+  | 'PIPELINE_UNAVAILABLE'
+  | 'REVISION_REQUESTED'
+  | 'MISSING_TARGET'
+  | 'BLOCKED_INTERNAL_WORKFLOW'
+  | 'DEGRADED_VISIBILITY'
+
+/**
+ * Safe non-mutating operational control hints.
+ * These are informational labels — no execution.
+ * No forbidden exposure.
+ */
+export type SafeOperationalControlHint =
+  | 'REFRESH_OVERVIEW'
+  | 'RECHECK_READINESS'
+  | 'VIEW_SAFE_PREVIEW'
+  | 'REVIEW_PIPELINE_DETAIL'
+  | 'REQUEST_MANUAL_INVESTIGATION'
+
+/**
+ * Safe workflow diagnostic item DTO.
+ * Read-only derived view.
+ * No forbidden exposure.
+ */
+export interface SafeWorkflowDiagnosticItem {
+  diagnosticType: SafeWorkflowDiagnosticType
+  targetType: ReviewTargetType
+  targetId: string
+  pipelineStage: SafePipelineStage | null
+  reviewState: ReviewState | null
+  safeReasonCode: string
+  safeMessage: string
+  safeRecommendedHints: SafeOperationalControlHint[]
+  updatedAt: string | null
+}
+
+/**
+ * Safe workflow observability summary DTO.
+ * Aggregate counts and diagnostics.
+ * No forbidden exposure.
+ */
+export interface SafeWorkflowObservabilitySummary {
+  countsByReviewState: Record<string, number>
+  countsByPipelineStage: Record<string, number>
+  countsByReadinessAvailability: Record<string, number>
+  previewAvailableCount: number
+  previewUnavailableCount: number
+  revisionRequestedCount: number
+  unavailableCount: number
+  diagnostics: SafeWorkflowDiagnosticItem[]
+  safeWarnings: string[]
+  updatedAt: string | null
+}
