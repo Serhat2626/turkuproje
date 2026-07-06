@@ -219,15 +219,13 @@ class InternalRevisionRequestAdminApiTest {
         }
 
         @Test
-        @DisplayName("CREATOR rejected safely with 403")
+        @DisplayName("CREATOR rejected by boundary policy before service")
         void creatorRejected() {
-            when(internalRevisionRequestService.requestRevision(any()))
-                    .thenThrow(new InternalRevisionRequestException(
-                            "CREATOR cannot request internal revision", "CREATOR_NOT_ALLOWED"));
-
+            // FP-018 Task 04: CREATOR is now blocked by boundary policy enforcement
+            // in resolveRevisionActor before reaching service layer.
             var ex = catchThrowableOfType(() -> callEndpoint(ReviewActorRole.CREATOR),
-                    InternalRevisionRequestException.class);
-            var response = controller.handleInternalRevisionException(ex);
+                    AdminActorResolutionException.class);
+            var response = controller.handleActorResolutionException(ex);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
             assertThat(response.getBody().isSuccess()).isFalse();

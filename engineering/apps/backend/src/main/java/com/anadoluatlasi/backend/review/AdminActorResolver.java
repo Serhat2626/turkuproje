@@ -106,7 +106,11 @@ public class AdminActorResolver {
         // Strip anything that looks like a token/credential
         String sanitized = raw.replaceAll("[<>]", "")
                 .replaceAll("(?i)bearer\\s+\\S+", "[REDACTED]")
-                .replaceAll("(?i)password[=:]\\S+", "[REDACTED]");
+                .replaceAll("(?i)password[=:]\\S+", "[REDACTED]")
+                // FP-018 Task 04: Strip JWT-like strings (eyJ...base64.base64.base64)
+                .replaceAll("eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+", "[REDACTED]")
+                // Strip authorization-header-like values
+                .replaceAll("(?i)authorization[=:]\\S+", "[REDACTED]");
         return sanitized.length() > 200 ? sanitized.substring(0, 200) : sanitized;
     }
 

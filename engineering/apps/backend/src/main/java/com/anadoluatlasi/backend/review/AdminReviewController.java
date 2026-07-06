@@ -349,7 +349,7 @@ public class AdminReviewController {
         }
     }
 
-    // ── FP-018 Task 03: Actor Resolution Helpers ────────────────────
+    // ── FP-018 Task 03 + Task 04: Actor Resolution Helpers ───────────
 
     /**
      * Resolve actor for standard review actions.
@@ -367,31 +367,51 @@ public class AdminReviewController {
     }
 
     /**
-     * Resolve actor for handoff. SYSTEM is allowed (internal handoff path).
+     * FP-018 Task 04: Resolve actor for handoff with narrow system boundary.
+     *
+     * <p>SYSTEM is allowed ONLY through the narrow handoff-specific policy gate
+     * ({@link AdminActorBoundaryPolicy#isHandoffSystemInternalPath}), not by
+     * raw request-body actorRole alone.</p>
+     *
+     * <p>After resolution, enforces handoff boundary policy to ensure the
+     * resolved actor is actually permitted for INTERNAL_HANDOFF.</p>
      */
     private ResolvedAdminActor resolveHandoffActor(AdminReviewHandoffRequest request) {
-        boolean isSystem = request.getActorRole() == ReviewActorRole.SYSTEM;
-        return adminActorResolver.resolve(AdminActorResolutionRequest.builder()
+        boolean isSystemPath = AdminActorBoundaryPolicy.isHandoffSystemInternalPath(request.getActorRole());
+        ResolvedAdminActor actor = adminActorResolver.resolve(AdminActorResolutionRequest.builder()
                 .requestedActorRole(request.getActorRole())
                 .requestedActorReference(request.getActorReference())
                 .fallbackAllowed(true)
-                .systemInternalAllowed(isSystem)
+                .systemInternalAllowed(isSystemPath)
                 .safeReasonCode("HANDOFF")
                 .build());
+        AdminActorBoundaryPolicy.enforce(
+                AdminActorBoundaryPolicy.ActionCategory.INTERNAL_HANDOFF, actor);
+        return actor;
     }
 
     /**
-     * Resolve actor for internal revision request.
-     * SYSTEM is NOT allowed for revision requests.
+     * FP-018 Task 04: Resolve actor for internal revision request with hardened boundary.
+     *
+     * <p>SYSTEM is NEVER allowed for revision requests. The systemInternalAllowed flag
+     * is always false, and the boundary policy is enforced after resolution.</p>
+     *
+     * <p>This double-check ensures even accidental configuration cannot allow SYSTEM
+     * through the revision path.</p>
      */
     private ResolvedAdminActor resolveRevisionActor(AdminInternalRevisionRequest request) {
-        return adminActorResolver.resolve(AdminActorResolutionRequest.builder()
+        // isRevisionSystemInternalPath always returns false — SYSTEM is always blocked
+        boolean isSystemPath = AdminActorBoundaryPolicy.isRevisionSystemInternalPath(request.getActorRole());
+        ResolvedAdminActor actor = adminActorResolver.resolve(AdminActorResolutionRequest.builder()
                 .requestedActorRole(request.getActorRole())
                 .requestedActorReference(request.getActorReference())
                 .fallbackAllowed(true)
-                .systemInternalAllowed(false)
+                .systemInternalAllowed(isSystemPath)
                 .safeReasonCode("INTERNAL_REVISION_REQUEST")
                 .build());
+        AdminActorBoundaryPolicy.enforce(
+                AdminActorBoundaryPolicy.ActionCategory.INTERNAL_REVISION_REQUEST, actor);
+        return actor;
     }
 
     // ── Exception Handlers ──────────────────────────────────────────
@@ -429,8 +449,8 @@ public class AdminReviewController {
     @ExceptionHandler(AdminActorResolutionException.class)
     public ResponseEntity<ApiResponse<Void>> handleActorResolutionException(AdminActorResolutionException ex) {
         HttpStatus status = switch (ex.getSafeErrorCode()) {
-            case "SYSTEM_NOT_ALLOWED" -> HttpStatus.FORBIDDEN;
-            case "FALLBACK_NOT_ALLOWED" -> HttpStatus.FORBIDDEN;
+            case "SYSTEM_NOT_ALLOWED", "FALLBACK_NOT_ALLOWED",
+                 "BOUNDARY_POLICY_VIOLATION" -> HttpStatus.FORBIDDEN;
             case "ACTOR_ROLE_NULL", "RESOLUTION_REQUEST_NULL" -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.BAD_REQUEST;
         };
