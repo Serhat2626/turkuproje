@@ -67,7 +67,7 @@ export default function ReviewPreviewPanel({
       if (res.success && res.data) {
         setPreview(res.data)
       } else {
-        setError(safeText(res.errorMessage ?? 'Önizleme yüklenemedi'))
+        setError(safeText(res.message ?? 'Önizleme yüklenemedi'))
       }
     } catch (err: unknown) {
       const msg = err && typeof err === 'object' && 'message' in err
