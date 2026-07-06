@@ -7,6 +7,7 @@ import com.anadoluatlasi.backend.ai.gateway.AiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiStoryboardAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockStoryboardGatewayMode;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
 import com.anadoluatlasi.backend.content.entity.ContentDraft;
 import com.anadoluatlasi.backend.content.entity.ContentDraftStatus;
@@ -61,6 +62,9 @@ class StoryboardGenerationServiceTest {
     @Mock
     private StoryboardDraftRepository storyboardDraftRepository;
 
+    @Mock
+    private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
+
     private MockAiStoryboardAgentGateway mockGateway;
     private StoryboardGenerationService service;
 
@@ -74,7 +78,8 @@ class StoryboardGenerationServiceTest {
         service = new StoryboardGenerationService(
                 scenarioDraftRepository,
                 storyboardDraftRepository,
-                mockGateway);
+                mockGateway,
+                generationReviewHandoffAdapter);
 
         project = ContentProject.builder()
                 .id(UUID.randomUUID())
@@ -281,7 +286,8 @@ class StoryboardGenerationServiceTest {
             // Spy kullanarak gateway çağrısını doğrula
             AiStoryboardAgentGateway spyGateway = spy(mockGateway);
             StoryboardGenerationService spyService = new StoryboardGenerationService(
-                    scenarioDraftRepository, storyboardDraftRepository, spyGateway);
+                    scenarioDraftRepository, storyboardDraftRepository, spyGateway,
+                    generationReviewHandoffAdapter);
 
             ScenarioDraft unapproved = createScenarioWithStatus(ScenarioDraftStatus.AI_GENERATED);
             when(scenarioDraftRepository.findById(unapproved.getId())).thenReturn(Optional.of(unapproved));
@@ -444,7 +450,8 @@ class StoryboardGenerationServiceTest {
                 throw new RuntimeException("Unexpected network error");
             };
             StoryboardGenerationService exceptionService = new StoryboardGenerationService(
-                    scenarioDraftRepository, storyboardDraftRepository, throwingGateway);
+                    scenarioDraftRepository, storyboardDraftRepository, throwingGateway,
+                    generationReviewHandoffAdapter);
 
             setupMocks(approvedScenario, 0);
 
@@ -479,7 +486,8 @@ class StoryboardGenerationServiceTest {
                             .build();
 
             StoryboardGenerationService testService = new StoryboardGenerationService(
-                    scenarioDraftRepository, storyboardDraftRepository, noTitleGateway);
+                    scenarioDraftRepository, storyboardDraftRepository, noTitleGateway,
+                    generationReviewHandoffAdapter);
             setupMocks(approvedScenario, 0);
 
             StoryboardGenerationResult result = testService.generateStoryboardForScenario(
@@ -504,7 +512,8 @@ class StoryboardGenerationServiceTest {
                             .build();
 
             StoryboardGenerationService testService = new StoryboardGenerationService(
-                    scenarioDraftRepository, storyboardDraftRepository, noScenesGateway);
+                    scenarioDraftRepository, storyboardDraftRepository, noScenesGateway,
+                    generationReviewHandoffAdapter);
             setupMocks(approvedScenario, 0);
 
             StoryboardGenerationResult result = testService.generateStoryboardForScenario(
@@ -537,7 +546,8 @@ class StoryboardGenerationServiceTest {
                             .build();
 
             StoryboardGenerationService testService = new StoryboardGenerationService(
-                    scenarioDraftRepository, storyboardDraftRepository, badSceneGateway);
+                    scenarioDraftRepository, storyboardDraftRepository, badSceneGateway,
+                    generationReviewHandoffAdapter);
             setupMocks(approvedScenario, 0);
 
             StoryboardGenerationResult result = testService.generateStoryboardForScenario(
@@ -570,7 +580,8 @@ class StoryboardGenerationServiceTest {
                             .build();
 
             StoryboardGenerationService testService = new StoryboardGenerationService(
-                    scenarioDraftRepository, storyboardDraftRepository, badOrderGateway);
+                    scenarioDraftRepository, storyboardDraftRepository, badOrderGateway,
+                    generationReviewHandoffAdapter);
             setupMocks(approvedScenario, 0);
 
             StoryboardGenerationResult result = testService.generateStoryboardForScenario(

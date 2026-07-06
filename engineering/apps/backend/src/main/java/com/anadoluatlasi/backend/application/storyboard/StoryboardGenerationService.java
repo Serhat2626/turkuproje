@@ -19,6 +19,7 @@ import com.anadoluatlasi.backend.storyboard.entity.StoryboardDraft;
 import com.anadoluatlasi.backend.storyboard.entity.StoryboardDraftStatus;
 import com.anadoluatlasi.backend.storyboard.entity.StoryboardScene;
 import com.anadoluatlasi.backend.storyboard.repository.StoryboardDraftRepository;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -65,6 +66,7 @@ public class StoryboardGenerationService {
     private final ScenarioDraftRepository scenarioDraftRepository;
     private final StoryboardDraftRepository storyboardDraftRepository;
     private final AiStoryboardAgentGateway aiStoryboardAgentGateway;
+    private final GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     /**
      * Approved ScenarioDraft'tan storyboard candidate üretir.
@@ -226,6 +228,10 @@ public class StoryboardGenerationService {
 
         log.info("Storyboard başarıyla üretildi: scenarioId={}, storyboardDraftId={}, version={}, scenes={}",
                 scenario.getId(), storyboardDraft.getId(), version, scenes.size());
+
+        // FP-013 Task 05: Hand off to review workflow (non-fatal)
+        generationReviewHandoffAdapter.handoffStoryboard(
+                storyboardDraft.getId(), storyboardDraft.getTitle(), storyboardDraft.getSummary());
 
         return StoryboardGenerationResult.builder()
                 .success(true)

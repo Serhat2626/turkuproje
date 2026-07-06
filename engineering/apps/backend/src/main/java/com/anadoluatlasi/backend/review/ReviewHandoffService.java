@@ -13,7 +13,7 @@ import java.util.UUID;
  * for generated outputs.
  *
  * <p>This service is internal only — NOT exposed via controller/API endpoint.
- * NOT wired into orchestration yet (Task 04).</p>
+ * Wired into orchestration via GenerationReviewHandoffAdapter (FP-013 Task 05).</p>
  *
  * <p>This service bypasses {@link ReviewDomainService} for the initial handoff
  * because SYSTEM cannot call SUBMIT_FOR_REVIEW via policy. Instead, it creates

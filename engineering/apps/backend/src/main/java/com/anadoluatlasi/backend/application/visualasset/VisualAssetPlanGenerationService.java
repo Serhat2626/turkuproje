@@ -342,6 +342,10 @@ public class VisualAssetPlanGenerationService {
                 + "Scene count: {}, Thumbnail: {}",
                 plan.getId(), plan.getVersion(), plan.getScenePlans().size(), true);
 
+        // FP-013 Task 05: VisualAssetPlan handoff deferred.
+        // ReviewTargetType does not include VISUAL_ASSET_PLAN.
+        // Image generation handoff (IMAGE_ASSET) is handled at image generation completion.
+
         return VisualAssetPlanGenerationResult.builder()
                 .success(true)
                 .contentProjectId(project.getId())

@@ -24,6 +24,7 @@ import com.anadoluatlasi.backend.content.entity.GeneratedBy;
 import com.anadoluatlasi.backend.content.repository.ContentDraftRepository;
 import com.anadoluatlasi.backend.content.repository.ContentProjectRepository;
 import com.anadoluatlasi.backend.knowledge.entity.KnowledgeItem;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -72,6 +73,7 @@ public class AiGenerationService {
     private final ContentDraftRepository contentDraftRepository;
     private final AiGenerationRequestRepository aiGenerationRequestRepository;
     private final AiContentAgentGateway aiContentAgentGateway;
+    private final GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     // ── Generate AI Draft ───────────────────────────────────
 
@@ -246,6 +248,10 @@ public class AiGenerationService {
 
         log.info("AI draft başarıyla oluşturuldu: projectId={}, draftId={}",
                 project.getId(), draft.getId());
+
+        // FP-013 Task 05: Hand off content project to review (non-fatal)
+        generationReviewHandoffAdapter.handoffContentProject(
+                project.getId(), project.getTitle(), draft.getSummary());
 
         return AiGenerationResult.builder()
                 .success(true)

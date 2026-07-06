@@ -10,6 +10,7 @@ import com.anadoluatlasi.backend.ai.gateway.AiContentAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.AiGatewayResult;
 import com.anadoluatlasi.backend.ai.repository.AiGenerationRequestRepository;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import com.anadoluatlasi.backend.content.entity.ContentDraft;
 import com.anadoluatlasi.backend.content.entity.ContentDraftStatus;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
@@ -61,6 +62,9 @@ class AiGenerationServiceTest {
 
     @Mock
     private AiContentAgentGateway aiContentAgentGateway;
+
+    @Mock
+    private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     @InjectMocks
     private AiGenerationService service;

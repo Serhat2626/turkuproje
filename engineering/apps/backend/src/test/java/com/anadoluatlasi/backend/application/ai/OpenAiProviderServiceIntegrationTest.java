@@ -35,6 +35,8 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
+
 /**
  * FP-001 Task 25: AiGenerationService + OpenAiContentAgentGateway entegrasyon testleri.
  *
@@ -53,6 +55,7 @@ class OpenAiProviderServiceIntegrationTest {
     private AiGenerationRequestRepository aiGenerationRequestRepository;
     private OpenAiContentAgentGateway gateway;
     private AiGenerationService service;
+    private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     // Mocked OpenAiClient — package-private erişim gerektirir,
     // bu yüzden gateway'e ProviderTestHelper üzerinden erişiyoruz.
@@ -64,6 +67,7 @@ class OpenAiProviderServiceIntegrationTest {
         contentProjectRepository = mock(ContentProjectRepository.class);
         contentDraftRepository = mock(ContentDraftRepository.class);
         aiGenerationRequestRepository = mock(AiGenerationRequestRepository.class);
+        generationReviewHandoffAdapter = mock(GenerationReviewHandoffAdapter.class);
 
         knowledgeItem = KnowledgeItem.builder()
                 .id(UUID.randomUUID())
@@ -113,14 +117,16 @@ class OpenAiProviderServiceIntegrationTest {
         gateway = OpenAiProviderTestHelper.createGatewayWithMockedSuccess(validJsonResponse);
         service = new AiGenerationService(
                 contentProjectRepository, contentDraftRepository,
-                aiGenerationRequestRepository, gateway);
+                aiGenerationRequestRepository, gateway,
+                generationReviewHandoffAdapter);
     }
 
     private void wireWithFailure(AiErrorType errorType, String message, boolean retryable) {
         gateway = OpenAiProviderTestHelper.createGatewayWithMockedFailure(errorType, message, retryable);
         service = new AiGenerationService(
                 contentProjectRepository, contentDraftRepository,
-                aiGenerationRequestRepository, gateway);
+                aiGenerationRequestRepository, gateway,
+                generationReviewHandoffAdapter);
     }
 
     private void wireWithConfigError() {
@@ -130,7 +136,8 @@ class OpenAiProviderServiceIntegrationTest {
         gateway = new OpenAiContentAgentGateway(config);
         service = new AiGenerationService(
                 contentProjectRepository, contentDraftRepository,
-                aiGenerationRequestRepository, gateway);
+                aiGenerationRequestRepository, gateway,
+                generationReviewHandoffAdapter);
     }
 
     // ════════════════════════════════════════════════════════════

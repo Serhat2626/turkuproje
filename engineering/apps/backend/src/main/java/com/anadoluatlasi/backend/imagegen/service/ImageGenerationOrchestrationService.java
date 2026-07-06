@@ -13,6 +13,7 @@ import com.anadoluatlasi.backend.imagegen.provider.ImageProviderGenerationResult
 import com.anadoluatlasi.backend.imagegen.provider.ProviderOutputReference;
 import com.anadoluatlasi.backend.imagegen.repository.ImageGenerationRequestRepository;
 import com.anadoluatlasi.backend.imagegen.repository.ImageGenerationResultRepository;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -51,6 +52,7 @@ public class ImageGenerationOrchestrationService {
     private final ImageGenerationProviderGateway providerGateway;
     private final ImageGeneratedAssetHandoffService handoffService;
     private final ImmediateStorageHandoffService immediateStorageHandoffService;
+    private final GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     /**
      * REQUESTED request için provider generation çalıştırır.
@@ -161,6 +163,12 @@ public class ImageGenerationOrchestrationService {
 
         log.info("Generation başarılı: requestId={}, resultId={}, status=GENERATED_PENDING_REVIEW",
                 request.getId(), result.getId());
+
+        // FP-013 Task 05: Hand off image asset to review (non-fatal)
+        generationReviewHandoffAdapter.handoffImageAsset(
+                generatedAsset.getId(),
+                "Görsel Üretim — " + request.getId().toString().substring(0, 8),
+                "AI görsel üretimi tamamlandı");
 
         return ImageGenerationResultMapper.toResponse(result);
     }

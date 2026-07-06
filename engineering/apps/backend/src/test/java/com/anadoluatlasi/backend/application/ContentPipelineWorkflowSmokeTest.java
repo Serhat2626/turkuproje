@@ -30,6 +30,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
@@ -60,6 +61,7 @@ class ContentPipelineWorkflowSmokeTest {
     @Mock private ContentDraftRepository contentDraftRepository;
     @Mock private AiGenerationRequestRepository aiGenerationRequestRepository;
     @Mock private AiContentAgentGateway aiContentAgentGateway;
+    @Mock private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     private KnowledgeItemService knowledgeItemService;
     private ContentProjectService contentProjectService;
@@ -77,7 +79,8 @@ class ContentPipelineWorkflowSmokeTest {
         contentProjectService = new ContentProjectService(contentProjectRepository, contentDraftRepository, knowledgeItemRepository);
         aiGenerationService = new AiGenerationService(
                 contentProjectRepository, contentDraftRepository,
-                aiGenerationRequestRepository, aiContentAgentGateway);
+                aiGenerationRequestRepository, aiContentAgentGateway,
+                generationReviewHandoffAdapter);
         contentDraftService = new ContentDraftService(contentDraftRepository);
 
         // Repository save stubs — entity'yi gerçek bir bellekte tutar gibi çalıştırır

@@ -8,6 +8,7 @@ import com.anadoluatlasi.backend.ai.gateway.mock.MockAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockScenarioGatewayMode;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import com.anadoluatlasi.backend.content.entity.ContentDraft;
 import com.anadoluatlasi.backend.content.entity.ContentDraftStatus;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
@@ -60,6 +61,9 @@ class ScenarioGenerationServiceTest {
     @Mock
     private ScenarioDraftRepository scenarioDraftRepository;
 
+    @Mock
+    private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
+
     private MockAiScenarioAgentGateway mockGateway;
     private ScenarioGenerationService service;
 
@@ -74,7 +78,8 @@ class ScenarioGenerationServiceTest {
                 contentProjectRepository,
                 contentDraftRepository,
                 scenarioDraftRepository,
-                mockGateway);
+                mockGateway,
+                generationReviewHandoffAdapter);
 
         project = ContentProject.builder()
                 .id(UUID.randomUUID())
@@ -435,7 +440,8 @@ class ScenarioGenerationServiceTest {
             };
             ScenarioGenerationService exService = new ScenarioGenerationService(
                     contentProjectRepository, contentDraftRepository,
-                    scenarioDraftRepository, throwingGateway);
+                    scenarioDraftRepository, throwingGateway,
+                    generationReviewHandoffAdapter);
 
             ScenarioGenerationResult result = exService.generateScenarioForContentProject(
                     project.getId(), "admin-1");
@@ -499,7 +505,8 @@ class ScenarioGenerationServiceTest {
 
             ScenarioGenerationService customService = new ScenarioGenerationService(
                     contentProjectRepository, contentDraftRepository,
-                    scenarioDraftRepository, partialGateway);
+                    scenarioDraftRepository, partialGateway,
+                    generationReviewHandoffAdapter);
 
             ScenarioGenerationResult result = customService.generateScenarioForContentProject(
                     project.getId(), "admin-1");
@@ -523,7 +530,8 @@ class ScenarioGenerationServiceTest {
 
             ScenarioGenerationService customService = new ScenarioGenerationService(
                     contentProjectRepository, contentDraftRepository,
-                    scenarioDraftRepository, noTitleGateway);
+                    scenarioDraftRepository, noTitleGateway,
+                    generationReviewHandoffAdapter);
 
             ScenarioGenerationResult result = customService.generateScenarioForContentProject(
                     project.getId(), "admin-1");

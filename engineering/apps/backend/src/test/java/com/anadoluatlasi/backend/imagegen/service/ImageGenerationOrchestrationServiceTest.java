@@ -2,6 +2,7 @@ package com.anadoluatlasi.backend.imagegen.service;
 
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import com.anadoluatlasi.backend.imagegen.controller.dto.ImageGenerationResultResponse;
 import com.anadoluatlasi.backend.imagegen.entity.*;
 import com.anadoluatlasi.backend.imagegen.provider.ImageGenerationProviderGateway;
@@ -61,8 +62,11 @@ class ImageGenerationOrchestrationServiceTest {
         ImmediateStorageHandoffService immediateHandoff = new ImmediateStorageHandoffService(
                 new ImmediateStorageHandoffProperties(),
                 org.mockito.Mockito.mock(ControlledStorageHandoffOrchestrationService.class));
+        GenerationReviewHandoffAdapter generationReviewHandoffAdapter =
+                org.mockito.Mockito.mock(GenerationReviewHandoffAdapter.class);
         orchestrationService = new ImageGenerationOrchestrationService(
-                requestRepository, resultRepository, mockProvider, handoffService, immediateHandoff);
+                requestRepository, resultRepository, mockProvider, handoffService, immediateHandoff,
+                generationReviewHandoffAdapter);
 
         // FP-010 Task 04: Stub handoff to return valid asset (immediate handoff needs getId())
         ImageGeneratedAsset stubAsset = new ImageGeneratedAsset();

@@ -18,6 +18,7 @@ import com.anadoluatlasi.backend.scenario.entity.ScenarioBeatType;
 import com.anadoluatlasi.backend.scenario.entity.ScenarioDraft;
 import com.anadoluatlasi.backend.scenario.entity.ScenarioDraftStatus;
 import com.anadoluatlasi.backend.scenario.repository.ScenarioDraftRepository;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -66,6 +67,7 @@ public class ScenarioGenerationService {
     private final ContentDraftRepository contentDraftRepository;
     private final ScenarioDraftRepository scenarioDraftRepository;
     private final AiScenarioAgentGateway aiScenarioAgentGateway;
+    private final GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     /**
      * Approved source draft'tan senaryo candidate üretir.
@@ -204,6 +206,10 @@ public class ScenarioGenerationService {
 
         log.info("Senaryo başarıyla üretildi: projectId={}, scenarioDraftId={}, version={}, beats={}",
                 project.getId(), scenarioDraft.getId(), version, beats.size());
+
+        // FP-013 Task 05: Hand off to review workflow (non-fatal)
+        generationReviewHandoffAdapter.handoffScenario(
+                scenarioDraft.getId(), scenarioDraft.getTitle(), scenarioDraft.getSummary());
 
         return ScenarioGenerationResult.builder()
                 .success(true)

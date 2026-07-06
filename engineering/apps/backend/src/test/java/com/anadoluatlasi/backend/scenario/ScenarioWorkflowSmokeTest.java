@@ -7,6 +7,7 @@ import com.anadoluatlasi.backend.ai.gateway.AiScenarioAgentGateway;
 import com.anadoluatlasi.backend.ai.gateway.mock.MockAiScenarioAgentGateway;
 import com.anadoluatlasi.backend.application.scenario.*;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import com.anadoluatlasi.backend.content.entity.*;
 import com.anadoluatlasi.backend.content.repository.ContentDraftRepository;
 import com.anadoluatlasi.backend.content.repository.ContentProjectRepository;
@@ -41,6 +42,7 @@ class ScenarioWorkflowSmokeTest {
     @Mock private ContentProjectRepository contentProjectRepository;
     @Mock private ContentDraftRepository contentDraftRepository;
     @Mock private ScenarioDraftRepository scenarioDraftRepository;
+    @Mock private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     private MockAiScenarioAgentGateway mockGateway;
     private ScenarioGenerationService generationService;
@@ -55,7 +57,8 @@ class ScenarioWorkflowSmokeTest {
         mockGateway = new MockAiScenarioAgentGateway();
         generationService = new ScenarioGenerationService(
                 contentProjectRepository, contentDraftRepository,
-                scenarioDraftRepository, mockGateway);
+                scenarioDraftRepository, mockGateway,
+                generationReviewHandoffAdapter);
         reviewService = new ScenarioReviewService(scenarioDraftRepository);
         queryService = new ScenarioQueryService(scenarioDraftRepository);
 

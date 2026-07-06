@@ -24,6 +24,7 @@ import com.anadoluatlasi.backend.storyboard.entity.StoryboardScene;
 import com.anadoluatlasi.backend.storyboard.repository.StoryboardDraftRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,7 @@ public class PlatformPackageGenerationService {
     private final PlatformPackageDraftRepository platformPackageDraftRepository;
     private final AiPlatformPackageAgentGateway aiPlatformPackageAgentGateway;
     private final ObjectMapper objectMapper;
+    private final GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
 
     /**
      * Approved StoryboardDraft'tan platform paketleri üretir.
@@ -229,6 +231,10 @@ public class PlatformPackageGenerationService {
             }
 
             generatedIds.add(draft.getId());
+
+            // FP-013 Task 05: Hand off each package to review workflow (non-fatal)
+            generationReviewHandoffAdapter.handoffPackage(
+                    draft.getId(), draft.getTitle(), draft.getCaptionOrDescription());
         }
 
         log.info("Platform paketleri başarıyla üretildi: storyboardId={}, packageCount={}",

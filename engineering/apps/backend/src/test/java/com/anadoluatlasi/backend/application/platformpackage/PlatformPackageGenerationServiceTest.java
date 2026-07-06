@@ -5,6 +5,7 @@ import com.anadoluatlasi.backend.ai.gateway.mock.MockAiPlatformPackageAgentGatew
 import com.anadoluatlasi.backend.ai.gateway.mock.MockPlatformPackageGatewayMode;
 import com.anadoluatlasi.backend.common.exception.BusinessException;
 import com.anadoluatlasi.backend.common.exception.NotFoundException;
+import com.anadoluatlasi.backend.review.GenerationReviewHandoffAdapter;
 import com.anadoluatlasi.backend.content.entity.ContentDraft;
 import com.anadoluatlasi.backend.content.entity.ContentDraftStatus;
 import com.anadoluatlasi.backend.content.entity.ContentProject;
@@ -60,6 +61,9 @@ class PlatformPackageGenerationServiceTest {
     @Mock
     private PlatformPackageDraftRepository platformPackageDraftRepository;
 
+    @Mock
+    private GenerationReviewHandoffAdapter generationReviewHandoffAdapter;
+
     private MockAiPlatformPackageAgentGateway mockGateway;
     private PlatformPackageGenerationService service;
     private ObjectMapper objectMapper;
@@ -75,7 +79,8 @@ class PlatformPackageGenerationServiceTest {
         objectMapper = new ObjectMapper();
         service = new PlatformPackageGenerationService(
                 storyboardDraftRepository, platformPackageDraftRepository,
-                mockGateway, objectMapper);
+                mockGateway, objectMapper,
+                generationReviewHandoffAdapter);
 
         project = ContentProject.builder()
                 .id(UUID.randomUUID())
@@ -471,7 +476,8 @@ class PlatformPackageGenerationServiceTest {
             };
             PlatformPackageGenerationService failService = new PlatformPackageGenerationService(
                     storyboardDraftRepository, platformPackageDraftRepository,
-                    throwingGateway, objectMapper);
+                    throwingGateway, objectMapper,
+                    generationReviewHandoffAdapter);
 
             PlatformPackageGenerationResult result = failService.generatePlatformPackages(
                     approvedStoryboard.getId(), "admin");
