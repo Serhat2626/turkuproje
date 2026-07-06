@@ -21,7 +21,8 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 /**
- * FP-012 Task 07 + FP-013 Task 04 + FP-014 Task 03: Internal admin review workflow controller.
+ * FP-012 Task 07 + FP-013 Task 04 + FP-014 Task 03 + FP-018 Task 03:
+ * Internal admin review workflow controller.
  *
  * <p>Explicit action endpoints — no generic status update.
  * No publish/export, no public/signed URL, no provider/storage inspection.
@@ -37,6 +38,11 @@ import java.util.stream.Collectors;
  * Narrow action endpoint — NOT generic status update.
  * Total endpoints: 17 (9 POST + 8 GET).</p>
  *
+ * <p>FP-018 Task 03: Review actions now route through AdminActorResolver.
+ * Request actorRole is treated as TEST_FALLBACK input, not production auth.
+ * No JWT/session/principal/authorization header integration.
+ * No new endpoints. Endpoint count unchanged.</p>
+ *
  * <p>Safe error handling — no stack trace, no secrets, no raw payloads.</p>
  */
 @RestController
@@ -50,6 +56,7 @@ public class AdminReviewController {
     private final AdminPreviewService adminPreviewService;
     private final InternalApprovalReadinessService internalApprovalReadinessService;
     private final InternalRevisionRequestService internalRevisionRequestService;
+    private final AdminActorResolver adminActorResolver;
 
     // ── Explicit Action Endpoints ───────────────────────────────────
 
@@ -58,9 +65,10 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewActionResponse>> submitForReview(
             @Valid @RequestBody AdminReviewActionRequest request) {
         validateActionRequest(request);
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.submitForReview(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -70,9 +78,10 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewActionResponse>> startReview(
             @Valid @RequestBody AdminReviewActionRequest request) {
         validateActionRequest(request);
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.startReview(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -82,9 +91,10 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewActionResponse>> requestChanges(
             @Valid @RequestBody AdminReviewActionRequest request) {
         validateActionRequest(request);
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.requestChanges(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getReasonCode(), request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -94,9 +104,10 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewActionResponse>> approveForInternalUse(
             @Valid @RequestBody AdminReviewActionRequest request) {
         validateActionRequest(request);
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.approveForInternalUse(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getReasonCode(), request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -106,9 +117,10 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewActionResponse>> reject(
             @Valid @RequestBody AdminReviewActionRequest request) {
         validateActionRequest(request);
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.reject(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getReasonCode(), request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -118,9 +130,10 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewActionResponse>> returnToDraft(
             @Valid @RequestBody AdminReviewActionRequest request) {
         validateActionRequest(request);
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.returnToDraft(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getReasonCode(), request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -134,9 +147,10 @@ public class AdminReviewController {
             return ResponseEntity.badRequest()
                     .body(ApiResponse.error("Note is required for add-note action"));
         }
+        ResolvedAdminActor actor = resolveReviewActor(request);
         ReviewApplicationResult result = reviewApplicationService.addReviewNote(
                 request.getTargetType(), request.getTargetId(),
-                request.getActorReference(), request.getActorRole(),
+                actor.getActorReference(), actor.getActorRole(),
                 request.getNote());
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toActionResponse(result)));
     }
@@ -148,7 +162,9 @@ public class AdminReviewController {
     public ResponseEntity<ApiResponse<AdminReviewHandoffResponse>> handoffForReview(
             @Valid @RequestBody AdminReviewHandoffRequest request) {
         validateHandoffRequest(request);
-        ReviewHandoffRequest internalRequest = AdminReviewDtoMapper.toHandoffRequest(request);
+        ResolvedAdminActor actor = resolveHandoffActor(request);
+        ReviewHandoffRequest internalRequest = AdminReviewDtoMapper.toHandoffRequest(
+                request, actor.getActorRole(), actor.getActorReference());
         ReviewHandoffResult result = reviewHandoffService.handoffForReview(internalRequest);
         return ResponseEntity.ok(ApiResponse.success(AdminReviewDtoMapper.toHandoffResponse(result)));
     }
@@ -261,11 +277,12 @@ public class AdminReviewController {
             @PathVariable UUID targetId,
             @Valid @RequestBody AdminInternalRevisionRequest request) {
         validateInternalRevisionRequest(request);
+        ResolvedAdminActor actor = resolveRevisionActor(request);
         InternalRevisionRequest serviceRequest = InternalRevisionRequest.builder()
                 .targetType(targetType)
                 .targetId(targetId)
-                .actorRole(request.getActorRole())
-                .actorReference(request.getActorReference())
+                .actorRole(actor.getActorRole())
+                .actorReference(actor.getActorReference())
                 .safeReasonCode(request.getSafeReasonCode())
                 .safeMessage(request.getSafeMessage())
                 .build();
@@ -332,6 +349,51 @@ public class AdminReviewController {
         }
     }
 
+    // ── FP-018 Task 03: Actor Resolution Helpers ────────────────────
+
+    /**
+     * Resolve actor for standard review actions.
+     * SYSTEM is NOT allowed through review controller request body.
+     * fallbackAllowed=true for current TEST_FALLBACK compatibility.
+     */
+    private ResolvedAdminActor resolveReviewActor(AdminReviewActionRequest request) {
+        return adminActorResolver.resolve(AdminActorResolutionRequest.builder()
+                .requestedActorRole(request.getActorRole())
+                .requestedActorReference(request.getActorReference())
+                .fallbackAllowed(true)
+                .systemInternalAllowed(false)
+                .safeReasonCode("REVIEW_ACTION")
+                .build());
+    }
+
+    /**
+     * Resolve actor for handoff. SYSTEM is allowed (internal handoff path).
+     */
+    private ResolvedAdminActor resolveHandoffActor(AdminReviewHandoffRequest request) {
+        boolean isSystem = request.getActorRole() == ReviewActorRole.SYSTEM;
+        return adminActorResolver.resolve(AdminActorResolutionRequest.builder()
+                .requestedActorRole(request.getActorRole())
+                .requestedActorReference(request.getActorReference())
+                .fallbackAllowed(true)
+                .systemInternalAllowed(isSystem)
+                .safeReasonCode("HANDOFF")
+                .build());
+    }
+
+    /**
+     * Resolve actor for internal revision request.
+     * SYSTEM is NOT allowed for revision requests.
+     */
+    private ResolvedAdminActor resolveRevisionActor(AdminInternalRevisionRequest request) {
+        return adminActorResolver.resolve(AdminActorResolutionRequest.builder()
+                .requestedActorRole(request.getActorRole())
+                .requestedActorReference(request.getActorReference())
+                .fallbackAllowed(true)
+                .systemInternalAllowed(false)
+                .safeReasonCode("INTERNAL_REVISION_REQUEST")
+                .build());
+    }
+
     // ── Exception Handlers ──────────────────────────────────────────
 
     @ExceptionHandler(ReviewApplicationException.class)
@@ -361,6 +423,18 @@ public class AdminReviewController {
     @ExceptionHandler(InternalApprovalReadinessException.class)
     public ResponseEntity<ApiResponse<Void>> handleReadinessException(InternalApprovalReadinessException ex) {
         return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(AdminActorResolutionException.class)
+    public ResponseEntity<ApiResponse<Void>> handleActorResolutionException(AdminActorResolutionException ex) {
+        HttpStatus status = switch (ex.getSafeErrorCode()) {
+            case "SYSTEM_NOT_ALLOWED" -> HttpStatus.FORBIDDEN;
+            case "FALLBACK_NOT_ALLOWED" -> HttpStatus.FORBIDDEN;
+            case "ACTOR_ROLE_NULL", "RESOLUTION_REQUEST_NULL" -> HttpStatus.BAD_REQUEST;
+            default -> HttpStatus.BAD_REQUEST;
+        };
+        return ResponseEntity.status(status)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 

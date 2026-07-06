@@ -58,7 +58,7 @@ class AdminReviewControllerTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
+        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService, new AdminActorResolver());
     }
 
     // ── 1. Action Endpoints Happy Path ──────────────────────────────
@@ -515,15 +515,13 @@ class AdminReviewControllerTest {
         }
 
         @Test
-        @DisplayName("SYSTEM cannot approve via API — domain rejects")
+        @DisplayName("SYSTEM cannot approve via API — blocked by actor resolver before service")
         void systemCannotApprove() {
-            when(reviewApplicationService.approveForInternalUse(any(), any(), any(),
-                    eq(ReviewActorRole.SYSTEM), any(), any()))
-                    .thenThrow(new ReviewTransitionViolationException("SYSTEM cannot approve"));
-
+            // FP-018 Task 03: SYSTEM is blocked by AdminActorResolver
+            // before reaching service. No mock setup needed.
             var request = buildRequest(ReviewActionType.APPROVE_FOR_INTERNAL_USE, ReviewActorRole.SYSTEM);
             assertThatThrownBy(() -> controller.approveForInternalUse(request))
-                    .isInstanceOf(ReviewTransitionViolationException.class);
+                    .isInstanceOf(AdminActorResolutionException.class);
         }
 
         @Test

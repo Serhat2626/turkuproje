@@ -65,7 +65,7 @@ class InternalRevisionRequestAdminApiTest {
         controller = new AdminReviewController(
                 reviewApplicationService, reviewHandoffService,
                 adminPreviewService, internalApprovalReadinessService,
-                internalRevisionRequestService);
+                internalRevisionRequestService, new AdminActorResolver());
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -206,15 +206,13 @@ class InternalRevisionRequestAdminApiTest {
     class ActorRejection {
 
         @Test
-        @DisplayName("SYSTEM rejected safely with 403")
+        @DisplayName("SYSTEM rejected safely by actor resolver before service")
         void systemRejected() {
-            when(internalRevisionRequestService.requestRevision(any()))
-                    .thenThrow(new InternalRevisionRequestException(
-                            "SYSTEM cannot request internal revision", "SYSTEM_NOT_ALLOWED"));
-
+            // FP-018 Task 03: SYSTEM is blocked by AdminActorResolver
+            // before reaching InternalRevisionRequestService.
             var ex = catchThrowableOfType(() -> callEndpoint(ReviewActorRole.SYSTEM),
-                    InternalRevisionRequestException.class);
-            var response = controller.handleInternalRevisionException(ex);
+                    AdminActorResolutionException.class);
+            var response = controller.handleActorResolutionException(ex);
 
             assertThat(response.getStatusCode()).isEqualTo(HttpStatus.FORBIDDEN);
             assertThat(response.getBody().isSuccess()).isFalse();
@@ -238,13 +236,10 @@ class InternalRevisionRequestAdminApiTest {
         @Test
         @DisplayName("Rejection error message is safe")
         void rejectionMessageSafe() {
-            when(internalRevisionRequestService.requestRevision(any()))
-                    .thenThrow(new InternalRevisionRequestException(
-                            "SYSTEM cannot request internal revision", "SYSTEM_NOT_ALLOWED"));
-
+            // FP-018 Task 03: SYSTEM is blocked by AdminActorResolver.
             var ex = catchThrowableOfType(() -> callEndpoint(ReviewActorRole.SYSTEM),
-                    InternalRevisionRequestException.class);
-            var response = controller.handleInternalRevisionException(ex);
+                    AdminActorResolutionException.class);
+            var response = controller.handleActorResolutionException(ex);
             String message = response.getBody().getMessage();
             assertThat(message).doesNotContain("stackTrace");
             assertThat(message).doesNotContain("provider");

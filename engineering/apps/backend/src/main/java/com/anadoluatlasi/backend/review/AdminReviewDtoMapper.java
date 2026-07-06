@@ -125,12 +125,21 @@ public final class AdminReviewDtoMapper {
      * Applies ReviewTextSafety sanitization on all text fields.
      */
     public static ReviewHandoffRequest toHandoffRequest(AdminReviewHandoffRequest dto) {
+        return toHandoffRequest(dto, dto.getActorRole(), dto.getActorReference());
+    }
+
+    /**
+     * FP-018 Task 03: Map with resolved actor role/reference.
+     * Uses resolved actor from AdminActorResolver instead of raw request fields.
+     */
+    public static ReviewHandoffRequest toHandoffRequest(
+            AdminReviewHandoffRequest dto, ReviewActorRole resolvedRole, String resolvedReference) {
         return ReviewHandoffRequest.builder()
                 .targetType(dto.getTargetType())
                 .targetId(dto.getTargetId())
                 .source(dto.getSource())
-                .actorRole(dto.getActorRole())
-                .actorReference(dto.getActorReference())
+                .actorRole(resolvedRole)
+                .actorReference(resolvedReference)
                 .safeTitle(ReviewTextSafety.sanitize(dto.getSafeTitle()))
                 .safeSummary(ReviewTextSafety.sanitize(dto.getSafeSummary()))
                 .safeReasonCode(ReviewTextSafety.sanitizeReasonCode(dto.getSafeReasonCode()))

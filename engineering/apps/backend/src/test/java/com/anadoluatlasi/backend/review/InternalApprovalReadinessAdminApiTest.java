@@ -50,7 +50,7 @@ class InternalApprovalReadinessAdminApiTest {
         controller = new AdminReviewController(
                 reviewApplicationService, reviewHandoffService,
                 adminPreviewService, internalApprovalReadinessService,
-                internalRevisionRequestService);
+                internalRevisionRequestService, new AdminActorResolver());
     }
 
     // ════════════════════════════════════════════════════════════════

@@ -62,7 +62,7 @@ class AdminReviewAvailabilityTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationServiceMock, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
+        controller = new AdminReviewController(reviewApplicationServiceMock, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService, new AdminActorResolver());
         realService = new ReviewApplicationService(reviewRecordRepository, auditEventRepository);
     }
 

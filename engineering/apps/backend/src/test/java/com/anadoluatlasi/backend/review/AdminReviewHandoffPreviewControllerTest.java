@@ -66,7 +66,8 @@ class AdminReviewHandoffPreviewControllerTest {
     void setUp() {
         controller = new AdminReviewController(
                 reviewApplicationService, reviewHandoffService, adminPreviewService,
-                internalApprovalReadinessService, internalRevisionRequestService);
+                internalApprovalReadinessService, internalRevisionRequestService,
+                new AdminActorResolver());
     }
 
     // ── A. Handoff Endpoint Happy Paths ──────────────────────────────

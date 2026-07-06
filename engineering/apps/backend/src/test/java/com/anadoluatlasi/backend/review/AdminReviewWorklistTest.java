@@ -62,7 +62,7 @@ class AdminReviewWorklistTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
+        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService, new AdminActorResolver());
     }
 
     // ── 1. Worklist Endpoint ────────────────────────────────────────
@@ -237,7 +237,7 @@ class AdminReviewWorklistTest {
             ReviewApplicationService realService = mock(ReviewApplicationService.class);
             when(realService.listWorkItems(any(), any(), any(), anyInt())).thenCallRealMethod();
             // We verify the method exists and handles limit
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService, new AdminActorResolver());
             when(reviewApplicationService.listWorkItems(any(), any(), any(), eq(200)))
                     .thenReturn(List.of());
             ctrl.getWorklist(null, null, null, 999);
