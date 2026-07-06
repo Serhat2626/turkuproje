@@ -23,6 +23,7 @@ import java.util.UUID;
  *   <li>No storage/provider calls</li>
  *   <li>No external API calls</li>
  *   <li>APPROVED_FOR_INTERNAL_USE is NOT publish/export approval</li>
+ *   <li>FP-015: REQUEST_INTERNAL_REVISION is a narrow action, NOT generic status update</li>
  * </ul>
  */
 @Service
@@ -121,6 +122,20 @@ public class ReviewApplicationService {
         ReviewRecordEntity record = findExistingOrFail(targetType, targetId);
         return executeAction(record, targetType, targetId, ReviewActionType.ADD_REVIEW_NOTE,
                 actorRole, actorReference, null, note);
+    }
+
+    /**
+     * FP-015 Task 02: Request internal revision for an approved item.
+     * Narrow action — transitions APPROVED_FOR_INTERNAL_USE → CHANGES_REQUESTED.
+     * Does NOT publish, export, or auto-approve.
+     */
+    @Transactional
+    public ReviewApplicationResult requestInternalRevision(ReviewTargetType targetType, UUID targetId,
+                                                            String actorReference, ReviewActorRole actorRole,
+                                                            String reasonCode, String note) {
+        ReviewRecordEntity record = findExistingOrFail(targetType, targetId);
+        return executeAction(record, targetType, targetId, ReviewActionType.REQUEST_INTERNAL_REVISION,
+                actorRole, actorReference, reasonCode, note);
     }
 
     // ── Read-Only Queries (internal only) ───────────────────────────
@@ -285,6 +300,8 @@ public class ReviewApplicationService {
             case REJECT -> "Reddet";
             case RETURN_TO_DRAFT -> "Taslağa Döndür";
             case ADD_REVIEW_NOTE -> "Not Ekle";
+            // FP-015 Task 02: Internal revision request label
+            case REQUEST_INTERNAL_REVISION -> "Dahili Revizyon İste";
         };
     }
 

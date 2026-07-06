@@ -38,5 +38,11 @@ public enum ReviewAuditEventType {
     REVIEW_NOTE_ADDED,
 
     /** Forbidden transition was attempted and rejected. */
-    REVIEW_TRANSITION_REJECTED
+    REVIEW_TRANSITION_REJECTED,
+
+    /**
+     * FP-015 Task 02: Internal revision requested for an approved/reviewable item.
+     * Does NOT publish, export, or auto-approve.
+     */
+    INTERNAL_REVISION_REQUESTED
 }

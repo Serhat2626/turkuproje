@@ -81,6 +81,8 @@ public final class ReviewAuditEventFactory {
             case REJECT -> ReviewAuditEventType.REVIEW_REJECTED;
             case RETURN_TO_DRAFT -> ReviewAuditEventType.RETURNED_TO_DRAFT;
             case ADD_REVIEW_NOTE -> ReviewAuditEventType.REVIEW_NOTE_ADDED;
+            // FP-015 Task 02: Internal revision request
+            case REQUEST_INTERNAL_REVISION -> ReviewAuditEventType.INTERNAL_REVISION_REQUESTED;
         };
     }
 

@@ -104,14 +104,15 @@ class ReviewTransitionPolicyTest {
                     ReviewActionType.APPROVE_FOR_INTERNAL_USE,
                     ReviewActionType.REJECT,
                     ReviewActionType.RETURN_TO_DRAFT,
-                    ReviewActionType.ADD_REVIEW_NOTE
+                    ReviewActionType.ADD_REVIEW_NOTE,
+                    ReviewActionType.REQUEST_INTERNAL_REVISION
             );
         }
 
         @Test
         @DisplayName("Has exactly 7 actions")
         void exactlySevenActions() {
-            assertThat(ReviewActionType.values()).hasSize(7);
+            assertThat(ReviewActionType.values()).hasSize(8);
         }
 
         @Test
@@ -377,11 +378,11 @@ class ReviewTransitionPolicyTest {
         }
 
         @Test
-        @DisplayName("APPROVED_FOR_INTERNAL_USE has no state-changing outgoing transitions")
-        void approvedTerminal() {
+        @DisplayName("APPROVED_FOR_INTERNAL_USE allows only REQUEST_INTERNAL_REVISION")
+        void approvedAllowsOnlyInternalRevision() {
             Set<ReviewState> targets = ReviewTransitionPolicy.allowedTargets(
                     ReviewState.APPROVED_FOR_INTERNAL_USE, ReviewActorRole.REVIEWER);
-            assertThat(targets).isEmpty();
+            assertThat(targets).containsExactly(ReviewState.CHANGES_REQUESTED);
         }
 
         @Test
@@ -480,7 +481,8 @@ class ReviewTransitionPolicyTest {
                     ReviewAuditEventType.REVIEW_REJECTED,
                     ReviewAuditEventType.RETURNED_TO_DRAFT,
                     ReviewAuditEventType.REVIEW_NOTE_ADDED,
-                    ReviewAuditEventType.REVIEW_TRANSITION_REJECTED
+                    ReviewAuditEventType.REVIEW_TRANSITION_REJECTED,
+                    ReviewAuditEventType.INTERNAL_REVISION_REQUESTED
             );
         }
 

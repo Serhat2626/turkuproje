@@ -165,20 +165,25 @@ class AdminReviewAvailabilityTest {
         }
 
         @Test
-        @DisplayName("APPROVED_FOR_INTERNAL_USE: only note enabled")
-        void approvedTerminalOnlyNote() {
+        @DisplayName("APPROVED_FOR_INTERNAL_USE: only note and REQUEST_INTERNAL_REVISION enabled")
+        void approvedTerminalNoteAndRevision() {
             when(reviewRecordRepository.findByReviewTargetTypeAndReviewTargetId(TARGET_TYPE, TARGET_ID))
                     .thenReturn(Optional.of(recordWithState(ReviewState.APPROVED_FOR_INTERNAL_USE)));
 
             var result = realService.getAvailableActions(TARGET_TYPE, TARGET_ID, ReviewActorRole.REVIEWER);
             var actions = result.get().getAvailableActions();
+            // FP-015 Task 02: REQUEST_INTERNAL_REVISION is now also enabled
             long enabledStateChanging = actions.stream()
                     .filter(a -> a.getActionType() != ReviewActionType.ADD_REVIEW_NOTE)
+                    .filter(a -> a.getActionType() != ReviewActionType.REQUEST_INTERNAL_REVISION)
                     .filter(AdminReviewAvailableAction::isEnabled).count();
             assertThat(enabledStateChanging).isZero();
             var note = actions.stream()
                     .filter(a -> a.getActionType() == ReviewActionType.ADD_REVIEW_NOTE).findFirst();
             assertThat(note.get().isEnabled()).isTrue();
+            var revision = actions.stream()
+                    .filter(a -> a.getActionType() == ReviewActionType.REQUEST_INTERNAL_REVISION).findFirst();
+            assertThat(revision.get().isEnabled()).isTrue();
         }
 
         @Test
@@ -218,7 +223,7 @@ class AdminReviewAvailabilityTest {
                     .thenReturn(Optional.of(recordWithState(ReviewState.IN_REVIEW)));
 
             var result = realService.getAvailableActions(TARGET_TYPE, TARGET_ID, ReviewActorRole.REVIEWER);
-            assertThat(result.get().getAvailableActions()).hasSize(7);
+            assertThat(result.get().getAvailableActions()).hasSize(8);
         }
     }
 

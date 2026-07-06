@@ -15,7 +15,7 @@ import java.util.Set;
  *   <li>CREATOR cannot approve</li>
  *   <li>SYSTEM cannot approve, reject, or perform human review actions</li>
  *   <li>REJECTED is terminal for state-changing transitions</li>
- *   <li>APPROVED_FOR_INTERNAL_USE is terminal for state-changing transitions</li>
+ *   <li>APPROVED_FOR_INTERNAL_USE allows only REQUEST_INTERNAL_REVISION (FP-015)</li>
  *   <li>ADD_REVIEW_NOTE does not change state</li>
  *   <li>Generic arbitrary status updates are forbidden</li>
  *   <li>Null/unknown inputs fail safely</li>
@@ -26,30 +26,34 @@ public final class ReviewTransitionPolicy {
     /**
      * Allowed state-changing transitions: Map of (fromState, action) -> toState.
      */
-    private static final Map<TransitionKey, ReviewState> ALLOWED_TRANSITIONS = Map.of(
-            key(ReviewState.DRAFT, ReviewActionType.SUBMIT_FOR_REVIEW),
-            ReviewState.NEEDS_REVIEW,
+    private static final Map<TransitionKey, ReviewState> ALLOWED_TRANSITIONS = Map.ofEntries(
+            Map.entry(key(ReviewState.DRAFT, ReviewActionType.SUBMIT_FOR_REVIEW),
+                    ReviewState.NEEDS_REVIEW),
 
-            key(ReviewState.AI_GENERATED, ReviewActionType.SUBMIT_FOR_REVIEW),
-            ReviewState.NEEDS_REVIEW,
+            Map.entry(key(ReviewState.AI_GENERATED, ReviewActionType.SUBMIT_FOR_REVIEW),
+                    ReviewState.NEEDS_REVIEW),
 
-            key(ReviewState.NEEDS_REVIEW, ReviewActionType.START_REVIEW),
-            ReviewState.IN_REVIEW,
+            Map.entry(key(ReviewState.NEEDS_REVIEW, ReviewActionType.START_REVIEW),
+                    ReviewState.IN_REVIEW),
 
-            key(ReviewState.IN_REVIEW, ReviewActionType.REQUEST_CHANGES),
-            ReviewState.CHANGES_REQUESTED,
+            Map.entry(key(ReviewState.IN_REVIEW, ReviewActionType.REQUEST_CHANGES),
+                    ReviewState.CHANGES_REQUESTED),
 
-            key(ReviewState.IN_REVIEW, ReviewActionType.APPROVE_FOR_INTERNAL_USE),
-            ReviewState.APPROVED_FOR_INTERNAL_USE,
+            Map.entry(key(ReviewState.IN_REVIEW, ReviewActionType.APPROVE_FOR_INTERNAL_USE),
+                    ReviewState.APPROVED_FOR_INTERNAL_USE),
 
-            key(ReviewState.IN_REVIEW, ReviewActionType.REJECT),
-            ReviewState.REJECTED,
+            Map.entry(key(ReviewState.IN_REVIEW, ReviewActionType.REJECT),
+                    ReviewState.REJECTED),
 
-            key(ReviewState.CHANGES_REQUESTED, ReviewActionType.SUBMIT_FOR_REVIEW),
-            ReviewState.NEEDS_REVIEW,
+            Map.entry(key(ReviewState.CHANGES_REQUESTED, ReviewActionType.SUBMIT_FOR_REVIEW),
+                    ReviewState.NEEDS_REVIEW),
 
-            key(ReviewState.CHANGES_REQUESTED, ReviewActionType.RETURN_TO_DRAFT),
-            ReviewState.DRAFT
+            Map.entry(key(ReviewState.CHANGES_REQUESTED, ReviewActionType.RETURN_TO_DRAFT),
+                    ReviewState.DRAFT),
+
+            // FP-015 Task 02: Internal revision request from approved state
+            Map.entry(key(ReviewState.APPROVED_FOR_INTERNAL_USE, ReviewActionType.REQUEST_INTERNAL_REVISION),
+                    ReviewState.CHANGES_REQUESTED)
     );
 
     /**
@@ -157,6 +161,8 @@ public final class ReviewTransitionPolicy {
                     || actorRole == ReviewActorRole.REVIEWER
                     || actorRole == ReviewActorRole.ADMIN;
             case ADD_REVIEW_NOTE -> actorRole.canAddReviewNote();
+            // FP-015 Task 02: Only REVIEWER/ADMIN can request internal revision
+            case REQUEST_INTERNAL_REVISION -> actorRole.canPerformReview();
         };
     }
 

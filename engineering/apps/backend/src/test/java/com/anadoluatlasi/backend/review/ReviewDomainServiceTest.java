@@ -289,10 +289,12 @@ class ReviewDomainServiceTest {
         }
 
         @Test
-        @DisplayName("APPROVED_FOR_INTERNAL_USE cannot state-change further")
+        @DisplayName("APPROVED_FOR_INTERNAL_USE cannot state-change further except REQUEST_INTERNAL_REVISION")
         void approvedTerminal() {
             for (ReviewActionType a : ReviewActionType.values()) {
                 if (a == ReviewActionType.ADD_REVIEW_NOTE) continue;
+                // FP-015 Task 02: REQUEST_INTERNAL_REVISION is the only allowed state change
+                if (a == ReviewActionType.REQUEST_INTERNAL_REVISION) continue;
                 assertThatThrownBy(() -> processSimple(ReviewState.APPROVED_FOR_INTERNAL_USE, a, ReviewActorRole.REVIEWER))
                         .as("APPROVED + " + a)
                         .isInstanceOf(ReviewTransitionViolationException.class);

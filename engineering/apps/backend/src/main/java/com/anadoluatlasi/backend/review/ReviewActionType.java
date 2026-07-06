@@ -37,5 +37,13 @@ public enum ReviewActionType {
     RETURN_TO_DRAFT,
 
     /** Add a review note — does NOT change workflow state. */
-    ADD_REVIEW_NOTE
+    ADD_REVIEW_NOTE,
+
+    /**
+     * FP-015 Task 02: Request internal revision for an approved item.
+     * Narrow action — NOT a generic status update.
+     * Only allowed from APPROVED_FOR_INTERNAL_USE (transition) or CHANGES_REQUESTED (note append).
+     * Does NOT publish, export, or auto-approve.
+     */
+    REQUEST_INTERNAL_REVISION
 }
