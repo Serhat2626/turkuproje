@@ -2,7 +2,8 @@ import { describe, it, expect } from 'vitest'
 import * as reviewApi from '../reviewApi'
 
 /**
- * FP-012 + FP-013 Task 04 + FP-014 Task 04 + FP-015 Task 04: Review API client tests.
+ * FP-012 + FP-013 Task 04 + FP-014 Task 04 + FP-015 Task 04 + FP-016 Task 04:
+ * Review API client tests.
  *
  * Kontrol noktaları:
  * - Sadece explicit action function'lar mevcut
@@ -12,6 +13,7 @@ import * as reviewApi from '../reviewApi'
  * - FP-013 Task 04: handoffReview ve getPreview function'lar mevcut
  * - FP-014 Task 04: getInternalReadiness ve getApprovedInternalReadiness function'lar mevcut
  * - FP-015 Task 04: requestInternalRevision function mevcut
+ * - FP-016 Task 04: getPipelineOverview ve getPipelineDetail function'lar mevcut
  */
 
 describe('reviewApi', () => {
@@ -73,13 +75,21 @@ describe('reviewApi', () => {
     expect(typeof reviewApi.requestInternalRevision).toBe('function')
   })
 
+  it('getPipelineOverview fonksiyonu mevcut', () => {
+    expect(typeof reviewApi.getPipelineOverview).toBe('function')
+  })
+
+  it('getPipelineDetail fonksiyonu mevcut', () => {
+    expect(typeof reviewApi.getPipelineDetail).toBe('function')
+  })
+
   // ── Exact Export Count ──────────────────────────────────
 
-  it('sadece 17 explicit function export ediyor', () => {
+  it('sadece 19 explicit function export ediyor', () => {
     const exportedFunctions = Object.keys(reviewApi).filter(
       k => typeof (reviewApi as Record<string, unknown>)[k] === 'function'
     )
-    expect(exportedFunctions).toHaveLength(17)
+    expect(exportedFunctions).toHaveLength(19)
     expect(exportedFunctions).toEqual(expect.arrayContaining([
       'submitForReview',
       'startReview',
@@ -98,6 +108,8 @@ describe('reviewApi', () => {
       'getInternalReadiness',
       'getApprovedInternalReadiness',
       'requestInternalRevision',
+      'getPipelineOverview',
+      'getPipelineDetail',
     ]))
   })
 

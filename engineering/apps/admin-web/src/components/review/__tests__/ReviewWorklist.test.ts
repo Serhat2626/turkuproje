@@ -187,4 +187,18 @@ describe('ReviewWorklist Safety Regression', () => {
     expect(WORKLIST_SOURCE).not.toMatch(/\.base64/)
     expect(WORKLIST_SOURCE).not.toContain("'base64'")
   })
+
+  // ── FP-016 Task 04: Pipeline Integration ────────────────
+
+  it('worklist PipelineOverviewPanel import ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain("import PipelineOverviewPanel from './PipelineOverviewPanel'")
+  })
+
+  it('worklist PipelineOverviewPanel render ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain('<PipelineOverviewPanel')
+  })
+
+  it('worklist FP-016 açıklaması mevcut', () => {
+    expect(WORKLIST_SOURCE).toContain('FP-016')
+  })
 })

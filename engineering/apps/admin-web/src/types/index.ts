@@ -1221,3 +1221,54 @@ export interface AdminInternalRevisionResponse {
   auditRecorded: boolean
   updatedAt: string | null
 }
+
+// ── FP-016 Task 04: Pipeline Aggregation Types ─────────────────
+
+/**
+ * Safe internal-only pipeline stages.
+ * No forbidden exposure.
+ */
+export type SafePipelineStage =
+  | 'GENERATED'
+  | 'REVIEW_PENDING'
+  | 'IN_REVIEW'
+  | 'CHANGES_REQUESTED'
+  | 'INTERNALLY_APPROVED'
+  | 'INTERNAL_READY'
+  | 'INTERNAL_REVISION_REQUESTED'
+  | 'REJECTED'
+  | 'UNAVAILABLE'
+
+/**
+ * Safe pipeline aggregate item DTO.
+ * Read-only derived view per target.
+ * No forbidden exposure.
+ */
+export interface SafePipelineAggregateItem {
+  targetType: ReviewTargetType
+  targetId: string
+  pipelineStage: SafePipelineStage
+  reviewState: ReviewState | null
+  previewAvailable: boolean
+  readinessAvailability: InternalApprovalReadinessAvailability | null
+  revisionRequested: boolean
+  safeTitle: string | null
+  safeSummary: string | null
+  safeBlockingReasons: string[]
+  safeNextInternalHints: string[]
+  updatedAt: string | null
+}
+
+/**
+ * Safe pipeline overview wrapper DTO.
+ * Aggregate counts and item list.
+ * No forbidden exposure.
+ */
+export interface SafePipelineOverview {
+  items: SafePipelineAggregateItem[]
+  totalCount: number
+  countsByStage: Record<string, number>
+  countsByTargetType: Record<string, number>
+  safeWarnings: string[]
+  updatedAt: string | null
+}

@@ -14,6 +14,9 @@ import type {
   SafeInternalApprovalReadiness,
   AdminInternalRevisionRequest,
   AdminInternalRevisionResponse,
+  SafePipelineOverview,
+  SafePipelineAggregateItem,
+  SafePipelineStage,
   ReviewTargetType,
   ReviewState,
   ReviewActorRole,
@@ -203,3 +206,28 @@ export function requestInternalRevision(
   )
 }
 
+// ── FP-016 Task 04: Pipeline Aggregation ────────────────────────
+
+export function getPipelineOverview(params?: {
+  targetType?: ReviewTargetType
+  stage?: SafePipelineStage
+  limit?: number
+}): Promise<ApiResponse<SafePipelineOverview>> {
+  const query = new URLSearchParams()
+  if (params?.targetType) query.set('targetType', params.targetType)
+  if (params?.stage) query.set('stage', params.stage)
+  if (params?.limit) query.set('limit', String(params.limit))
+  const qs = query.toString()
+  return request<SafePipelineOverview>(
+    `/admin/pipeline/overview${qs ? '?' + qs : ''}`
+  )
+}
+
+export function getPipelineDetail(
+  targetType: ReviewTargetType,
+  targetId: string
+): Promise<ApiResponse<SafePipelineAggregateItem>> {
+  return request<SafePipelineAggregateItem>(
+    `/admin/pipeline/${targetType}/${targetId}`
+  )
+}
