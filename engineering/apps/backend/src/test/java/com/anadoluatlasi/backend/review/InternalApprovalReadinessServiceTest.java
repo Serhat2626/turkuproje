@@ -595,7 +595,7 @@ class InternalApprovalReadinessServiceTest {
     class EndpointMigrationRegression {
 
         @Test
-        @DisplayName("AdminReviewController has exactly 16 endpoints")
+        @DisplayName("AdminReviewController has exactly 17 endpoints")
         void adminReviewControllerHas16Endpoints() {
             long endpointCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m ->
@@ -606,8 +606,8 @@ class InternalApprovalReadinessServiceTest {
                     .count();
 
             assertThat(endpointCount)
-                    .as("Admin review endpoints must be 16 (FP-014 baseline)")
-                    .isEqualTo(16);
+                    .as("Admin review endpoints must be 17 (FP-015 baseline)")
+                    .isEqualTo(17);
         }
 
         @Test

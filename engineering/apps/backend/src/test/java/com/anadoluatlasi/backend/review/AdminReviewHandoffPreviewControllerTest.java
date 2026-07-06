@@ -55,6 +55,9 @@ class AdminReviewHandoffPreviewControllerTest {
     @Mock
     private InternalApprovalReadinessService internalApprovalReadinessService;
 
+    @Mock
+    private InternalRevisionRequestService internalRevisionRequestService;
+
     private AdminReviewController controller;
 
     private static final UUID TARGET_ID = UUID.randomUUID();
@@ -63,7 +66,7 @@ class AdminReviewHandoffPreviewControllerTest {
     void setUp() {
         controller = new AdminReviewController(
                 reviewApplicationService, reviewHandoffService, adminPreviewService,
-                internalApprovalReadinessService);
+                internalApprovalReadinessService, internalRevisionRequestService);
     }
 
     // ── A. Handoff Endpoint Happy Paths ──────────────────────────────
@@ -512,9 +515,9 @@ class AdminReviewHandoffPreviewControllerTest {
             long get = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
 
-            assertThat(post).isEqualTo(8);
+            assertThat(post).isEqualTo(9);
             assertThat(get).isEqualTo(8);
-            assertThat(post + get).isEqualTo(16);
+            assertThat(post + get).isEqualTo(17);
         }
 
         @Test

@@ -31,8 +31,11 @@ import java.util.stream.Collectors;
  * Handoff is idempotent. Preview returns safe metadata only — no bytes/URL/base64.</p>
  *
  * <p>FP-014 Task 03: Internal approval readiness endpoints added.
- * Read-only derived views — no state mutation, no external calls.
- * Total endpoints: 16 (8 POST + 8 GET).</p>
+ * Read-only derived views — no state mutation, no external calls.</p>
+ *
+ * <p>FP-015 Task 03: Internal revision request endpoint added.
+ * Narrow action endpoint — NOT generic status update.
+ * Total endpoints: 17 (9 POST + 8 GET).</p>
  *
  * <p>Safe error handling — no stack trace, no secrets, no raw payloads.</p>
  */
@@ -46,6 +49,7 @@ public class AdminReviewController {
     private final ReviewHandoffService reviewHandoffService;
     private final AdminPreviewService adminPreviewService;
     private final InternalApprovalReadinessService internalApprovalReadinessService;
+    private final InternalRevisionRequestService internalRevisionRequestService;
 
     // ── Explicit Action Endpoints ───────────────────────────────────
 
@@ -248,6 +252,39 @@ public class AdminReviewController {
         return ResponseEntity.ok(ApiResponse.success(readinessList));
     }
 
+    // ── FP-015 Task 03: Internal Revision Request Endpoint ───────────
+
+    @PostMapping("/{targetType}/{targetId}/request-internal-revision")
+    @Operation(summary = "Request internal revision — narrow action, NOT generic status update, NOT publish/export")
+    public ResponseEntity<ApiResponse<AdminInternalRevisionResponse>> requestInternalRevision(
+            @PathVariable ReviewTargetType targetType,
+            @PathVariable UUID targetId,
+            @Valid @RequestBody AdminInternalRevisionRequest request) {
+        validateInternalRevisionRequest(request);
+        InternalRevisionRequest serviceRequest = InternalRevisionRequest.builder()
+                .targetType(targetType)
+                .targetId(targetId)
+                .actorRole(request.getActorRole())
+                .actorReference(request.getActorReference())
+                .safeReasonCode(request.getSafeReasonCode())
+                .safeMessage(request.getSafeMessage())
+                .build();
+        InternalRevisionRequestResult result = internalRevisionRequestService.requestRevision(serviceRequest);
+        AdminInternalRevisionResponse response = AdminInternalRevisionResponse.builder()
+                .targetType(targetType)
+                .targetId(targetId)
+                .previousState(result.getPreviousState())
+                .currentState(result.getCurrentState())
+                .actionApplied(result.getActionApplied())
+                .safeReasonCode(result.getSafeReasonCode())
+                .safeMessage(result.getSafeMessage())
+                .appendedNote(result.isAppendedNote())
+                .auditRecorded(result.isAuditRecorded())
+                .updatedAt(result.getUpdatedAt())
+                .build();
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
     // ── Request Validation ──────────────────────────────────────────
 
     private void validateActionRequest(AdminReviewActionRequest request) {
@@ -262,6 +299,18 @@ public class AdminReviewController {
         }
         if (request.getActorReference() == null || request.getActorReference().isBlank()) {
             throw new IllegalArgumentException("actorReference is required");
+        }
+    }
+
+    private void validateInternalRevisionRequest(AdminInternalRevisionRequest request) {
+        if (request.getActorRole() == null) {
+            throw new IllegalArgumentException("actorRole is required");
+        }
+        if (request.getActorReference() == null || request.getActorReference().isBlank()) {
+            throw new IllegalArgumentException("actorReference is required");
+        }
+        if (request.getSafeMessage() == null || request.getSafeMessage().isBlank()) {
+            throw new IllegalArgumentException("safeMessage is required");
         }
     }
 
@@ -318,6 +367,18 @@ public class AdminReviewController {
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ApiResponse<Void>> handleValidation(IllegalArgumentException ex) {
         return ResponseEntity.badRequest()
+                .body(ApiResponse.error(ex.getMessage()));
+    }
+
+    @ExceptionHandler(InternalRevisionRequestException.class)
+    public ResponseEntity<ApiResponse<Void>> handleInternalRevisionException(InternalRevisionRequestException ex) {
+        HttpStatus status = switch (ex.getSafeErrorCode()) {
+            case "REVIEW_NOT_FOUND" -> HttpStatus.NOT_FOUND;
+            case "SYSTEM_NOT_ALLOWED", "CREATOR_NOT_ALLOWED" -> HttpStatus.FORBIDDEN;
+            case "STATE_NOT_ALLOWED" -> HttpStatus.CONFLICT;
+            default -> HttpStatus.BAD_REQUEST;
+        };
+        return ResponseEntity.status(status)
                 .body(ApiResponse.error(ex.getMessage()));
     }
 }

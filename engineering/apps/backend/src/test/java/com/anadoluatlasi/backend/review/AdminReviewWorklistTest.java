@@ -45,6 +45,8 @@ class AdminReviewWorklistTest {
     private AdminPreviewService adminPreviewService;
     @Mock
     private InternalApprovalReadinessService internalApprovalReadinessService;
+    @Mock
+    private InternalRevisionRequestService internalRevisionRequestService;
 
     private AdminReviewController controller;
 
@@ -60,7 +62,7 @@ class AdminReviewWorklistTest {
 
     @BeforeEach
     void setUp() {
-        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+        controller = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
     }
 
     // ── 1. Worklist Endpoint ────────────────────────────────────────
@@ -191,7 +193,7 @@ class AdminReviewWorklistTest {
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long getCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
-            assertThat(postCount).isEqualTo(8);
+            assertThat(postCount).isEqualTo(9);
             assertThat(getCount).isEqualTo(8);
         }
 
@@ -235,7 +237,7 @@ class AdminReviewWorklistTest {
             ReviewApplicationService realService = mock(ReviewApplicationService.class);
             when(realService.listWorkItems(any(), any(), any(), anyInt())).thenCallRealMethod();
             // We verify the method exists and handles limit
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
             when(reviewApplicationService.listWorkItems(any(), any(), any(), eq(200)))
                     .thenReturn(List.of());
             ctrl.getWorklist(null, null, null, 999);

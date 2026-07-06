@@ -43,6 +43,8 @@ class AdminReviewApiBoundaryRegressionTest {
     private AdminPreviewService adminPreviewService;
     @Mock
     private InternalApprovalReadinessService internalApprovalReadinessService;
+    @Mock
+    private InternalRevisionRequestService internalRevisionRequestService;
 
     private static final Set<String> FORBIDDEN_FIELDS = Set.of(
             "providerUrl", "storageKey", "bucketName", "bucketPath",
@@ -70,7 +72,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     .filter(m -> m.isAnnotationPresent(PostMapping.class)).count();
             long getCount = Arrays.stream(AdminReviewController.class.getDeclaredMethods())
                     .filter(m -> m.isAnnotationPresent(GetMapping.class)).count();
-            assertThat(postCount).isEqualTo(8);
+            assertThat(postCount).isEqualTo(9);
             assertThat(getCount).isEqualTo(8);
         }
 
@@ -83,7 +85,8 @@ class AdminReviewApiBoundaryRegressionTest {
                     .collect(Collectors.toSet());
             assertThat(postPaths).containsExactlyInAnyOrder(
                     "/submit", "/start", "/request-changes",
-                    "/approve-internal", "/reject", "/return-to-draft", "/note", "/handoff");
+                    "/approve-internal", "/reject", "/return-to-draft", "/note", "/handoff",
+                    "/{targetType}/{targetId}/request-internal-revision");
         }
 
         @Test
@@ -197,7 +200,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     eq(ReviewActorRole.CREATOR), any(), any()))
                     .thenThrow(new ReviewTransitionViolationException("CREATOR cannot approve"));
 
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
             AdminReviewActionRequest req = buildRequest(ReviewActorRole.CREATOR);
             assertThatThrownBy(() -> ctrl.approveForInternalUse(req))
                     .isInstanceOf(ReviewTransitionViolationException.class);
@@ -210,7 +213,7 @@ class AdminReviewApiBoundaryRegressionTest {
                     eq(ReviewActorRole.SYSTEM), any(), any()))
                     .thenThrow(new ReviewTransitionViolationException("SYSTEM cannot approve"));
 
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
             AdminReviewActionRequest req = buildRequest(ReviewActorRole.SYSTEM);
             assertThatThrownBy(() -> ctrl.approveForInternalUse(req))
                     .isInstanceOf(ReviewTransitionViolationException.class);
@@ -273,7 +276,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for ApplicationException returns safe body")
         void controllerAppErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
             var resp = ctrl.handleReviewApplicationException(
                     new ReviewApplicationException("Not found"));
             assertThat(resp.getBody().isSuccess()).isFalse();
@@ -283,7 +286,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for TransitionViolation returns safe body")
         void controllerTransitionErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
             var resp = ctrl.handleTransitionViolation(
                     new ReviewTransitionViolationException("Invalid transition"));
             assertThat(resp.getBody().isSuccess()).isFalse();
@@ -293,7 +296,7 @@ class AdminReviewApiBoundaryRegressionTest {
         @Test
         @DisplayName("Controller error handler for validation returns safe body")
         void controllerValidationErrorSafe() {
-            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService);
+            AdminReviewController ctrl = new AdminReviewController(reviewApplicationService, reviewHandoffService, adminPreviewService, internalApprovalReadinessService, internalRevisionRequestService);
             var resp = ctrl.handleValidation(new IllegalArgumentException("targetType is required"));
             assertThat(resp.getBody().isSuccess()).isFalse();
             assertSafeMessage(resp.getBody().getMessage());

@@ -41,6 +41,7 @@ class InternalApprovalReadinessAdminApiTest {
     @Mock private ReviewHandoffService reviewHandoffService;
     @Mock private AdminPreviewService adminPreviewService;
     @Mock private InternalApprovalReadinessService internalApprovalReadinessService;
+    @Mock private InternalRevisionRequestService internalRevisionRequestService;
 
     private AdminReviewController controller;
 
@@ -48,7 +49,8 @@ class InternalApprovalReadinessAdminApiTest {
     void setUp() {
         controller = new AdminReviewController(
                 reviewApplicationService, reviewHandoffService,
-                adminPreviewService, internalApprovalReadinessService);
+                adminPreviewService, internalApprovalReadinessService,
+                internalRevisionRequestService);
     }
 
     // ════════════════════════════════════════════════════════════════
@@ -268,9 +270,9 @@ class InternalApprovalReadinessAdminApiTest {
                     .filter(m -> m.isAnnotationPresent(
                             org.springframework.web.bind.annotation.GetMapping.class)).count();
 
-            assertThat(post).isEqualTo(8);
+            assertThat(post).isEqualTo(9);
             assertThat(get).isEqualTo(8);
-            assertThat(post + get).isEqualTo(16);
+            assertThat(post + get).isEqualTo(17);
         }
 
         @Test
