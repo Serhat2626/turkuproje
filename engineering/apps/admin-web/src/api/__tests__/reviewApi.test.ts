@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import * as reviewApi from '../reviewApi'
 
 /**
- * FP-012 + FP-013 Task 04 + FP-014 Task 04: Review API client tests.
+ * FP-012 + FP-013 Task 04 + FP-014 Task 04 + FP-015 Task 04: Review API client tests.
  *
  * Kontrol noktaları:
  * - Sadece explicit action function'lar mevcut
@@ -11,6 +11,7 @@ import * as reviewApi from '../reviewApi'
  * - Provider/storage inspection function yok
  * - FP-013 Task 04: handoffReview ve getPreview function'lar mevcut
  * - FP-014 Task 04: getInternalReadiness ve getApprovedInternalReadiness function'lar mevcut
+ * - FP-015 Task 04: requestInternalRevision function mevcut
  */
 
 describe('reviewApi', () => {
@@ -68,13 +69,17 @@ describe('reviewApi', () => {
     expect(typeof reviewApi.getApprovedInternalReadiness).toBe('function')
   })
 
+  it('requestInternalRevision fonksiyonu mevcut', () => {
+    expect(typeof reviewApi.requestInternalRevision).toBe('function')
+  })
+
   // ── Exact Export Count ──────────────────────────────────
 
-  it('sadece 16 explicit function export ediyor', () => {
+  it('sadece 17 explicit function export ediyor', () => {
     const exportedFunctions = Object.keys(reviewApi).filter(
       k => typeof (reviewApi as Record<string, unknown>)[k] === 'function'
     )
-    expect(exportedFunctions).toHaveLength(16)
+    expect(exportedFunctions).toHaveLength(17)
     expect(exportedFunctions).toEqual(expect.arrayContaining([
       'submitForReview',
       'startReview',
@@ -92,6 +97,7 @@ describe('reviewApi', () => {
       'getPreview',
       'getInternalReadiness',
       'getApprovedInternalReadiness',
+      'requestInternalRevision',
     ]))
   })
 

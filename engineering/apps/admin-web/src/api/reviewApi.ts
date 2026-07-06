@@ -12,6 +12,8 @@ import type {
   AdminReviewHandoffResponse,
   SafeAdminPreview,
   SafeInternalApprovalReadiness,
+  AdminInternalRevisionRequest,
+  AdminInternalRevisionResponse,
   ReviewTargetType,
   ReviewState,
   ReviewActorRole,
@@ -182,6 +184,22 @@ export function getApprovedInternalReadiness(
   const qs = query.toString()
   return request<SafeInternalApprovalReadiness[]>(
     `/admin/reviews/approved/internal-readiness${qs ? '?' + qs : ''}`
+  )
+}
+
+// ── FP-015 Task 04: Internal Revision Request ──────────────────
+
+export function requestInternalRevision(
+  targetType: ReviewTargetType,
+  targetId: string,
+  data: AdminInternalRevisionRequest
+): Promise<ApiResponse<AdminInternalRevisionResponse>> {
+  return request<AdminInternalRevisionResponse>(
+    `/admin/reviews/${targetType}/${targetId}/request-internal-revision`,
+    {
+      method: 'POST',
+      body: JSON.stringify(data),
+    }
   )
 }
 

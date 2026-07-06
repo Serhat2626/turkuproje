@@ -142,4 +142,49 @@ describe('ReviewWorklist Safety Regression', () => {
   it('worklist ReviewPreviewPanel render ediyor', () => {
     expect(WORKLIST_SOURCE).toContain('<ReviewPreviewPanel')
   })
+
+  // ── FP-015 Task 04: Inventory + Revision Integration ────
+
+  it('worklist ApprovedInternalInventoryPanel import ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain("import ApprovedInternalInventoryPanel from './ApprovedInternalInventoryPanel'")
+  })
+
+  it('worklist ApprovedInternalInventoryPanel render ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain('<ApprovedInternalInventoryPanel')
+  })
+
+  it('worklist InternalRevisionRequestPanel import ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain("import InternalRevisionRequestPanel from './InternalRevisionRequestPanel'")
+  })
+
+  it('worklist InternalRevisionRequestPanel render ediyor', () => {
+    expect(WORKLIST_SOURCE).toContain('<InternalRevisionRequestPanel')
+  })
+
+  it('worklist selectedReadiness state mevcut', () => {
+    expect(WORKLIST_SOURCE).toContain('selectedReadiness')
+  })
+
+  it('worklist getInternalReadiness yüklüyor', () => {
+    expect(WORKLIST_SOURCE).toContain('getInternalReadiness')
+  })
+
+  it('worklist handleRevisionRequested callback mevcut', () => {
+    expect(WORKLIST_SOURCE).toContain('handleRevisionRequested')
+  })
+
+  it('worklist onRevisionRequested prop geçiyor', () => {
+    expect(WORKLIST_SOURCE).toContain('onRevisionRequested={handleRevisionRequested}')
+  })
+
+  // ── FP-015 Task 04: IMAGE_ASSET Safety ──────────────────
+
+  it('worklist img src kullanmıyor', () => {
+    expect(WORKLIST_SOURCE).not.toMatch(/<img\s/)
+  })
+
+  it('worklist base64 yok', () => {
+    expect(WORKLIST_SOURCE).not.toMatch(/\.base64/)
+    expect(WORKLIST_SOURCE).not.toContain("'base64'")
+  })
 })

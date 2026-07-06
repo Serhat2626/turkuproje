@@ -17,7 +17,7 @@ import * as reviewApi from '../../api/reviewApi'
  * Safe text rendering only — no unsafe HTML injection methods.
  * APPROVED_FOR_INTERNAL_USE shown as internal-only readiness.
  * PREPARE_FOR_FUTURE_EXPORT is informational/non-executing only.
- * REQUEST_INTERNAL_REVISION shown as deferred hint — no POST behavior.
+ * REQUEST_INTERNAL_REVISION now active — linked to revision request panel.
  */
 
 /** Safe availability labels — Turkish */
@@ -46,14 +46,13 @@ const AVAILABILITY_CLASSES: Record<InternalApprovalReadinessAvailability, string
 const ACTION_LABELS: Record<SafeInternalAction, string> = {
   VIEW_SAFE_PREVIEW: 'Güvenli Önizleme',
   REVIEW_APPROVAL_DETAILS: 'Onay Detayları',
-  REQUEST_INTERNAL_REVISION: 'Dahili Revizyon İsteği (yakında)',
+  REQUEST_INTERNAL_REVISION: 'Dahili Revizyon İsteği',
   PREPARE_FOR_FUTURE_EXPORT: 'Gelecekte Export Hazırlığı — bilgilendirme',
   MARK_AS_INTERNAL_READY_CANDIDATE: 'Dahili Hazır Adayı Olarak İşaretle',
 }
 
 /** Actions that are informational-only — disabled, no POST behavior */
 const DEFERRED_ACTIONS: SafeInternalAction[] = [
-  'REQUEST_INTERNAL_REVISION',
   'PREPARE_FOR_FUTURE_EXPORT',
   'MARK_AS_INTERNAL_READY_CANDIDATE',
 ]

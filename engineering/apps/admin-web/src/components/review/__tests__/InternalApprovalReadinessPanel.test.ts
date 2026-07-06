@@ -98,9 +98,14 @@ describe('FP-014 Task 04 — InternalApprovalReadinessPanel', () => {
       expect(PANEL_SOURCE).toContain('REVIEW_APPROVAL_DETAILS')
     })
 
-    it('REQUEST_INTERNAL_REVISION deferred olarak gösteriliyor', () => {
+    it('REQUEST_INTERNAL_REVISION aktif olarak gösteriliyor (FP-015)', () => {
       expect(PANEL_SOURCE).toContain('REQUEST_INTERNAL_REVISION')
       expect(PANEL_SOURCE).toContain('DEFERRED_ACTIONS')
+      // REQUEST_INTERNAL_REVISION artık DEFERRED_ACTIONS dizisinde DEĞİL
+      const deferredMatch = PANEL_SOURCE.match(/DEFERRED_ACTIONS[^]]*?\]/)
+      if (deferredMatch) {
+        expect(deferredMatch[0]).not.toContain('REQUEST_INTERNAL_REVISION')
+      }
     })
 
     it('PREPARE_FOR_FUTURE_EXPORT bilgilendirme olarak gösteriliyor', () => {

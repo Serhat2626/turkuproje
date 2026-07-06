@@ -4,17 +4,20 @@ import type {
   ReviewState,
   AdminReviewWorklistItem,
   AdminReviewTargetContext,
+  SafeInternalApprovalReadiness,
 } from '../../types'
 import * as reviewApi from '../../api/reviewApi'
 import ReviewConsole from './ReviewConsole'
 import ReviewPreviewPanel from './ReviewPreviewPanel'
 import InternalApprovalReadinessPanel from './InternalApprovalReadinessPanel'
+import ApprovedInternalInventoryPanel from './ApprovedInternalInventoryPanel'
+import InternalRevisionRequestPanel from './InternalRevisionRequestPanel'
 
 /**
- * FP-012 Task 10 + FP-014 Task 04: Admin Review Worklist with console integration.
+ * FP-012 Task 10 + FP-014 Task 04 + FP-015 Task 04: Admin Review Worklist
+ * with console, preview, internal readiness, inventory, and revision request.
  *
  * Safe rendering. No publish/export. No unsafe HTML.
- * Selects worklist item to open ReviewConsole + Preview + Internal Readiness.
  */
 
 /** Safe state labels */
@@ -56,6 +59,7 @@ export default function ReviewWorklist({
   // Selected item
   const [selectedItem, setSelectedItem] = useState<AdminReviewWorklistItem | null>(null)
   const [targetContext, setTargetContext] = useState<AdminReviewTargetContext | null>(null)
+  const [selectedReadiness, setSelectedReadiness] = useState<SafeInternalApprovalReadiness | null>(null)
 
   const loadWorklist = useCallback(async () => {
     try {
@@ -92,15 +96,45 @@ export default function ReviewWorklist({
     } catch {
       setTargetContext(null)
     }
+    try {
+      const readinessRes = await reviewApi.getInternalReadiness(item.targetType, item.targetId)
+      if (readinessRes.success && readinessRes.data) {
+        setSelectedReadiness(readinessRes.data)
+      } else {
+        setSelectedReadiness(null)
+      }
+    } catch {
+      setSelectedReadiness(null)
+    }
   }
 
   const handleConsoleActionComplete = () => {
     loadWorklist()
   }
 
+  const handleRevisionRequested = () => {
+    loadWorklist()
+    // Reload readiness after revision request
+    if (selectedItem) {
+      reviewApi.getInternalReadiness(selectedItem.targetType, selectedItem.targetId)
+        .then(res => {
+          if (res.success && res.data) setSelectedReadiness(res.data)
+        })
+        .catch(() => setSelectedReadiness(null))
+    }
+  }
+
   return (
     <div className="review-worklist" data-testid="review-worklist">
       <h2 className="review-worklist__title">İnceleme İş Listesi</h2>
+
+      {/* FP-015 Task 04: Approved Internal Inventory */}
+      <ApprovedInternalInventoryPanel
+        onSelectItem={(tt, tid) => {
+          const match = items.find(i => i.targetType === tt && i.targetId === tid)
+          if (match) handleSelectItem(match)
+        }}
+      />
 
       {/* Filters */}
       <div className="review-worklist__filters" data-testid="review-worklist-filters">
@@ -194,6 +228,16 @@ export default function ReviewWorklist({
           <InternalApprovalReadinessPanel
             targetType={selectedItem.targetType}
             targetId={selectedItem.targetId}
+          />
+
+          {/* FP-015 Task 04: Internal Revision Request Panel */}
+          <InternalRevisionRequestPanel
+            targetType={selectedItem.targetType}
+            targetId={selectedItem.targetId}
+            actorRole={actorRole}
+            actorReference={actorReference}
+            readiness={selectedReadiness}
+            onRevisionRequested={handleRevisionRequested}
           />
 
           {/* Integrated Console */}

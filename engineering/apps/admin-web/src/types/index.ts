@@ -1191,3 +1191,33 @@ export interface SafeInternalApprovalReadiness {
   updatedAt: string | null
 }
 
+// ── FP-015 Task 04: Internal Revision Request Types ────────────
+
+/**
+ * Request DTO for POST /{targetType}/{targetId}/request-internal-revision.
+ * targetType and targetId provided via path — NOT in the body.
+ * Safe fields only — no forbidden exposure.
+ */
+export interface AdminInternalRevisionRequest {
+  actorRole: ReviewActorRole
+  actorReference: string
+  safeReasonCode?: string
+  safeMessage?: string
+}
+
+/**
+ * Response DTO for internal revision request.
+ * Safe fields only — no forbidden exposure.
+ */
+export interface AdminInternalRevisionResponse {
+  targetType: ReviewTargetType
+  targetId: string
+  previousState: ReviewState
+  currentState: ReviewState
+  actionApplied: string
+  safeReasonCode: string | null
+  safeMessage: string | null
+  appendedNote: boolean
+  auditRecorded: boolean
+  updatedAt: string | null
+}
