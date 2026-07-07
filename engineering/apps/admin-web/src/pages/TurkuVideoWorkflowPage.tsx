@@ -1258,6 +1258,74 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-028: Real FFmpeg Dev/Test ── */}
+      {project && (
+        <div className="card" data-testid="fp028-ffmpeg-section">
+          <h2>🎬 Gerçek FFmpeg Dev/Test (FP-028)</h2>
+
+          {/* Panel A — Gate Status */}
+          <div className="preview-section" data-testid="fp028-gate-status-panel">
+            <h3>🔒 FFmpeg Çalıştırma Kapısı</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Mod:</span>
+              <span className="detail-value" data-testid="fp028-execution-mode">DISABLED</span>
+              <span className="detail-label">Ortam:</span>
+              <span className="detail-value" data-testid="fp028-environment">UNKNOWN</span>
+              <span className="detail-label">Dahili bayrak:</span>
+              <span className="detail-value" data-testid="fp028-internal-flag">Kapalı</span>
+              <span className="detail-label">Binary:</span>
+              <span className="detail-value" data-testid="fp028-binary-policy">DISABLED_BINARY</span>
+            </div>
+            <p className="preview-text">Gerçek FFmpeg sadece local/dev/test — production'da kapalı.</p>
+          </div>
+
+          {/* Panel B — Adapter Boundary */}
+          <div className="preview-section" data-testid="fp028-adapter-panel">
+            <h3>⚙️ Dev/Test Execution Boundary</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Sonuç durumu:</span>
+              <span className="detail-value" data-testid="fp028-boundary-status">NOT_EXECUTED</span>
+              <span className="detail-label">Neden kodu:</span>
+              <span className="detail-value" data-testid="fp028-boundary-reason">DISABLED_BY_DEFAULT</span>
+              <span className="detail-label">Dahili mi:</span>
+              <span className="detail-value" data-testid="fp028-adapter-internal">Evet</span>
+            </div>
+            <p className="preview-text">Kapı sonucu — STAGING/PROD/UNKNOWN her zaman reddedilir.</p>
+          </div>
+
+          {/* Panel C — Output / Verification */}
+          <div className="preview-section" data-testid="fp028-output-panel">
+            <h3>📄 Dahili Çıktı / Doğrulama</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Çıktı referansı:</span>
+              <span className="detail-value" data-testid="fp028-output-ref">Opak dahili referans</span>
+              <span className="detail-label">Format:</span>
+              <span className="detail-value" data-testid="fp028-output-format">mp4/webm</span>
+              <span className="detail-label">Doğrulama:</span>
+              <span className="detail-value" data-testid="fp028-verification-status">Bekliyor</span>
+            </div>
+            <p className="preview-text">Public URL yok — dosya yolu gösterilmez.</p>
+          </div>
+
+          {/* Panel D — Safety */}
+          <div className="preview-section" data-testid="fp028-safety-panel">
+            <h3>🛡️ Güvenlik Garantileri</h3>
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp028-label-local-only">Gerçek FFmpeg sadece local/dev/test</span>
+              <span className="safety-flag" data-testid="fp028-label-prod-disabled">Production'da kapalı</span>
+              <span className="safety-flag" data-testid="fp028-label-no-url">Public URL yok</span>
+              <span className="safety-flag" data-testid="fp028-label-no-download">İndirme/yayın/dışa aktarım yok</span>
+              <span className="safety-flag" data-testid="fp028-label-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp028-label-no-path">Komut/dosya yolu gösterilmez</span>
+              <span className="safety-flag" data-testid="fp028-label-no-auto">Otomatik onay kapalı</span>
+              <span className="safety-flag" data-testid="fp028-label-internal">Sadece dahili işleme</span>
+              <span className="safety-flag" data-testid="fp028-label-no-stderr">stdout/stderr gösterilmez</span>
+              <span className="safety-flag" data-testid="fp028-label-no-storage">Storage key gösterilmez</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">

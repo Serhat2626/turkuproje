@@ -2414,3 +2414,88 @@ export interface TurkuInternalRenderExpirationSnapshot {
   maxQueueDurationSeconds: number
   maxRetryWaitDurationSeconds: number
 }
+
+// ── FP-028: Real FFmpeg Internal Dev/Test Enablement ────────────
+
+export type TurkuFfmpegRealExecutionMode =
+  | 'DISABLED'
+  | 'DRY_RUN'
+  | 'SIMULATED'
+  | 'REAL_DEV_TEST_ONLY'
+
+export type TurkuFfmpegExecutionEnvironment =
+  | 'LOCAL'
+  | 'DEV'
+  | 'TEST'
+  | 'STAGING'
+  | 'PROD'
+  | 'UNKNOWN'
+
+export type TurkuFfmpegBinaryPolicy =
+  | 'SYSTEM_FFMPEG_LOCAL'
+  | 'TEST_FIXTURE_FFMPEG'
+  | 'DISABLED_BINARY'
+
+export type TurkuFfmpegBoundaryResultStatus =
+  | 'NOT_EXECUTED'
+  | 'DRY_RUN_COMPLETE'
+  | 'SIMULATED_COMPLETE'
+  | 'EXECUTED_INTERNAL'
+  | 'FAILED_SAFE'
+  | 'DENIED'
+
+export type TurkuFfmpegBoundaryReasonCode =
+  | 'DISABLED_BY_DEFAULT'
+  | 'DRY_RUN_SAFE'
+  | 'SIMULATED_SAFE'
+  | 'EXECUTED_INTERNAL_SAFE'
+  | 'ENVIRONMENT_DENIED'
+  | 'MODE_DISABLED'
+  | 'BINARY_UNAVAILABLE'
+  | 'INTERNAL_FLAG_NOT_SET'
+  | 'REVIEW_NOT_APPROVED'
+  | 'DISPATCH_NOT_READY'
+  | 'BOUNDS_EXCEEDED'
+  | 'TIMEOUT_EXCEEDED'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+
+export interface TurkuFfmpegExecutionBoundaryResult {
+  status: TurkuFfmpegBoundaryResultStatus
+  reasonCode: TurkuFfmpegBoundaryReasonCode
+  mode: TurkuFfmpegRealExecutionMode
+  environment: TurkuFfmpegExecutionEnvironment
+  jobRef: string | null
+  queueItemRef: string | null
+  reviewRef: string | null
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuFfmpegDevTestAdapterResult {
+  allowed: boolean
+  gateResult: TurkuFfmpegExecutionBoundaryResult
+  outputRef: string | null
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuFfmpegVerificationCandidate {
+  outputRef: string
+  jobRef: string
+  format: string
+  durationSeconds: number
+  fps: number
+  width: number
+  height: number
+  estimatedSizeMB: number
+  boundsValid: boolean
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}
