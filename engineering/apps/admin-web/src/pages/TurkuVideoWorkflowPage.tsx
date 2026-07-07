@@ -780,9 +780,69 @@ function TurkuVideoWorkflowPage() {
                 <li>Auto Approved: <strong>false</strong></li>
               </ul>
             </div>
+
+            {/* FP-023: Renderer Mode & Adapter Status */}
+            <div className="preview-section" data-testid="renderer-adapter-panel">
+              <h3>⚙️ Renderer Adapter Durumu</h3>
+              <ul className="safety-list">
+                <li>Adapter Mode: <strong data-testid="renderer-mode-badge">STUB</strong></li>
+                <li>FFmpeg Durumu: <strong data-testid="ffmpeg-sandbox-label">Kapalı (Varsayılan)</strong></li>
+                <li>Sandbox Render: <strong>Evet — Gerçek render kapalı</strong></li>
+                <li>Process Execution: <strong>Hayır — No ProcessBuilder</strong></li>
+                <li>Gerçek render: <strong>Kapalı veya güvenli yapılandırma gerektirir</strong></li>
+              </ul>
+              <div className="review-flags" data-testid="adapter-safety-flags">
+                <span className="badge badge-info">NO_REAL_RENDER</span>
+                <span className="badge badge-info">NO_SHELL_EXECUTION</span>
+                <span className="badge badge-info">NO_USER_ARGS</span>
+                <span className="badge badge-info">STUB_DEFAULT</span>
+              </div>
+            </div>
+
+            {/* FP-023: Internal Artifact Metadata */}
+            <div className="preview-section" data-testid="artifact-metadata-panel">
+              <h3>📦 Dahili Render Artifact</h3>
+              <ul className="safety-list">
+                <li>Artifact Ref: <strong data-testid="artifact-opaque-ref">{renderExecution?.artifactRef ?? '—'}</strong></li>
+                <li>Artifact Status: <strong data-testid="artifact-status-label">Dahili</strong></li>
+                <li>Format: <strong>mp4</strong></li>
+                <li>Opaque Ref Only: <strong>Evet</strong></li>
+                <li>Public URL: <strong>Yok</strong></li>
+                <li>İndirilebilir dosya: <strong>Yok</strong></li>
+              </ul>
+            </div>
+
+            {/* FP-023: Retention & Cleanup */}
+            <div className="preview-section" data-testid="retention-cleanup-panel">
+              <h3>🗑️ Retention / Cleanup</h3>
+              <ul className="safety-list">
+                <li>Retention Policy: <strong data-testid="retention-policy-label">default-24h</strong></li>
+                <li>Retention Süresi: <strong>24 saat</strong></li>
+                <li>Auto Cleanup: <strong>Kapalı</strong></li>
+                <li>Cleanup Eligibility: <strong>Metadata-only — dosya silinmez</strong></li>
+              </ul>
+            </div>
+
+            {/* FP-023: Dahili Render Güvenliği */}
+            <div className="preview-section" data-testid="render-adapter-safety-summary">
+              <h3>🛡️ Dahili Render Güvenliği</h3>
+              <ul className="safety-list">
+                <li>Stub/Sandbox render: <strong>Evet</strong></li>
+                <li>Gerçek render kapalı veya güvenli yapılandırma gerektirir: <strong>Evet</strong></li>
+                <li>Yayın/Dışa Aktarım Yok: <strong>Evet</strong></li>
+                <li>İndirilebilir dosya yok: <strong>Evet</strong></li>
+                <li>Public URL yok: <strong>Evet</strong></li>
+                <li>Not Publish Ready: <strong>true</strong></li>
+                <li>Not Export Ready: <strong>true</strong></li>
+                <li>Human Review Required: <strong>true</strong></li>
+                <li>Copyright Review Required: <strong>true</strong></li>
+                <li>Auto Approved: <strong>false</strong></li>
+              </ul>
+            </div>
           </div>
         </div>
       )}
+
 
       {/* ── Internal Preview ──────────────────── */}
       {project && progress && currentStageIndex >= 1 && (

@@ -1839,3 +1839,99 @@ export interface TurkuRenderExecutionSafetyResponse {
   safetyEnvelope: TurkuRenderExecutionSafetyEnvelope
   summary: string
 }
+
+// ── FP-023: Render Adapter + Artifact Metadata Domain ────────
+
+export type TurkuRenderAdapterMode = 'STUB' | 'FFMPEG_DISABLED' | 'FFMPEG_CONFIG_MISSING' | 'FFMPEG_READY' | 'FFMPEG_FAILED_SAFE'
+
+export type TurkuRenderAdapterFailureCode =
+  | 'RENDER_PROVIDER_DISABLED'
+  | 'RENDER_CONFIG_MISSING'
+  | 'RENDER_INPUT_MISSING'
+  | 'RENDER_TIMEOUT'
+  | 'RENDER_PROCESS_FAILED'
+  | 'RENDER_OUTPUT_REJECTED'
+  | 'RENDER_SECURITY_VIOLATION'
+  | 'RENDER_FAILED_SAFE'
+
+export interface TurkuRenderAdapterTraceReference {
+  traceRef: string
+  adapterMode: TurkuRenderAdapterMode
+  timestampMs: number
+}
+
+export interface TurkuRenderAdapterSafetyEnvelope {
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  adapterMode: TurkuRenderAdapterMode
+  safetyFlags: string[]
+  reviewFlags: string[]
+}
+
+export interface TurkuFfmpegCommandPlanSummary {
+  executableToken: string
+  argCount: number
+  validated: boolean
+  validationError: string | null
+  format: string | null
+  resolution: string | null
+  fps: number | null
+}
+
+export type TurkuRenderArtifactStatus =
+  | 'CREATED'
+  | 'VALIDATED'
+  | 'RETENTION_ACTIVE'
+  | 'CLEANUP_ELIGIBLE'
+  | 'CLEANUP_PLANNED'
+  | 'CLEANED'
+  | 'REJECTED'
+
+export interface TurkuRenderArtifactReference {
+  artifactId: string
+  opaqueRef: string
+  rendererMode: TurkuRenderAdapterMode
+  format: string
+  durationSeconds: number
+  resolution: string
+  sizeLabel: string
+  createdAt: string
+}
+
+export interface TurkuInternalRenderArtifact {
+  reference: TurkuRenderArtifactReference
+  safetyReport: TurkuRenderArtifactSafetyReport
+  retentionPolicy: TurkuRenderArtifactRetentionPolicy
+  status: TurkuRenderArtifactStatus
+}
+
+export interface TurkuRenderArtifactRetentionPolicy {
+  retentionHours: number
+  autoCleanupEnabled: boolean
+  policyLabel: string
+}
+
+export interface TurkuRenderArtifactCleanupPlan {
+  planId: string
+  artifactId: string
+  opaqueRef: string
+  retentionPolicy: TurkuRenderArtifactRetentionPolicy
+  eligible: boolean
+  reason: string
+}
+
+export interface TurkuRenderArtifactSafetyReport {
+  artifactId: string
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  status: TurkuRenderArtifactStatus
+  rendererMode: TurkuRenderAdapterMode
+  safetyFlags: string[]
+  reviewFlags: string[]
+}
