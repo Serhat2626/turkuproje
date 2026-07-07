@@ -1397,6 +1397,30 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-030: Real Local/Dev/Test FFmpeg Smoke Run ── */}
+      {project && (
+        <div className="card" data-testid="fp030-smokerun-section">
+          <h2>⚡ Gerçek Local/Dev/Test FFmpeg Denemesi (FP-030)</h2>
+          <div className="preview-section" data-testid="fp030-smokerun-panel">
+            <div className="detail-grid">
+              <span className="detail-label">Smoke run durumu:</span>
+              <span className="detail-value" data-testid="fp030-smokerun-status">EXECUTION_SKIPPED_DISABLED</span>
+              <span className="detail-label">Process runner:</span>
+              <span className="detail-value" data-testid="fp030-process-enabled">Kapalı (varsayılan)</span>
+              <span className="detail-label">Doğrulama adayı:</span>
+              <span className="detail-value" data-testid="fp030-candidate">Bekliyor</span>
+            </div>
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp030-label-local-only">Sadece LOCAL/DEV/TEST</span>
+              <span className="safety-flag" data-testid="fp030-label-disabled-default">Varsayılan kapalı</span>
+              <span className="safety-flag" data-testid="fp030-label-no-publish">Yayın/dışa aktarım yok</span>
+              <span className="safety-flag" data-testid="fp030-label-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp030-label-no-command">Komut/dosya yolu gösterilmez</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">

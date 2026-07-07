@@ -1,0 +1,19 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-030 Task 02: Real smoke run status.
+ */
+public enum TurkuFfmpegSmokeRunStatus {
+    NOT_ATTEMPTED,
+    READINESS_DENIED,
+    REVIEW_DENIED,
+    GATE_DENIED,
+    PROCESS_DENIED,
+    EXECUTION_SKIPPED_DISABLED,
+    EXECUTION_SKIPPED_UNAVAILABLE,
+    EXECUTION_FAKE_TESTED,
+    EXECUTION_ATTEMPTED_LOCAL,
+    EXECUTION_COMPLETED_SAFE,
+    EXECUTION_FAILED_SAFE,
+    VERIFICATION_CANDIDATE_CREATED
+}

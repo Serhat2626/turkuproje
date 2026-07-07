@@ -2597,3 +2597,30 @@ export interface TurkuInternalTrialResult {
   autoApproved: boolean
   safetyFlags: string[]
 }
+
+// ── FP-030: Real FFmpeg Smoke Run ───────────────────────────────
+
+export type TurkuFfmpegSmokeRunStatus =
+  | 'NOT_ATTEMPTED'
+  | 'READINESS_DENIED'
+  | 'REVIEW_DENIED'
+  | 'GATE_DENIED'
+  | 'PROCESS_DENIED'
+  | 'EXECUTION_SKIPPED_DISABLED'
+  | 'EXECUTION_SKIPPED_UNAVAILABLE'
+  | 'EXECUTION_FAKE_TESTED'
+  | 'EXECUTION_ATTEMPTED_LOCAL'
+  | 'EXECUTION_COMPLETED_SAFE'
+  | 'EXECUTION_FAILED_SAFE'
+  | 'VERIFICATION_CANDIDATE_CREATED'
+
+export interface TurkuFfmpegSmokeRunResult {
+  status: TurkuFfmpegSmokeRunStatus
+  outputRef: string | null
+  verificationCandidate: TurkuFfmpegVerificationCandidate | null
+  durationMs: number
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}
