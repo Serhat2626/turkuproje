@@ -50,6 +50,9 @@ public final class TurkuVideoProgressResponse {
                 TurkuVideoWorkflowStage.COMPOSITION_PLAN_PREPARED,
                 TurkuVideoWorkflowStage.RENDER_MANIFEST_PREPARED,
                 TurkuVideoWorkflowStage.RENDER_JOB_PREPARED,
+                TurkuVideoWorkflowStage.RENDER_JOB_RUNNING,
+                TurkuVideoWorkflowStage.RENDER_JOB_COMPLETED_INTERNAL,
+                TurkuVideoWorkflowStage.INTERNAL_RENDER_ARTIFACT_READY,
                 TurkuVideoWorkflowStage.INTERNAL_PREVIEW_READY
         };
         int idx = Arrays.asList(ordered).indexOf(current);
@@ -68,7 +71,11 @@ public final class TurkuVideoProgressResponse {
             case IMAGE_BATCH_COMPLETED -> "prepare-composition-plan";
             case COMPOSITION_PLAN_PREPARED -> "prepare-render-manifest";
             case RENDER_MANIFEST_PREPARED -> "prepare-render-job";
-            case RENDER_JOB_PREPARED -> "Render job hazır — çalıştırma kontrolü";
+            case RENDER_JOB_PREPARED -> "run-render-job";
+            case RENDER_JOB_RUNNING -> "Render çalışıyor — bekleyin";
+            case RENDER_JOB_COMPLETED_INTERNAL -> "Dahili render tamamlandı — inceleme gerekli";
+            case RENDER_JOB_FAILED_SAFE -> "Render başarısız — güvenli kapanış";
+            case INTERNAL_RENDER_ARTIFACT_READY -> "Dahili artifact hazır — inceleme gerekli";
             case INTERNAL_PREVIEW_READY -> "Tamamlandı — dahili önizleme hazır";
             case NEEDS_REVISION -> "Revizyon gerekli";
             case BLOCKED -> "Engellendi";

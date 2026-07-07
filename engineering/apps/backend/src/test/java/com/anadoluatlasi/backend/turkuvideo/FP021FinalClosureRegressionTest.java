@@ -47,11 +47,13 @@ class FP021FinalClosureRegressionTest {
         compositionService = new TurkuVideoCompositionService(repository);
         renderManifestService = new TurkuRenderManifestService(repository);
         var renderJobService = new TurkuRenderJobService(repository, renderManifestService);
+        var renderRunner = new StubTurkuRenderRunnerGateway();
+        var renderExecutionService = new TurkuRenderExecutionService(repository, renderRunner);
         var actorResolver = new AdminActorResolver();
         controller = new TurkuVideoProjectController(
                 bootstrapService, planningService, assetService,
                 draftService, imageBatchService, compositionService,
-                renderManifestService, renderJobService, actorResolver);
+                renderManifestService, renderJobService, renderExecutionService, actorResolver);
     }
 
     private TurkuVideoProject bootstrapProject() {
@@ -76,14 +78,14 @@ class FP021FinalClosureRegressionTest {
         return id;
     }
 
-    // ── A. Endpoint Inventory (42 = 24 POST + 18 GET) ──
+    // ── A. Endpoint Inventory (44 = 25 POST + 19 GET) ──
 
     @Nested
-    @DisplayName("A. Endpoint Inventory (42 = 24 POST + 18 GET)")
+    @DisplayName("A. Endpoint Inventory (44 = 25 POST + 19 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total 42 = 24 POST + 18 GET")
+        @DisplayName("total 44 = 25 POST + 19 GET")
         void totalEndpoints() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -93,18 +95,18 @@ class FP021FinalClosureRegressionTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(24);
-            assertThat(get).as("total GET").isEqualTo(18);
-            assertThat(post + get).as("total endpoints").isEqualTo(42);
+            assertThat(post).as("total POST").isEqualTo(25);
+            assertThat(get).as("total GET").isEqualTo(19);
+            assertThat(post + get).as("total endpoints").isEqualTo(44);
         }
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 15 POST + 6 GET = 21")
+        @DisplayName("TurkuVideoProjectController: 16 POST + 7 GET = 23")
         void turkuControllerCounts() {
             assertThat(countMethods(TurkuVideoProjectController.class, PostMapping.class))
-                    .as("POST").isEqualTo(15);
+                    .as("POST").isEqualTo(16);
             assertThat(countMethods(TurkuVideoProjectController.class, GetMapping.class))
-                    .as("GET").isEqualTo(6);
+                    .as("GET").isEqualTo(7);
         }
 
         @Test
@@ -396,7 +398,7 @@ class FP021FinalClosureRegressionTest {
         @Test
         @DisplayName("stage enum has exactly 14 values")
         void enumSize() {
-            assertThat(TurkuVideoWorkflowStage.values()).hasSize(15);
+            assertThat(TurkuVideoWorkflowStage.values()).hasSize(19);
         }
 
         @Test

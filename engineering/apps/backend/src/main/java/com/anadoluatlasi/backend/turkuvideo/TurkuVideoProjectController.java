@@ -49,6 +49,7 @@ public class TurkuVideoProjectController {
     private final TurkuVideoCompositionService compositionService;
     private final TurkuRenderManifestService renderManifestService;
     private final TurkuRenderJobService renderJobService;
+    private final TurkuRenderExecutionService renderExecutionService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -59,6 +60,7 @@ public class TurkuVideoProjectController {
                                         TurkuVideoCompositionService compositionService,
                                         TurkuRenderManifestService renderManifestService,
                                         TurkuRenderJobService renderJobService,
+                                        TurkuRenderExecutionService renderExecutionService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
@@ -68,6 +70,7 @@ public class TurkuVideoProjectController {
         this.compositionService = compositionService;
         this.renderManifestService = renderManifestService;
         this.renderJobService = renderJobService;
+        this.renderExecutionService = renderExecutionService;
         this.actorResolver = actorResolver;
     }
 
@@ -573,6 +576,32 @@ public class TurkuVideoProjectController {
     public ResponseEntity<ApiResponse<TurkuRenderJobResponse>> getRenderJob(
             @PathVariable UUID id) {
         TurkuRenderJobResponse response = renderJobService.getRenderJob(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/run-render-job ──
+
+    @PostMapping("/{id}/run-render-job")
+    @Operation(summary = "Dahili render job çalıştır",
+               description = "Render job'u stub runner ile çalıştırır. Gerçek render yok. Yayın/dışa aktarım yok.")
+    public ResponseEntity<ApiResponse<TurkuRenderExecutionResponse>> runRenderJob(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuRenderExecutionRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuRenderExecutionResponse response = renderExecutionService.runRenderJob(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── GET /admin/turku-video-projects/{id}/render-execution-safety ──
+
+    @GetMapping("/{id}/render-execution-safety")
+    @Operation(summary = "Render çalıştırma güvenlik durumu",
+               description = "Render çalıştırma güvenlik zarfını döndürür. Yayın/dışa aktarım yok.")
+    public ResponseEntity<ApiResponse<TurkuRenderExecutionSafetyResponse>> getRenderExecutionSafety(
+            @PathVariable UUID id) {
+        TurkuRenderExecutionSafetyResponse response = renderExecutionService.getRenderExecutionSafety(id);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

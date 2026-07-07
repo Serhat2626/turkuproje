@@ -41,6 +41,18 @@ public enum TurkuVideoWorkflowStage {
     /** Internal render job prepared from manifest */
     RENDER_JOB_PREPARED,
 
+    /** Render job execution in progress */
+    RENDER_JOB_RUNNING,
+
+    /** Render completed internally — NOT publish/export ready */
+    RENDER_JOB_COMPLETED_INTERNAL,
+
+    /** Render failed safely — no partial output exposed */
+    RENDER_JOB_FAILED_SAFE,
+
+    /** Internal render artifact metadata available — no download/export */
+    INTERNAL_RENDER_ARTIFACT_READY,
+
     /** Internal preview package assembled */
     INTERNAL_PREVIEW_READY,
 
