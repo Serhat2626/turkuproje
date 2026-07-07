@@ -50,4 +50,16 @@ public class TurkuVideoProjectException extends RuntimeException {
         return new TurkuVideoProjectException(
                 "Hedef süre 1-30 dakika arasında olmalıdır", "INVALID_DURATION");
     }
+
+    public static TurkuVideoProjectException invalidStageTransition(
+            TurkuVideoWorkflowStage current, TurkuVideoWorkflowStage target) {
+        return new TurkuVideoProjectException(
+                "Geçersiz aşama geçişi: " + current + " → " + target,
+                "INVALID_STAGE_TRANSITION");
+    }
+
+    public static TurkuVideoProjectException missingPrerequisite(String detail) {
+        return new TurkuVideoProjectException(
+                "Ön koşul eksik: " + detail, "MISSING_PREREQUISITE");
+    }
 }

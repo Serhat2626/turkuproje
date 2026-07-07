@@ -31,6 +31,11 @@ public final class TurkuVideoProject {
     private final LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
+    // ── Planning outputs (Task 03) ──
+    private TurkuStoryPackage storyPackage;
+    private TurkuScenarioPlan scenarioPlan;
+    private TurkuStoryboardPlan storyboardPlan;
+
     private TurkuVideoProject(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.turkuName = builder.turkuName;
@@ -66,6 +71,13 @@ public final class TurkuVideoProject {
     public String getCreatedByActorReference() { return createdByActorReference; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }
+    public TurkuStoryPackage getStoryPackage() { return storyPackage; }
+    public TurkuScenarioPlan getScenarioPlan() { return scenarioPlan; }
+    public TurkuStoryboardPlan getStoryboardPlan() { return storyboardPlan; }
+
+    public void setStoryPackage(TurkuStoryPackage v) { this.storyPackage = v; }
+    public void setScenarioPlan(TurkuScenarioPlan v) { this.scenarioPlan = v; }
+    public void setStoryboardPlan(TurkuStoryboardPlan v) { this.storyboardPlan = v; }
 
     // ── Stage Mutations (controlled) ──
 

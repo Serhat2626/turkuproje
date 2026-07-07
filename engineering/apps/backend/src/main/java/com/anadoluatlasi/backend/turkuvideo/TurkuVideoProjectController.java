@@ -42,11 +42,14 @@ import java.util.UUID;
 public class TurkuVideoProjectController {
 
     private final TurkuVideoProjectBootstrapService bootstrapService;
+    private final TurkuVideoPlanningService planningService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
+                                        TurkuVideoPlanningService planningService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
+        this.planningService = planningService;
         this.actorResolver = actorResolver;
     }
 
@@ -95,14 +98,89 @@ public class TurkuVideoProjectController {
         return ResponseEntity.ok(ApiResponse.success(TurkuVideoProgressResponse.from(project)));
     }
 
+    // ── POST /admin/turku-video-projects/{id}/prepare-story ──
+
+    @PostMapping("/{id}/prepare-story")
+    @Operation(summary = "Hikâye paketi hazırla",
+               description = "Türkü projesi için hikâye/kültürel bağlam paketi hazırlar.")
+    public ResponseEntity<ApiResponse<TurkuPreparationResponse>> prepareStory(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuStoryPreparationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuStoryPackage story = planningService.prepareStory(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                new TurkuPreparationResponse(id, project.getWorkflowStage(),
+                        "Hikâye paketi başarıyla hazırlandı",
+                        story.getSourceConfidence(), story.isNeedsHumanReview(),
+                        story.isCopyrightReviewRequired(), story.getReviewFlags()),
+                "Hikâye paketi hazır"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/prepare-scenario ──
+
+    @PostMapping("/{id}/prepare-scenario")
+    @Operation(summary = "Senaryo planı hazırla",
+               description = "Hikâye paketine dayalı senaryo planı hazırlar.")
+    public ResponseEntity<ApiResponse<TurkuPreparationResponse>> prepareScenario(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuScenarioPreparationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuScenarioPlan scenario = planningService.prepareScenario(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                new TurkuPreparationResponse(id, project.getWorkflowStage(),
+                        "Senaryo planı başarıyla hazırlandı",
+                        project.getSourceConfidence(), project.isNeedsHumanReview(),
+                        project.isCopyrightReviewRequired(), scenario.getReviewFlags()),
+                "Senaryo planı hazır"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/prepare-storyboard ──
+
+    @PostMapping("/{id}/prepare-storyboard")
+    @Operation(summary = "Storyboard planı hazırla",
+               description = "Senaryoya dayalı sahne bazlı storyboard planı hazırlar.")
+    public ResponseEntity<ApiResponse<TurkuPreparationResponse>> prepareStoryboard(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuStoryboardPreparationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuStoryboardPlan storyboard = planningService.prepareStoryboard(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                new TurkuPreparationResponse(id, project.getWorkflowStage(),
+                        "Storyboard planı başarıyla hazırlandı (" + storyboard.getScenes().size() + " sahne)",
+                        project.getSourceConfidence(), project.isNeedsHumanReview(),
+                        project.isCopyrightReviewRequired(), storyboard.getReviewFlags()),
+                "Storyboard hazır"));
+    }
+
     // ── Actor Resolution ──
 
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {
-        // SYSTEM cannot bootstrap projects from request body
+        return resolvePlanningActor(role, reference);
+    }
+
+    /**
+     * Resolve admin actor for all türkü project planning actions.
+     * SYSTEM is blocked. ADMIN/REVIEWER/CREATOR allowed via TEST_FALLBACK.
+     */
+    private ResolvedAdminActor resolvePlanningActor(ReviewActorRole role, String reference) {
         boolean systemAllowed = false;
 
         if (role == null) {
-            // Default to ADMIN for bootstrap if no role provided
             role = ReviewActorRole.ADMIN;
         }
 
@@ -115,9 +193,6 @@ public class TurkuVideoProjectController {
 
         ResolvedAdminActor actor = actorResolver.resolve(resolutionRequest);
 
-        // Boundary enforcement: TURKU_PROJECT_BOOTSTRAP allows ADMIN, REVIEWER
-        // CREATOR is allowed for bootstrap (can start their own project)
-        // SYSTEM is blocked
         AdminActorBoundaryPolicy.enforce(
                 AdminActorBoundaryPolicy.ActionCategory.TURKU_PROJECT_BOOTSTRAP, actor);
 
@@ -131,7 +206,8 @@ public class TurkuVideoProjectController {
         HttpStatus status = switch (ex.getSafeErrorCode()) {
             case "PROJECT_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "TURKU_NAME_REQUIRED", "TURKU_NAME_TOO_LONG",
-                 "UNSAFE_INPUT", "FIELD_TOO_LONG", "INVALID_DURATION" -> HttpStatus.BAD_REQUEST;
+                 "UNSAFE_INPUT", "FIELD_TOO_LONG", "INVALID_DURATION",
+                 "INVALID_STAGE_TRANSITION", "MISSING_PREREQUISITE" -> HttpStatus.BAD_REQUEST;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
         return ResponseEntity.status(status).body(ApiResponse.error(ex.getMessage()));
