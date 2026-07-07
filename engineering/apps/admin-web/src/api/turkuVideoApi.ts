@@ -16,6 +16,9 @@ import type {
   TurkuRenderManifestResponse,
   TurkuRenderReadinessReport,
   TurkuCompositionPreviewResponse,
+  TurkuRenderJobResponse,
+  TurkuRenderExecutionResponse,
+  TurkuRenderExecutionSafetyResponse,
 } from '../types'
 
 /**
@@ -174,4 +177,34 @@ export function getTurkuCompositionPreview(
   id: string
 ): Promise<ApiResponse<TurkuCompositionPreviewResponse>> {
   return request<TurkuCompositionPreviewResponse>(`${BASE}/${id}/composition-preview`)
+}
+
+// ── FP-022: Render Job + Execution Safety ──
+
+export function prepareTurkuRenderJob(
+  id: string
+): Promise<ApiResponse<TurkuRenderJobResponse>> {
+  return request<TurkuRenderJobResponse>(`${BASE}/${id}/prepare-render-job`, {
+    method: 'POST',
+  })
+}
+
+export function getTurkuRenderJob(
+  id: string
+): Promise<ApiResponse<TurkuRenderJobResponse>> {
+  return request<TurkuRenderJobResponse>(`${BASE}/${id}/render-job`)
+}
+
+export function runTurkuRenderJob(
+  id: string
+): Promise<ApiResponse<TurkuRenderExecutionResponse>> {
+  return request<TurkuRenderExecutionResponse>(`${BASE}/${id}/run-render-job`, {
+    method: 'POST',
+  })
+}
+
+export function getTurkuRenderExecutionSafety(
+  id: string
+): Promise<ApiResponse<TurkuRenderExecutionSafetyResponse>> {
+  return request<TurkuRenderExecutionSafetyResponse>(`${BASE}/${id}/render-execution-safety`)
 }

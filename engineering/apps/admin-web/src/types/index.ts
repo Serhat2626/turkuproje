@@ -1747,3 +1747,95 @@ export interface TurkuCompositionPreviewResponse {
   reviewFlags: string[]
   summary: string
 }
+
+// ── FP-022: Render Job + Execution Safety Domain ─────────────
+
+export type TurkuRenderJobStatus = 'PREPARED' | 'RUNNING' | 'COMPLETED_INTERNAL' | 'FAILED_SAFE' | 'CANCELLED'
+
+export type TurkuRenderFailureCode =
+  | 'MANIFEST_INCOMPLETE'
+  | 'READINESS_CHECK_FAILED'
+  | 'RENDERER_UNAVAILABLE'
+  | 'RENDERER_TIMEOUT'
+  | 'RENDERER_INTERNAL_ERROR'
+  | 'SAFETY_VIOLATION'
+  | 'COPYRIGHT_REVIEW_PENDING'
+  | 'HUMAN_REVIEW_REQUIRED'
+
+export interface TurkuRenderAttempt {
+  attemptId: string
+  attemptNo: number
+  startedAt: string
+  completedAt: string | null
+  status: TurkuRenderJobStatus
+  failureCode: TurkuRenderFailureCode | null
+  durationMs: number
+  rendererAlias: string
+}
+
+export interface TurkuRenderArtifact {
+  artifactId: string
+  artifactRef: string
+  format: string
+  durationSeconds: number
+  resolution: string
+  sizeLabel: string
+  humanReviewRequired: boolean
+  autoApproved: boolean
+}
+
+export interface TurkuRenderJobResponse {
+  projectId: string
+  jobId: string | null
+  status: TurkuRenderJobStatus | null
+  currentStage: TurkuVideoWorkflowStage
+  manifestRef: string | null
+  attemptCount: number
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  reviewFlags: string[]
+  summary: string
+}
+
+export interface TurkuRenderExecutionResponse {
+  projectId: string
+  jobId: string | null
+  attemptId: string | null
+  status: TurkuRenderJobStatus | null
+  currentStage: TurkuVideoWorkflowStage
+  safeTraceRef: string | null
+  artifactRef: string | null
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  reviewFlags: string[]
+  summary: string
+  failureCode: TurkuRenderFailureCode | null
+}
+
+export interface TurkuRenderExecutionSafetyEnvelope {
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  lyricsIncluded: boolean
+  copyrightClearanceVerified: boolean
+  renderMode: string
+  safetyFlags: string[]
+  reviewFlags: string[]
+  failureCodes: TurkuRenderFailureCode[]
+  blockedReasons: string[]
+}
+
+export interface TurkuRenderExecutionSafetyResponse {
+  projectId: string
+  jobId: string | null
+  jobStatus: TurkuRenderJobStatus | null
+  currentStage: TurkuVideoWorkflowStage
+  safetyEnvelope: TurkuRenderExecutionSafetyEnvelope
+  summary: string
+}

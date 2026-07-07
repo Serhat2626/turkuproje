@@ -121,8 +121,8 @@ describe('FP-020 Final Closure — API Client', () => {
     })
   }
 
-  it('toplam 15 export fonksiyonu var', () => {
-    expect(Object.keys(turkuVideoApi)).toHaveLength(19)
+  it('toplam 23 export fonksiyonu var', () => {
+    expect(Object.keys(turkuVideoApi)).toHaveLength(23)
   })
 
   it('Authorization header göndermiyor', () => {

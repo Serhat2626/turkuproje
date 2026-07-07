@@ -8,6 +8,9 @@ import type {
   TurkuProviderMode,
   TurkuCompositionPreviewResponse,
   TurkuRenderReadinessReport,
+  TurkuRenderJobResponse,
+  TurkuRenderExecutionResponse,
+  TurkuRenderExecutionSafetyResponse,
 } from '../types'
 import * as turkuApi from '../api/turkuVideoApi'
 
@@ -30,6 +33,11 @@ const STAGE_ORDER: TurkuVideoWorkflowStage[] = [
   'IMAGE_BATCH_COMPLETED',
   'COMPOSITION_PLAN_PREPARED',
   'RENDER_MANIFEST_PREPARED',
+  'RENDER_JOB_PREPARED',
+  'RENDER_JOB_RUNNING',
+  'RENDER_JOB_COMPLETED_INTERNAL',
+  'RENDER_JOB_FAILED_SAFE',
+  'INTERNAL_RENDER_ARTIFACT_READY',
 ]
 
 const STAGE_LABELS: Record<string, string> = {
@@ -43,6 +51,11 @@ const STAGE_LABELS: Record<string, string> = {
   IMAGE_BATCH_PARTIAL: 'Görseller Kısmi',
   COMPOSITION_PLAN_PREPARED: 'Kompozisyon Planı Hazır',
   RENDER_MANIFEST_PREPARED: 'Render Manifest Hazır',
+  RENDER_JOB_PREPARED: 'Render Job Hazır',
+  RENDER_JOB_RUNNING: 'Render Çalışıyor',
+  RENDER_JOB_COMPLETED_INTERNAL: 'Dahili Render Tamamlandı',
+  RENDER_JOB_FAILED_SAFE: 'Render Güvenli Kapandı',
+  INTERNAL_RENDER_ARTIFACT_READY: 'Dahili Artifact Hazır',
   INTERNAL_PREVIEW_READY: 'Dahili Önizleme Hazır',
   NEEDS_REVISION: 'Revizyon Gerekli',
   BLOCKED: 'Engellendi',
@@ -83,6 +96,9 @@ function TurkuVideoWorkflowPage() {
   const [safety, setSafety] = useState<TurkuGenerationSafetyResponse | null>(null)
   const [compositionPreview, setCompositionPreview] = useState<TurkuCompositionPreviewResponse | null>(null)
   const [readiness, setReadiness] = useState<TurkuRenderReadinessReport | null>(null)
+  const [renderJob, setRenderJob] = useState<TurkuRenderJobResponse | null>(null)
+  const [renderExecution, setRenderExecution] = useState<TurkuRenderExecutionResponse | null>(null)
+  const [executionSafety, setExecutionSafety] = useState<TurkuRenderExecutionSafetyResponse | null>(null)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -94,6 +110,8 @@ function TurkuVideoWorkflowPage() {
     { label: 'Batch Tamamla', enabledAt: 'IMAGE_BATCH_PREPARED', action: (id) => turkuApi.completeTurkuImageBatch(id) },
     { label: 'Kompozisyon Planı Hazırla', enabledAt: 'IMAGE_BATCH_COMPLETED', action: (id) => turkuApi.prepareTurkuCompositionPlan(id) },
     { label: 'Render Manifest Hazırla', enabledAt: 'COMPOSITION_PLAN_PREPARED', action: (id) => turkuApi.prepareTurkuRenderManifest(id) },
+    { label: 'Render Job Hazırla', enabledAt: 'RENDER_MANIFEST_PREPARED', action: (id) => turkuApi.prepareTurkuRenderJob(id) },
+    { label: 'Render Job Çalıştır', enabledAt: 'RENDER_JOB_PREPARED', action: (id) => turkuApi.runTurkuRenderJob(id) },
   ]
 
   const refreshProject = useCallback(async (id: string) => {
@@ -116,6 +134,17 @@ function TurkuVideoWorkflowPage() {
         setReadiness(readRes.data)
       } catch {
         // composition/readiness not available yet
+      }
+      // Render job / execution safety — safe to fail
+      try {
+        const [jobRes, execSafetyRes] = await Promise.all([
+          turkuApi.getTurkuRenderJob(id),
+          turkuApi.getTurkuRenderExecutionSafety(id),
+        ])
+        setRenderJob(jobRes.data)
+        setExecutionSafety(execSafetyRes.data)
+      } catch {
+        // render job not available yet
       }
     } catch {
       // keep current state
@@ -662,6 +691,99 @@ function TurkuVideoWorkflowPage() {
         </div>
       )}
 
+      {/* ── FP-022: Render Job & Execution Safety ── */}
+      {project && progress && currentStageIndex >= 8 && (
+        <div className="card" data-testid="render-execution-section">
+          <div className="card-header">
+            <h2 className="card-title">🔧 Dahili Render İşlemi</h2>
+            <span className="badge badge-warning">Internal Stub Render</span>
+          </div>
+          <div className="card-body">
+            <p className="preview-disclaimer" data-testid="render-no-publish-label">
+              ⚠️ Dahili render hazırlığı — Yayın/Dışa Aktarım Yok — İndirilebilir video yok
+            </p>
+
+            {/* Render Job Status */}
+            {renderJob && (
+              <div className="preview-section" data-testid="render-job-status-panel">
+                <h3>📋 Render Job Durumu</h3>
+                <ul className="safety-list">
+                  <li>Job ID: <strong>{renderJob.jobId ?? '—'}</strong></li>
+                  <li>Durum: <strong>{renderJob.status ?? 'Hazırlanmadı'}</strong></li>
+                  <li>Aşama: <strong>{STAGE_LABELS[renderJob.currentStage] ?? renderJob.currentStage}</strong></li>
+                  <li>Manifest Ref: <strong>{renderJob.manifestRef ?? '—'}</strong></li>
+                  <li>Deneme Sayısı: <strong>{renderJob.attemptCount}</strong></li>
+                  <li>Human Review Required: <strong>true</strong></li>
+                  <li>Auto Approved: <strong>false</strong></li>
+                  <li>Not Publish Ready: <strong>true</strong></li>
+                  <li>Not Export Ready: <strong>true</strong></li>
+                </ul>
+                <div className="review-flags" data-testid="render-job-review-flags">
+                  {renderJob.reviewFlags.map((flag, i) => (
+                    <span key={i} className="badge badge-info">{flag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Execution Result */}
+            {renderExecution && (
+              <div className="preview-section" data-testid="render-execution-result-panel">
+                <h3>🎬 Render Çalıştırma Sonucu</h3>
+                <ul className="safety-list">
+                  <li>Attempt ID: <strong>{renderExecution.attemptId ?? '—'}</strong></li>
+                  <li>Durum: <strong>{renderExecution.status ?? '—'}</strong></li>
+                  <li>Trace Ref: <strong>{renderExecution.safeTraceRef ?? '—'}</strong></li>
+                  <li>Artifact Ref: <strong>{renderExecution.artifactRef ?? '—'}</strong></li>
+                  {renderExecution.failureCode && (
+                    <li>Hata Kodu: <strong>{renderExecution.failureCode}</strong></li>
+                  )}
+                </ul>
+              </div>
+            )}
+
+            {/* Execution Safety Envelope */}
+            {executionSafety && (
+              <div className="preview-section" data-testid="render-execution-safety-panel">
+                <h3>🛡️ Render Güvenlik Zarfı</h3>
+                <ul className="safety-list">
+                  <li>Render Mode: <strong>{executionSafety.safetyEnvelope.renderMode}</strong></li>
+                  <li>Human Review Required: <strong>{String(executionSafety.safetyEnvelope.humanReviewRequired)}</strong></li>
+                  <li>Copyright Review Required: <strong>{String(executionSafety.safetyEnvelope.copyrightReviewRequired)}</strong></li>
+                  <li>Auto Approved: <strong>{String(executionSafety.safetyEnvelope.autoApproved)}</strong></li>
+                  <li>Lyrics Included: <strong>{String(executionSafety.safetyEnvelope.lyricsIncluded)}</strong></li>
+                  <li>Copyright Clearance: <strong>{String(executionSafety.safetyEnvelope.copyrightClearanceVerified)}</strong></li>
+                </ul>
+                <div className="review-flags" data-testid="execution-safety-flags">
+                  {executionSafety.safetyEnvelope.safetyFlags.map((flag, i) => (
+                    <span key={i} className="badge badge-success">{flag}</span>
+                  ))}
+                </div>
+                <div className="review-flags" data-testid="execution-review-flags">
+                  {executionSafety.safetyEnvelope.reviewFlags.map((flag, i) => (
+                    <span key={i} className="badge badge-warning">{flag}</span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Safety Summary */}
+            <div className="preview-section" data-testid="render-safety-summary">
+              <h3>🛡️ Güvenlik Özeti</h3>
+              <ul className="safety-list">
+                <li>Internal Stub Render: <strong>Evet</strong></li>
+                <li>Gerçek video rendering: <strong>Hayır</strong></li>
+                <li>İndirilebilir dosya: <strong>Hayır</strong></li>
+                <li>Yayın hazır: <strong>Hayır — sadece dahili</strong></li>
+                <li>Dışa aktarım hazır: <strong>Hayır</strong></li>
+                <li>Human Review Required: <strong>Evet</strong></li>
+                <li>Auto Approved: <strong>false</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Internal Preview ──────────────────── */}
       {project && progress && currentStageIndex >= 1 && (
         <div className="card" data-testid="internal-preview">
@@ -730,7 +852,7 @@ function TurkuVideoWorkflowPage() {
         <div className="form-actions">
           <button
             className="btn btn-ghost"
-            onClick={() => { setProject(null); setProgress(null); setSafety(null); setCompositionPreview(null); setReadiness(null); setForm({ turkuName: '' }); setError(null) }}
+            onClick={() => { setProject(null); setProgress(null); setSafety(null); setCompositionPreview(null); setReadiness(null); setRenderJob(null); setRenderExecution(null); setExecutionSafety(null); setForm({ turkuName: '' }); setError(null) }}
             data-testid="btn-new-project"
           >
             ➕ Yeni Proje Başlat

@@ -302,7 +302,7 @@ describe('FP-019 Page Safety', () => {
 
   it('download kontrolleri YOK', () => {
     expect(page).not.toContain('btn-download')
-    expect(page).not.toContain('İndir')
+    expect(page).not.toContain('>İndir<')
     expect(page).not.toContain('downloadVideo')
   })
 

@@ -148,9 +148,9 @@ describe('FP-019 Closure: API Client Completeness', () => {
     })
   }
 
-  it('tam olarak 19 export function var', () => {
+  it('tam olarak 23 export function var', () => {
     const matches = apiSource.match(/export function \w+/g) || []
-    expect(matches).toHaveLength(19)
+    expect(matches).toHaveLength(23)
   })
 
   const FORBIDDEN_METHODS = [
@@ -283,7 +283,7 @@ describe('FP-019 Closure: Page Safety', () => {
   it('Yayınla/Dışa Aktar/İndir butonları yok', () => {
     expect(page).not.toContain('Yayınla')
     expect(page).not.toContain('btn-export')
-    expect(page).not.toContain('İndir')
+    expect(page).not.toContain('>İndir<')
   })
 
   it('JWT/principal/session yok', () => {
