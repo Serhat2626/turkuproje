@@ -2086,3 +2086,119 @@ export interface TurkuRenderArtifactVerificationReport {
   notExportReady: boolean
   safetyFlags: string[]
 }
+
+// ── FP-025: Internal Render Job Lifecycle & Progress Domain ────────
+
+export type TurkuInternalRenderJobStatus =
+  | 'DRAFT'
+  | 'READY_FOR_INTERNAL_RENDER'
+  | 'QUEUED_INTERNAL'
+  | 'RUNNING_INTERNAL'
+  | 'SUCCEEDED_INTERNAL'
+  | 'FAILED_INTERNAL'
+  | 'CANCELLED_INTERNAL'
+  | 'EXPIRED_INTERNAL'
+
+export type TurkuInternalRenderJobAction =
+  | 'VALIDATE_FOR_INTERNAL_RENDER'
+  | 'ENQUEUE_INTERNAL_RENDER'
+  | 'START_INTERNAL_RENDER'
+  | 'COMPLETE_INTERNAL_RENDER'
+  | 'FAIL_INTERNAL_RENDER'
+  | 'CANCEL_INTERNAL_RENDER'
+  | 'EXPIRE_INTERNAL_RENDER'
+
+export type TurkuInternalRenderJobReasonCode =
+  | 'TRANSITION_ALLOWED'
+  | 'UNKNOWN_CURRENT_STATE'
+  | 'UNKNOWN_ACTION'
+  | 'TRANSITION_NOT_ALLOWED'
+  | 'TERMINAL_STATE'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'GENERIC_STATUS_UPDATE_FORBIDDEN'
+  | 'JOB_REF_INVALID'
+  | 'RENDER_EXECUTION_DISABLED'
+  | 'UNSAFE_INPUT_REJECTED'
+  | 'ARTIFACT_REF_INVALID'
+  | 'PROGRESS_OUT_OF_BOUNDS'
+  | 'PROVIDER_PAYLOAD_FORBIDDEN'
+  | 'FILESYSTEM_EXPOSURE_FORBIDDEN'
+
+export interface TurkuInternalRenderJobProgress {
+  jobRef: string
+  status: TurkuInternalRenderJobStatus
+  progressPercent: number
+  currentStageLabel: string
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalRenderJobSummary {
+  jobRef: string
+  status: TurkuInternalRenderJobStatus
+  progressPercent: number
+  currentStageLabel: string
+  safeTraceRef: string
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+}
+
+export type TurkuInternalRenderReadinessStatus =
+  | 'NOT_READY'
+  | 'READY_INTERNAL_ONLY'
+  | 'BLOCKED_BY_CONFIG'
+  | 'BLOCKED_BY_WORKSPACE'
+  | 'BLOCKED_BY_EXECUTION_BOUNDARY'
+  | 'BLOCKED_BY_ARTIFACT_VERIFICATION'
+  | 'BLOCKED_BY_HUMAN_REVIEW'
+
+export type TurkuInternalRenderReadinessIssue =
+  | 'CONFIG_DISABLED'
+  | 'CONFIG_INVALID'
+  | 'WORKSPACE_REF_MISSING'
+  | 'WORKSPACE_REF_INVALID'
+  | 'EXECUTION_BOUNDARY_DISABLED'
+  | 'EXECUTION_PLAN_UNSAFE'
+  | 'ARTIFACT_REF_MISSING'
+  | 'ARTIFACT_REF_INVALID'
+  | 'ARTIFACT_VERIFICATION_FAILED'
+  | 'HUMAN_REVIEW_REQUIRED'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+  | 'UNSAFE_INPUT_REJECTED'
+
+export interface TurkuInternalRenderReadinessSnapshot {
+  status: TurkuInternalRenderReadinessStatus
+  issues: TurkuInternalRenderReadinessIssue[]
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  publicDeliveryAvailable: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalRenderSafetyChainSnapshot {
+  configValid: boolean
+  workspaceSafe: boolean
+  executionBoundarySafe: boolean
+  artifactVerified: boolean
+  configModeLabel: string
+  executionModeLabel: string
+  verificationStatusLabel: string
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  publicDeliveryAvailable: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalRenderJobActionResult {
+  allowed: boolean
+  summary: TurkuInternalRenderJobSummary | null
+  action: TurkuInternalRenderJobAction
+  reasonCode: TurkuInternalRenderJobReasonCode
+}

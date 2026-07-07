@@ -988,6 +988,101 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-025: Internal Render Job Lifecycle / Progress / Readiness ── */}
+      {project && (
+        <div className="card" data-testid="fp025-job-lifecycle-section">
+          <h2>🔄 Dahili Render İş Akışı (FP-025)</h2>
+
+          {/* Panel A — Job Lifecycle Status */}
+          <div className="preview-section" data-testid="fp025-lifecycle-panel">
+            <h3>📋 İş Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">İş referansı:</span>
+              <span className="detail-value" data-testid="fp025-job-ref">Opak dahili referans</span>
+              <span className="detail-label">Durum:</span>
+              <span className="detail-value" data-testid="fp025-job-status">DRAFT</span>
+              <span className="detail-label">Terminal:</span>
+              <span className="detail-value" data-testid="fp025-terminal-indicator">Hayır</span>
+              <span className="detail-label">İnsan onayı:</span>
+              <span className="detail-value" data-testid="fp025-human-review">Gerekli</span>
+              <span className="detail-label">Otomatik onay:</span>
+              <span className="detail-value" data-testid="fp025-auto-approval">Kapalı</span>
+              <span className="detail-label">Yayın durumu:</span>
+              <span className="detail-value" data-testid="fp025-public-delivery">Kullanılamaz</span>
+            </div>
+            <p className="preview-text">Sadece dahili durum görünürlüğü — yayın/indirme/dışa aktarım yok.</p>
+          </div>
+
+          {/* Panel B — Readiness */}
+          <div className="preview-section" data-testid="fp025-readiness-panel">
+            <h3>🔍 Dahili Render Hazırlık Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Hazırlık durumu:</span>
+              <span className="detail-value" data-testid="fp025-readiness-status">NOT_READY</span>
+              <span className="detail-label">Sorunlar:</span>
+              <span className="detail-value" data-testid="fp025-readiness-issues">Yapılandırma doğrulanıyor</span>
+            </div>
+            <div className="safety-flags" data-testid="fp025-readiness-flags">
+              <span className="safety-flag">İnsan onayı gerekli</span>
+              <span className="safety-flag">Otomatik onay kapalı</span>
+              <span className="safety-flag">Yayın/Dışa aktarım yok</span>
+              <span className="safety-flag">Public/CDN URL yok</span>
+            </div>
+          </div>
+
+          {/* Panel C — Progress */}
+          <div className="preview-section" data-testid="fp025-progress-panel">
+            <h3>📊 Güvenli İlerleme Özeti</h3>
+            <div className="detail-grid">
+              <span className="detail-label">İlerleme:</span>
+              <span className="detail-value" data-testid="fp025-progress-percent">0%</span>
+              <span className="detail-label">Aşama:</span>
+              <span className="detail-value" data-testid="fp025-stage-label">Hazırlanıyor</span>
+            </div>
+            <div className="progress-bar-container" data-testid="fp025-progress-bar">
+              <div className="progress-bar-fill" style={{ width: '0%' }} />
+            </div>
+            <p className="preview-text">Güvenli ilerleme özeti — log/stdout/stderr/komut/yol gösterilmez.</p>
+          </div>
+
+          {/* Panel D — FP-024 Safety Chain */}
+          <div className="preview-section" data-testid="fp025-safety-chain-panel">
+            <h3>🛡️ FP-024 Güvenlik Zinciri Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Render yapılandırma:</span>
+              <span className="detail-value" data-testid="fp025-chain-config">Güvenli varsayılan</span>
+              <span className="detail-label">Çalışma alanı:</span>
+              <span className="detail-value" data-testid="fp025-chain-workspace">Güvenli</span>
+              <span className="detail-label">FFmpeg yürütme sınırı:</span>
+              <span className="detail-value" data-testid="fp025-chain-execution">DISABLED</span>
+              <span className="detail-label">Artifact doğrulama:</span>
+              <span className="detail-value" data-testid="fp025-chain-verification">PENDING</span>
+              <span className="detail-label">İnsan onayı:</span>
+              <span className="detail-value" data-testid="fp025-chain-human-review">Gerekli</span>
+              <span className="detail-label">Yayın:</span>
+              <span className="detail-value" data-testid="fp025-chain-delivery">Kapalı</span>
+            </div>
+          </div>
+
+          {/* Safety Labels */}
+          <div className="preview-section" data-testid="fp025-safety-labels">
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp025-label-workflow">Dahili render iş akışı</span>
+              <span className="safety-flag" data-testid="fp025-label-internal-only">Sadece dahili durum görünürlüğü</span>
+              <span className="safety-flag" data-testid="fp025-label-human-review">İnsan onayı gerekli</span>
+              <span className="safety-flag" data-testid="fp025-label-no-auto">Otomatik onay kapalı</span>
+              <span className="safety-flag" data-testid="fp025-label-no-publish">Yayın/Dışa aktarım yok</span>
+              <span className="safety-flag" data-testid="fp025-label-no-download">İndirilebilir video yok</span>
+              <span className="safety-flag" data-testid="fp025-label-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp025-label-no-url">Public/CDN URL yok</span>
+              <span className="safety-flag" data-testid="fp025-label-no-path">Dosya yolu gösterilmez</span>
+              <span className="safety-flag" data-testid="fp025-label-no-cmd">Komut satırı gösterilmez</span>
+              <span className="safety-flag" data-testid="fp025-label-safe-progress">Güvenli ilerleme özeti</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">
