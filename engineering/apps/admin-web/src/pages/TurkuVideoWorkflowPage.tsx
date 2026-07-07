@@ -1326,6 +1326,52 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-029: Internal E2E Smoke Path ── */}
+      {project && (
+        <div className="card" data-testid="fp029-smoke-section">
+          <h2>🔥 Dahili E2E Video Smoke Path (FP-029)</h2>
+
+          <div className="preview-section" data-testid="fp029-smoke-status-panel">
+            <h3>📊 Smoke Path Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Durum:</span>
+              <span className="detail-value" data-testid="fp029-smoke-status">NOT_STARTED</span>
+              <span className="detail-label">Neden:</span>
+              <span className="detail-value" data-testid="fp029-smoke-reason">Başlatılmadı</span>
+              <span className="detail-label">FP-025 hazırlık:</span>
+              <span className="detail-value" data-testid="fp029-readiness">Gerekli</span>
+              <span className="detail-label">FP-026 insan onayı:</span>
+              <span className="detail-value" data-testid="fp029-review">Gerekli</span>
+              <span className="detail-label">FP-028 FFmpeg kapısı:</span>
+              <span className="detail-value" data-testid="fp029-gate">Kapalı</span>
+            </div>
+          </div>
+
+          <div className="preview-section" data-testid="fp029-plan-panel">
+            <h3>📋 Render Plan Özeti</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Format:</span>
+              <span className="detail-value" data-testid="fp029-format">mp4/webm</span>
+              <span className="detail-label">Çıktı referansı:</span>
+              <span className="detail-value" data-testid="fp029-output-ref">Opak dahili referans</span>
+              <span className="detail-label">Doğrulama:</span>
+              <span className="detail-value" data-testid="fp029-verification">Bekliyor</span>
+            </div>
+          </div>
+
+          <div className="preview-section" data-testid="fp029-safety-panel">
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp029-label-internal">Sadece dahili smoke test</span>
+              <span className="safety-flag" data-testid="fp029-label-no-publish">Yayın/dışa aktarım yok</span>
+              <span className="safety-flag" data-testid="fp029-label-no-download">İndirme yok</span>
+              <span className="safety-flag" data-testid="fp029-label-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp029-label-no-public">Public URL yok</span>
+              <span className="safety-flag" data-testid="fp029-label-no-auto">Otomatik onay kapalı</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">

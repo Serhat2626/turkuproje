@@ -2499,3 +2499,59 @@ export interface TurkuFfmpegVerificationCandidate {
   autoApproved: boolean
   safetyFlags: string[]
 }
+
+// ── FP-029: Internal E2E Video Smoke Path ───────────────────────
+
+export type TurkuInternalSmokePathStatus =
+  | 'NOT_STARTED'
+  | 'READINESS_CHECK_PASSED'
+  | 'REVIEW_CHECK_PASSED'
+  | 'DISPATCH_CHECK_PASSED'
+  | 'GATE_CHECK_PASSED'
+  | 'PLAN_CREATED'
+  | 'CANDIDATE_CREATED'
+  | 'SMOKE_COMPLETE_INTERNAL'
+  | 'DENIED'
+  | 'FAILED_SAFE'
+
+export type TurkuInternalSmokePathReasonCode =
+  | 'NOT_STARTED'
+  | 'READINESS_NOT_MET'
+  | 'REVIEW_NOT_APPROVED'
+  | 'DISPATCH_NOT_READY'
+  | 'GATE_DENIED'
+  | 'BINARY_UNAVAILABLE'
+  | 'ENVIRONMENT_DENIED'
+  | 'BOUNDS_INVALID'
+  | 'FORMAT_NOT_ALLOWED'
+  | 'PLAN_CREATED_SAFE'
+  | 'CANDIDATE_CREATED_SAFE'
+  | 'SMOKE_COMPLETE_SAFE'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+
+export interface TurkuInternalSmokeRenderPlan {
+  format: string
+  durationSeconds: number
+  fps: number
+  width: number
+  height: number
+  estimatedSizeMB: number
+  sceneCount: number
+  assetCount: number
+  boundsValid: boolean
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalSmokePathResult {
+  status: TurkuInternalSmokePathStatus
+  reasonCode: TurkuInternalSmokePathReasonCode
+  outputRef: string | null
+  plan: TurkuInternalSmokeRenderPlan | null
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}

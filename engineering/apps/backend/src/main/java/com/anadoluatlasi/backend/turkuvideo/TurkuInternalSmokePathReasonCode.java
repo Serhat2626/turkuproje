@@ -1,0 +1,21 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-029 Task 01: Smoke path reason codes.
+ */
+public enum TurkuInternalSmokePathReasonCode {
+    NOT_STARTED,
+    READINESS_NOT_MET,
+    REVIEW_NOT_APPROVED,
+    DISPATCH_NOT_READY,
+    GATE_DENIED,
+    BINARY_UNAVAILABLE,
+    ENVIRONMENT_DENIED,
+    BOUNDS_INVALID,
+    FORMAT_NOT_ALLOWED,
+    PLAN_CREATED_SAFE,
+    CANDIDATE_CREATED_SAFE,
+    SMOKE_COMPLETE_SAFE,
+    PUBLIC_DELIVERY_FORBIDDEN,
+    AUTO_APPROVAL_FORBIDDEN
+}
