@@ -2202,3 +2202,101 @@ export interface TurkuInternalRenderJobActionResult {
   action: TurkuInternalRenderJobAction
   reasonCode: TurkuInternalRenderJobReasonCode
 }
+
+// ── FP-026: Human Review Gate Domain ──────────────────────────────
+
+export type TurkuInternalRenderReviewState =
+  | 'REVIEW_NOT_REQUIRED'
+  | 'REVIEW_REQUIRED'
+  | 'READY_FOR_REVIEW'
+  | 'IN_REVIEW'
+  | 'APPROVED_FOR_INTERNAL_NEXT_STEP'
+  | 'REJECTED_BY_HUMAN_REVIEW'
+  | 'BLOCKED_BY_SAFETY'
+  | 'EXPIRED_REVIEW'
+
+export type TurkuInternalRenderReviewAction =
+  | 'REQUIRE_HUMAN_REVIEW'
+  | 'MARK_READY_FOR_REVIEW'
+  | 'START_HUMAN_REVIEW'
+  | 'APPROVE_FOR_INTERNAL_NEXT_STEP'
+  | 'REJECT_HUMAN_REVIEW'
+  | 'BLOCK_FOR_SAFETY'
+  | 'EXPIRE_HUMAN_REVIEW'
+
+export type TurkuInternalRenderReviewReasonCode =
+  | 'REVIEW_NOT_REQUIRED'
+  | 'REVIEW_REQUIRED'
+  | 'READY_FOR_REVIEW'
+  | 'REVIEW_STARTED'
+  | 'APPROVED_INTERNAL_ONLY'
+  | 'REJECTED_BY_REVIEWER'
+  | 'BLOCKED_BY_SAFETY'
+  | 'REVIEW_EXPIRED'
+  | 'JOB_NOT_READY'
+  | 'READINESS_BLOCKED'
+  | 'ARTIFACT_VERIFICATION_FAILED'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+  | 'GENERIC_STATUS_UPDATE_FORBIDDEN'
+  | 'UNSAFE_REVIEW_INPUT_REJECTED'
+  | 'TRANSITION_NOT_ALLOWED'
+  | 'TERMINAL_STATE'
+  | 'REVIEW_REF_INVALID'
+
+export type TurkuInternalRenderReviewReadinessStatus =
+  | 'NOT_READY_FOR_REVIEW'
+  | 'READY_FOR_HUMAN_REVIEW'
+  | 'IN_REVIEW'
+  | 'APPROVED_INTERNAL_ONLY'
+  | 'REJECTED'
+  | 'BLOCKED'
+  | 'EXPIRED'
+
+export type TurkuInternalRenderReviewReadinessIssue =
+  | 'JOB_NOT_READY'
+  | 'READINESS_BLOCKED'
+  | 'ARTIFACT_VERIFICATION_FAILED'
+  | 'HUMAN_REVIEW_REQUIRED'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+  | 'UNSAFE_INPUT_REJECTED'
+
+export interface TurkuInternalRenderReviewSummary {
+  reviewRef: string
+  jobRef: string
+  reviewState: TurkuInternalRenderReviewState
+  reasonCode: TurkuInternalRenderReviewReasonCode
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  publicDeliveryAvailable: boolean
+  internalOnly: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalRenderReviewReadinessSnapshot {
+  status: TurkuInternalRenderReviewReadinessStatus
+  issues: TurkuInternalRenderReviewReadinessIssue[]
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  publicDeliveryAvailable: boolean
+  internalOnly: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalRenderReviewTransitionResult {
+  allowed: boolean
+  fromState: TurkuInternalRenderReviewState | null
+  action: TurkuInternalRenderReviewAction
+  toState: TurkuInternalRenderReviewState | null
+  reasonCode: TurkuInternalRenderReviewReasonCode
+}
+
+export interface TurkuInternalRenderReviewActionResult {
+  allowed: boolean
+  summary: TurkuInternalRenderReviewSummary | null
+  action: TurkuInternalRenderReviewAction
+  reasonCode: TurkuInternalRenderReviewReasonCode
+}

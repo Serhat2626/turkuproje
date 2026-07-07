@@ -1083,6 +1083,96 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-026: Human Review Gate ── */}
+      {project && (
+        <div className="card" data-testid="fp026-review-gate-section">
+          <h2>🔍 İnsan İnceleme Kapısı (FP-026)</h2>
+
+          {/* Panel A — Review Gate Status */}
+          <div className="preview-section" data-testid="fp026-review-gate-panel">
+            <h3>📋 İnceleme Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">İnceleme referansı:</span>
+              <span className="detail-value" data-testid="fp026-review-ref">Opak dahili referans</span>
+              <span className="detail-label">İnceleme durumu:</span>
+              <span className="detail-value" data-testid="fp026-review-state">REVIEW_NOT_REQUIRED</span>
+              <span className="detail-label">Dahili mi:</span>
+              <span className="detail-value" data-testid="fp026-internal-only">Evet</span>
+              <span className="detail-label">İnsan onayı:</span>
+              <span className="detail-value" data-testid="fp026-human-review">Gerekli</span>
+              <span className="detail-label">Otomatik onay:</span>
+              <span className="detail-value" data-testid="fp026-auto-approval">Kapalı</span>
+              <span className="detail-label">Yayın durumu:</span>
+              <span className="detail-value" data-testid="fp026-public-delivery">Kullanılamaz</span>
+            </div>
+            <p className="preview-text">Güvenli inceleme kapısı — onay sadece dahili sonraki adım içindir.</p>
+          </div>
+
+          {/* Panel B — Review Readiness */}
+          <div className="preview-section" data-testid="fp026-review-readiness-panel">
+            <h3>🔎 İnceleme Hazırlığı</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Hazırlık durumu:</span>
+              <span className="detail-value" data-testid="fp026-review-readiness-status">NOT_READY_FOR_REVIEW</span>
+              <span className="detail-label">Sorunlar:</span>
+              <span className="detail-value" data-testid="fp026-review-readiness-issues">İnceleme ön koşulları kontrol ediliyor</span>
+            </div>
+            <div className="safety-flags" data-testid="fp026-review-readiness-flags">
+              <span className="safety-flag">İnsan incelemesi gerekli</span>
+              <span className="safety-flag">Otomatik onay kapalı</span>
+              <span className="safety-flag">Yayın/Dışa aktarım yok</span>
+              <span className="safety-flag">Public/CDN URL yok</span>
+            </div>
+          </div>
+
+          {/* Panel C — Safe Review Actions */}
+          <div className="preview-section" data-testid="fp026-review-actions-panel">
+            <h3>⚙️ Güvenli İnceleme Aksiyonları</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Onay aksiyonu:</span>
+              <span className="detail-value" data-testid="fp026-approve-label">Dahili Sonraki Adım İçin Onayla</span>
+              <span className="detail-label">Ret aksiyonu:</span>
+              <span className="detail-value" data-testid="fp026-reject-label">Reddet</span>
+              <span className="detail-label">Engelleme aksiyonu:</span>
+              <span className="detail-value" data-testid="fp026-block-label">Güvenlik Nedeniyle Engelle</span>
+            </div>
+            <p className="preview-text">Sadece dahili sonraki adım — yayın/dışa aktarım/indirme DEĞİL.</p>
+          </div>
+
+          {/* Panel D — Decision Safety Summary */}
+          <div className="preview-section" data-testid="fp026-decision-safety-panel">
+            <h3>🛡️ Karar Güvenlik Özeti</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Onay anlamı:</span>
+              <span className="detail-value" data-testid="fp026-approval-meaning">Sadece dahili sonraki adım</span>
+              <span className="detail-label">Yayın:</span>
+              <span className="detail-value" data-testid="fp026-no-publish">Kullanılamaz</span>
+              <span className="detail-label">İndirme:</span>
+              <span className="detail-value" data-testid="fp026-no-download">Kullanılamaz</span>
+              <span className="detail-label">Video oynatıcı:</span>
+              <span className="detail-value" data-testid="fp026-no-player">Yok</span>
+            </div>
+          </div>
+
+          {/* Safety Labels */}
+          <div className="preview-section" data-testid="fp026-safety-labels">
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp026-label-human-review">İnsan incelemesi gerekli</span>
+              <span className="safety-flag" data-testid="fp026-label-no-auto">Otomatik onay kapalı</span>
+              <span className="safety-flag" data-testid="fp026-label-internal-step">Sadece dahili sonraki adım</span>
+              <span className="safety-flag" data-testid="fp026-label-no-publish">Yayın/Dışa aktarım yok</span>
+              <span className="safety-flag" data-testid="fp026-label-no-download">İndirilebilir video yok</span>
+              <span className="safety-flag" data-testid="fp026-label-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp026-label-no-url">Public/CDN URL yok</span>
+              <span className="safety-flag" data-testid="fp026-label-no-path">Dosya yolu gösterilmez</span>
+              <span className="safety-flag" data-testid="fp026-label-no-cmd">Komut satırı gösterilmez</span>
+              <span className="safety-flag" data-testid="fp026-label-safe-gate">Güvenli inceleme kapısı</span>
+              <span className="safety-flag" data-testid="fp026-label-no-generic">Genel durum güncellemesi yok</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">
