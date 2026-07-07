@@ -197,9 +197,9 @@ class TurkuFfmpegManualExecutionTest {
         @Test @DisplayName("2 policies")
         void policies() { assertThat(TurkuFfmpegManualExecutionPolicy.values()).hasSize(2); }
         @Test @DisplayName("15 statuses")
-        void statuses() { assertThat(TurkuFfmpegManualExecutionStatus.values()).hasSize(15); }
+        void statuses() { assertThat(TurkuFfmpegManualExecutionStatus.values()).hasSize(19); }
         @Test @DisplayName("16 reason codes")
-        void reasons() { assertThat(TurkuFfmpegManualExecutionReasonCode.values()).hasSize(16); }
+        void reasons() { assertThat(TurkuFfmpegManualExecutionReasonCode.values()).hasSize(20); }
     }
 
     // ── G. ProcessBuilder Inventory ──
