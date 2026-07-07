@@ -1,0 +1,27 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-027 Task 02: Safe queue reason codes.
+ */
+public enum TurkuInternalRenderQueueReasonCode {
+    NOT_QUEUED,
+    QUEUE_READY,
+    ENQUEUED,
+    DISPATCHING,
+    IN_PROGRESS,
+    RETRY_WAIT,
+    SUCCEEDED,
+    FAILED_PERMANENT,
+    CANCELLED,
+    EXPIRED,
+    TRANSITION_NOT_ALLOWED,
+    TERMINAL_STATE,
+    QUEUE_REF_INVALID,
+    READINESS_NOT_MET,
+    REVIEW_NOT_APPROVED,
+    MAX_RETRIES_EXHAUSTED,
+    RETRY_DELAY_ACTIVE,
+    PUBLIC_DELIVERY_FORBIDDEN,
+    AUTO_APPROVAL_FORBIDDEN,
+    GENERIC_STATUS_UPDATE_FORBIDDEN
+}
