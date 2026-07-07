@@ -1,0 +1,22 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-031 Task 01: Manual execution status.
+ */
+public enum TurkuFfmpegManualExecutionStatus {
+    NOT_ATTEMPTED,
+    POLICY_DISABLED,
+    MANUAL_CONFIRMATION_MISSING,
+    PROCESS_DISABLED,
+    BINARY_UNAVAILABLE,
+    READINESS_DENIED,
+    REVIEW_DENIED,
+    GATE_DENIED,
+    ENVIRONMENT_DENIED,
+    EXECUTION_SKIPPED_FAKE,
+    EXECUTION_ATTEMPTED_LOCAL,
+    EXECUTION_COMPLETED_SAFE,
+    EXECUTION_FAILED_SAFE,
+    VERIFICATION_PASSED,
+    VERIFICATION_FAILED
+}
