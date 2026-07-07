@@ -1372,6 +1372,31 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-029 Task 02: Trial ── */}
+      {project && (
+        <div className="card" data-testid="fp029-trial-section">
+          <h2>🧪 İlk Dahili Video Denemesi (FP-029)</h2>
+          <div className="preview-section" data-testid="fp029-trial-panel">
+            <div className="detail-grid">
+              <span className="detail-label">Deneme durumu:</span>
+              <span className="detail-value" data-testid="fp029-trial-status">NOT_ATTEMPTED</span>
+              <span className="detail-label">Neden:</span>
+              <span className="detail-value" data-testid="fp029-trial-reason">Henüz denenmedi</span>
+              <span className="detail-label">Kapı durumu:</span>
+              <span className="detail-value" data-testid="fp029-trial-gate">Kapalı</span>
+              <span className="detail-label">Doğrulama adayı:</span>
+              <span className="detail-value" data-testid="fp029-trial-candidate">Bekliyor</span>
+            </div>
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp029-trial-internal">Sadece dahili deneme</span>
+              <span className="safety-flag" data-testid="fp029-trial-no-publish">Yayın yok</span>
+              <span className="safety-flag" data-testid="fp029-trial-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp029-trial-simulated">Simüle edilmiş / atlanmış</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">

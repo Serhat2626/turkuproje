@@ -2555,3 +2555,45 @@ export interface TurkuInternalSmokePathResult {
   autoApproved: boolean
   safetyFlags: string[]
 }
+
+// ── FP-029 Task 02: Internal Generation Trial ──────────────────
+
+export type TurkuInternalTrialStatus =
+  | 'NOT_ATTEMPTED'
+  | 'GATE_DENIED'
+  | 'PLAN_INVALID'
+  | 'TRIAL_READY'
+  | 'EXECUTION_SKIPPED'
+  | 'EXECUTION_SIMULATED'
+  | 'EXECUTION_ATTEMPTED_DEV_TEST'
+  | 'VERIFICATION_CANDIDATE_CREATED'
+  | 'TRIAL_FAILED_SAFE'
+
+export type TurkuInternalTrialReasonCode =
+  | 'NOT_ATTEMPTED'
+  | 'READINESS_NOT_MET'
+  | 'REVIEW_NOT_APPROVED'
+  | 'DISPATCH_NOT_READY'
+  | 'GATE_DENIED_MODE'
+  | 'GATE_DENIED_ENVIRONMENT'
+  | 'GATE_DENIED_FLAG'
+  | 'BINARY_UNAVAILABLE'
+  | 'PLAN_BOUNDS_INVALID'
+  | 'FORMAT_NOT_ALLOWED'
+  | 'EXECUTION_SKIPPED_SAFE'
+  | 'EXECUTION_SIMULATED_SAFE'
+  | 'EXECUTION_ATTEMPTED_SAFE'
+  | 'CANDIDATE_CREATED_SAFE'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+
+export interface TurkuInternalTrialResult {
+  status: TurkuInternalTrialStatus
+  reasonCode: TurkuInternalTrialReasonCode
+  outputRef: string | null
+  verificationCandidate: TurkuFfmpegVerificationCandidate | null
+  internalOnly: boolean
+  publicDeliveryAvailable: boolean
+  autoApproved: boolean
+  safetyFlags: string[]
+}
