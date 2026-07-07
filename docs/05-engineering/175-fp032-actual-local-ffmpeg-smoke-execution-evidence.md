@@ -60,10 +60,12 @@ This path is tested via fake doubles in CI but architecturally reaches real Proc
 
 ## 4. ProcessBuilder Inventory
 
+**Fix 01 applied**: ProcessBuilder removed from `TurkuFfmpegLocalAvailabilityChecker`. Now delegates to runner.
+
 | Class | ProcessBuilder | Runtime.exec |
 |-------|:--------------:|:------------:|
-| TurkuFfmpegLocalDevProcessRunner | ✅ (execution) | ❌ |
-| TurkuFfmpegLocalAvailabilityChecker | ✅ (probe-only) | ❌ |
+| TurkuFfmpegLocalDevProcessRunner | ✅ (ONLY allowed) | ❌ |
+| TurkuFfmpegLocalAvailabilityChecker | ❌ (delegates to runner) | ❌ |
 | TurkuFfmpegActualRunEvidenceService | ❌ | ❌ |
 | All other classes | ❌ | ❌ |
 

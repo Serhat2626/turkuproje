@@ -145,6 +145,12 @@ class TurkuFfmpegActualRunEvidenceTest {
             assertThat(Arrays.stream(TurkuFfmpegLocalDevProcessRunner.class.getDeclaredMethods())
                     .anyMatch(m -> m.getName().equals("executeProcess"))).isTrue();
         }
+        @Test @DisplayName("checker has NO ProcessBuilder")
+        void checkerClean() {
+            Set<String> types = Arrays.stream(TurkuFfmpegLocalAvailabilityChecker.class.getDeclaredFields())
+                    .map(f -> f.getType().getSimpleName()).collect(Collectors.toSet());
+            assertThat(types).doesNotContain("ProcessBuilder", "Process", "Runtime");
+        }
     }
 
     // ── F. Forbidden Exposure ──
