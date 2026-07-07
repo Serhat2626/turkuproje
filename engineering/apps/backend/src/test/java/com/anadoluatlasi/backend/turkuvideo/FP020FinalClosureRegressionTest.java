@@ -350,11 +350,11 @@ class FP020FinalClosureRegressionTest {
     // ── E. Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("E. Endpoint Inventory (39 = 23 POST + 16 GET)")
+    @DisplayName("E. Endpoint Inventory (40 = 23 POST + 17 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total exactly 39 = 23 POST + 16 GET")
+        @DisplayName("total exactly 40 = 23 POST + 17 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -365,17 +365,17 @@ class FP020FinalClosureRegressionTest {
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
             assertThat(post).as("total POST").isEqualTo(23);
-            assertThat(get).as("total GET").isEqualTo(16);
-            assertThat(post + get).as("total endpoints").isEqualTo(39);
+            assertThat(get).as("total GET").isEqualTo(17);
+            assertThat(post + get).as("total endpoints").isEqualTo(40);
         }
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 14 POST + 4 GET")
+        @DisplayName("TurkuVideoProjectController: 14 POST + 5 GET")
         void turkuController() {
             assertThat(countMethods(TurkuVideoProjectController.class, PostMapping.class))
                     .as("POST").isEqualTo(14);
             assertThat(countMethods(TurkuVideoProjectController.class, GetMapping.class))
-                    .as("GET").isEqualTo(4);
+                    .as("GET").isEqualTo(5);
         }
 
         @Test

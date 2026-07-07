@@ -12,6 +12,10 @@ import type {
   TurkuProviderPlanningGenerationResponse,
   TurkuPlanningBundleGenerationResponse,
   TurkuImageBatchRunResponse,
+  TurkuCompositionPlanResponse,
+  TurkuRenderManifestResponse,
+  TurkuRenderReadinessReport,
+  TurkuCompositionPreviewResponse,
 } from '../types'
 
 /**
@@ -140,4 +144,34 @@ export function getTurkuGenerationSafety(
   id: string
 ): Promise<ApiResponse<TurkuGenerationSafetyResponse>> {
   return request<TurkuGenerationSafetyResponse>(`${BASE}/${id}/generation-safety`)
+}
+
+// ── FP-021: Composition / Render Planning ──
+
+export function prepareTurkuCompositionPlan(
+  id: string
+): Promise<ApiResponse<TurkuCompositionPlanResponse>> {
+  return request<TurkuCompositionPlanResponse>(`${BASE}/${id}/prepare-composition-plan`, {
+    method: 'POST',
+  })
+}
+
+export function prepareTurkuRenderManifest(
+  id: string
+): Promise<ApiResponse<TurkuRenderManifestResponse>> {
+  return request<TurkuRenderManifestResponse>(`${BASE}/${id}/prepare-render-manifest`, {
+    method: 'POST',
+  })
+}
+
+export function getTurkuRenderReadiness(
+  id: string
+): Promise<ApiResponse<TurkuRenderReadinessReport>> {
+  return request<TurkuRenderReadinessReport>(`${BASE}/${id}/render-readiness`)
+}
+
+export function getTurkuCompositionPreview(
+  id: string
+): Promise<ApiResponse<TurkuCompositionPreviewResponse>> {
+  return request<TurkuCompositionPreviewResponse>(`${BASE}/${id}/composition-preview`)
 }

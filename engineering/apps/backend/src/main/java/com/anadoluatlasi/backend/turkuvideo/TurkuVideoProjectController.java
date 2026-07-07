@@ -457,6 +457,66 @@ public class TurkuVideoProjectController {
         return ResponseEntity.ok(ApiResponse.success(report, "Render hazırlık raporu"));
     }
 
+    // ── FP-021 Task 04: Composition Preview ──
+
+    // ── GET /admin/turku-video-projects/{id}/composition-preview ──
+
+    @GetMapping("/{id}/composition-preview")
+    @Operation(summary = "Kompozisyon önizleme",
+               description = "Dahili kompozisyon timeline önizleme meta verisi. Yayın/dışa aktarım hazırlığı değil.")
+    public ResponseEntity<ApiResponse<TurkuCompositionPreviewResponse>> getCompositionPreview(
+            @PathVariable UUID id) {
+
+        TurkuVideoProject project = bootstrapService.getById(id);
+        TurkuVideoCompositionPlan comp = project.getCompositionPlan();
+        TurkuRenderManifest manifest = project.getRenderManifest();
+
+        boolean compositionReady = comp != null;
+        boolean manifestReady = manifest != null;
+
+        java.util.List<TurkuCompositionPreviewScene> timelineScenes = new java.util.ArrayList<>();
+        double totalDuration = 0;
+
+        if (compositionReady) {
+            for (var scene : comp.getScenes()) {
+                timelineScenes.add(new TurkuCompositionPreviewScene(
+                        scene.getSceneNo(), scene.getSceneTitle(),
+                        scene.getNarrationText(),
+                        scene.getImageRef() != null ? "internal-ref (mevcut)" : "referans yok",
+                        scene.getDurationSeconds(), scene.getMood(),
+                        scene.getTransitionIn(), scene.getTransitionOut(),
+                        scene.getCameraDirection()));
+                totalDuration += scene.getDurationSeconds();
+            }
+        }
+
+        // Readiness summary
+        String readinessStatus;
+        java.util.List<String> readinessIssues = new java.util.ArrayList<>();
+        if (!compositionReady) {
+            readinessStatus = "BLOCKED";
+            readinessIssues.add("Kompozisyon planı hazırlanmadı");
+        } else if (!manifestReady) {
+            readinessStatus = "BLOCKED";
+            readinessIssues.add("Render manifest hazırlanmadı");
+        } else {
+            readinessStatus = "NEEDS_REVIEW";
+            readinessIssues.add("Telif incelemesi bekliyor");
+        }
+
+        java.util.List<String> reviewFlags = java.util.List.of(
+                "HUMAN_REVIEW_REQUIRED", "COPYRIGHT_REVIEW_REQUIRED",
+                "NOT_PUBLISH_READY", "NOT_EXPORT_READY", "INTERNAL_PREVIEW_ONLY");
+
+        TurkuCompositionPreviewResponse response = new TurkuCompositionPreviewResponse(
+                project.getId(), project.getWorkflowStage(),
+                compositionReady, manifestReady, timelineScenes,
+                totalDuration, timelineScenes.size(), readinessStatus, readinessIssues,
+                reviewFlags, "Dahili kompozisyon önizleme meta verisi");
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Kompozisyon önizleme"));
+    }
+
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {
         return resolvePlanningActor(role, reference);
     }

@@ -1351,6 +1351,8 @@ export type TurkuVideoWorkflowStage =
   | 'IMAGE_BATCH_PREPARED'
   | 'IMAGE_BATCH_COMPLETED'
   | 'IMAGE_BATCH_PARTIAL'
+  | 'COMPOSITION_PLAN_PREPARED'
+  | 'RENDER_MANIFEST_PREPARED'
   | 'INTERNAL_PREVIEW_READY'
   | 'NEEDS_REVISION'
   | 'BLOCKED'
@@ -1660,4 +1662,88 @@ export interface TurkuImageBatchRunResponse {
   sceneStatuses: TurkuImageBatchRunSceneStatus[]
   reviewFlags: string[]
   safeWarnings: string[]
+}
+
+// ── FP-021: Composition / Render Planning Types ──
+
+export interface TurkuCompositionPlanResponse {
+  projectId: string
+  compositionId: string
+  currentStage: TurkuVideoWorkflowStage
+  sceneCount: number
+  totalDurationSeconds: number
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  reviewFlags: string[]
+  summary: string
+}
+
+export interface TurkuRenderManifestResponse {
+  projectId: string
+  manifestId: string
+  currentStage: TurkuVideoWorkflowStage
+  sceneCount: number
+  totalDurationSeconds: number
+  targetResolution: string
+  targetFps: number
+  targetFormat: string
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  reviewFlags: string[]
+  summary: string
+}
+
+export type TurkuRenderReadinessStatus = 'READY' | 'NEEDS_REVIEW' | 'BLOCKED'
+
+export interface TurkuRenderReadinessIssue {
+  code: string
+  description: string
+  severity: string
+}
+
+export interface TurkuRenderReadinessReport {
+  projectId: string
+  status: TurkuRenderReadinessStatus
+  compositionReady: boolean
+  manifestReady: boolean
+  allScenesHaveImages: boolean
+  allNarrationPresent: boolean
+  timingPlanComplete: boolean
+  copyrightReviewDone: boolean
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  readinessScore: number
+  issues: TurkuRenderReadinessIssue[]
+  reviewFlags: string[]
+}
+
+export interface TurkuCompositionPreviewScene {
+  sceneNo: number
+  sceneTitle: string
+  narrationSummary: string
+  imageRefLabel: string
+  durationSeconds: number
+  mood: string
+  transitionIn: string
+  transitionOut: string
+  cameraDirection: string
+}
+
+export interface TurkuCompositionPreviewResponse {
+  projectId: string
+  currentStage: TurkuVideoWorkflowStage
+  compositionReady: boolean
+  manifestReady: boolean
+  timelineScenes: TurkuCompositionPreviewScene[]
+  totalDurationSeconds: number
+  sceneCount: number
+  readinessStatus: string
+  readinessIssues: string[]
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  reviewFlags: string[]
+  summary: string
 }

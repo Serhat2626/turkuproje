@@ -55,11 +55,11 @@ class FP020GenerationSafetyTest {
     // ── A. Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("A. Endpoint Inventory (39 = 23 POST + 16 GET)")
+    @DisplayName("A. Endpoint Inventory (40 = 23 POST + 17 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total 39 endpoints: 23 POST + 16 GET")
+        @DisplayName("total 40 endpoints: 23 POST + 17 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -70,8 +70,8 @@ class FP020GenerationSafetyTest {
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
             assertThat(post).as("POST").isEqualTo(23);
-            assertThat(get).as("GET").isEqualTo(16);
-            assertThat(post + get).as("total").isEqualTo(39);
+            assertThat(get).as("GET").isEqualTo(17);
+            assertThat(post + get).as("total").isEqualTo(40);
         }
 
         @Test
@@ -80,7 +80,7 @@ class FP020GenerationSafetyTest {
             long post = countMethods(TurkuVideoProjectController.class, PostMapping.class);
             long get = countMethods(TurkuVideoProjectController.class, GetMapping.class);
             assertThat(post).isEqualTo(14);
-            assertThat(get).isEqualTo(4);
+            assertThat(get).isEqualTo(5);
         }
 
         @Test

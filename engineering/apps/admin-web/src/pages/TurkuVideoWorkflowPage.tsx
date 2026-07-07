@@ -6,6 +6,8 @@ import type {
   TurkuVideoWorkflowStage,
   TurkuGenerationSafetyResponse,
   TurkuProviderMode,
+  TurkuCompositionPreviewResponse,
+  TurkuRenderReadinessReport,
 } from '../types'
 import * as turkuApi from '../api/turkuVideoApi'
 
@@ -26,6 +28,8 @@ const STAGE_ORDER: TurkuVideoWorkflowStage[] = [
   'SCENE_ASSET_PLAN_PREPARED',
   'IMAGE_BATCH_PREPARED',
   'IMAGE_BATCH_COMPLETED',
+  'COMPOSITION_PLAN_PREPARED',
+  'RENDER_MANIFEST_PREPARED',
 ]
 
 const STAGE_LABELS: Record<string, string> = {
@@ -37,6 +41,8 @@ const STAGE_LABELS: Record<string, string> = {
   IMAGE_BATCH_PREPARED: 'Görsel Batch Hazır',
   IMAGE_BATCH_COMPLETED: 'Görseller Tamamlandı',
   IMAGE_BATCH_PARTIAL: 'Görseller Kısmi',
+  COMPOSITION_PLAN_PREPARED: 'Kompozisyon Planı Hazır',
+  RENDER_MANIFEST_PREPARED: 'Render Manifest Hazır',
   INTERNAL_PREVIEW_READY: 'Dahili Önizleme Hazır',
   NEEDS_REVISION: 'Revizyon Gerekli',
   BLOCKED: 'Engellendi',
@@ -75,6 +81,8 @@ function TurkuVideoWorkflowPage() {
   const [project, setProject] = useState<TurkuVideoProjectResponse | null>(null)
   const [progress, setProgress] = useState<TurkuVideoProgressResponse | null>(null)
   const [safety, setSafety] = useState<TurkuGenerationSafetyResponse | null>(null)
+  const [compositionPreview, setCompositionPreview] = useState<TurkuCompositionPreviewResponse | null>(null)
+  const [readiness, setReadiness] = useState<TurkuRenderReadinessReport | null>(null)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -84,6 +92,8 @@ function TurkuVideoWorkflowPage() {
     { label: 'Varlık Planı Hazırla', enabledAt: 'STORYBOARD_PREPARED', action: (id) => turkuApi.prepareTurkuSceneAssets(id) },
     { label: 'Görsel Batch Hazırla', enabledAt: 'SCENE_ASSET_PLAN_PREPARED', action: (id) => turkuApi.prepareTurkuImageBatch(id) },
     { label: 'Batch Tamamla', enabledAt: 'IMAGE_BATCH_PREPARED', action: (id) => turkuApi.completeTurkuImageBatch(id) },
+    { label: 'Kompozisyon Planı Hazırla', enabledAt: 'IMAGE_BATCH_COMPLETED', action: (id) => turkuApi.prepareTurkuCompositionPlan(id) },
+    { label: 'Render Manifest Hazırla', enabledAt: 'COMPOSITION_PLAN_PREPARED', action: (id) => turkuApi.prepareTurkuRenderManifest(id) },
   ]
 
   const refreshProject = useCallback(async (id: string) => {
@@ -96,6 +106,17 @@ function TurkuVideoWorkflowPage() {
       setProject(projRes.data)
       setProgress(progRes.data)
       setSafety(safetyRes.data)
+      // Composition/readiness — safe to fail
+      try {
+        const [compRes, readRes] = await Promise.all([
+          turkuApi.getTurkuCompositionPreview(id),
+          turkuApi.getTurkuRenderReadiness(id),
+        ])
+        setCompositionPreview(compRes.data)
+        setReadiness(readRes.data)
+      } catch {
+        // composition/readiness not available yet
+      }
     } catch {
       // keep current state
     }
@@ -537,6 +558,110 @@ function TurkuVideoWorkflowPage() {
         </div>
       )}
 
+      {/* ── FP-021: Composition / Render Planning ─── */}
+      {project && compositionPreview && (
+        <div className="card" data-testid="composition-planning-section">
+          <div className="card-header">
+            <h2 className="card-title">🎬 Kompozisyon / Render Planlaması</h2>
+            <span className="badge badge-warning">Dahili Planlama — Yayın/Dışa Aktarım Yok</span>
+          </div>
+          <div className="card-body">
+            <p className="preview-disclaimer" data-testid="composition-disclaimer">
+              ⚠️ Bu bölüm dahili render planlaması içindir. Gerçek video üretimi, dışa aktarım veya yayın yoktur.
+            </p>
+
+            {/* Readiness Panel */}
+            <div className="preview-section" data-testid="readiness-panel">
+              <h3>📊 Render Hazırlık Durumu</h3>
+              <div className="status-grid">
+                <div className="status-item">
+                  <span className="status-label">Durum:</span>
+                  <span className={`badge ${compositionPreview.readinessStatus === 'BLOCKED' ? 'badge-error' : 'badge-warning'}`}
+                        data-testid="readiness-status">
+                    {compositionPreview.readinessStatus}
+                  </span>
+                </div>
+                <div className="status-item">
+                  <span className="status-label">Kompozisyon:</span>
+                  <span className={`badge ${compositionPreview.compositionReady ? 'badge-success' : 'badge-error'}`}>
+                    {compositionPreview.compositionReady ? '✅ Hazır' : '❌ Hazır Değil'}
+                  </span>
+                </div>
+                <div className="status-item">
+                  <span className="status-label">Manifest:</span>
+                  <span className={`badge ${compositionPreview.manifestReady ? 'badge-success' : 'badge-error'}`}>
+                    {compositionPreview.manifestReady ? '✅ Hazır' : '❌ Hazır Değil'}
+                  </span>
+                </div>
+                {readiness && (
+                  <div className="status-item">
+                    <span className="status-label">Puan:</span>
+                    <span className="badge badge-info" data-testid="readiness-score">{readiness.readinessScore}/100</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Readiness Issues */}
+              {compositionPreview.readinessIssues.length > 0 && (
+                <div data-testid="readiness-issues">
+                  <h4>⚠️ Sorunlar</h4>
+                  <ul className="issue-list">
+                    {compositionPreview.readinessIssues.map((issue, idx) => (
+                      <li key={idx} className="issue-item">{issue}</li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
+              {/* Review Flags */}
+              <div className="flag-list" data-testid="review-flags">
+                {compositionPreview.reviewFlags.map((flag, idx) => (
+                  <span key={idx} className="badge badge-outline">{flag}</span>
+                ))}
+              </div>
+            </div>
+
+            {/* Composition Timeline */}
+            {compositionPreview.timelineScenes.length > 0 && (
+              <div className="preview-section" data-testid="composition-timeline">
+                <h3>🎞️ Kompozisyon Timeline ({compositionPreview.sceneCount} sahne — {compositionPreview.totalDurationSeconds.toFixed(1)}s)</h3>
+                <div className="timeline-list">
+                  {compositionPreview.timelineScenes.map((scene) => (
+                    <div key={scene.sceneNo} className="timeline-scene" data-testid={`timeline-scene-${scene.sceneNo}`}>
+                      <div className="scene-header">
+                        <span className="scene-number">#{scene.sceneNo}</span>
+                        <span className="scene-title">{scene.sceneTitle}</span>
+                        <span className="badge badge-info">{scene.durationSeconds.toFixed(1)}s</span>
+                      </div>
+                      <div className="scene-details">
+                        <div className="scene-detail"><span className="detail-label">Anlatım:</span> {scene.narrationSummary}</div>
+                        <div className="scene-detail"><span className="detail-label">Görsel:</span> {scene.imageRefLabel}</div>
+                        <div className="scene-detail"><span className="detail-label">Ruh hali:</span> {scene.mood}</div>
+                        {scene.transitionIn && <div className="scene-detail"><span className="detail-label">Geçiş giriş:</span> {scene.transitionIn}</div>}
+                        {scene.transitionOut && <div className="scene-detail"><span className="detail-label">Geçiş çıkış:</span> {scene.transitionOut}</div>}
+                        {scene.cameraDirection && <div className="scene-detail"><span className="detail-label">Kamera:</span> {scene.cameraDirection}</div>}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Safety Summary */}
+            <div className="preview-section" data-testid="composition-safety-summary">
+              <h3>🛡️ Güvenlik Özeti</h3>
+              <ul className="safety-list">
+                <li>İnsan incelemesi gerekli: <strong>Evet</strong></li>
+                <li>Otomatik onay: <strong>Hayır</strong></li>
+                <li>Telif incelemesi gerekli: <strong>Evet</strong></li>
+                <li>Yayın hazır: <strong>Hayır — sadece dahili planlama</strong></li>
+                <li>Dışa aktarım hazır: <strong>Hayır</strong></li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Internal Preview ──────────────────── */}
       {project && progress && currentStageIndex >= 1 && (
         <div className="card" data-testid="internal-preview">
@@ -605,7 +730,7 @@ function TurkuVideoWorkflowPage() {
         <div className="form-actions">
           <button
             className="btn btn-ghost"
-            onClick={() => { setProject(null); setProgress(null); setSafety(null); setForm({ turkuName: '' }); setError(null) }}
+            onClick={() => { setProject(null); setProgress(null); setSafety(null); setCompositionPreview(null); setReadiness(null); setForm({ turkuName: '' }); setError(null) }}
             data-testid="btn-new-project"
           >
             ➕ Yeni Proje Başlat

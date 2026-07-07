@@ -296,8 +296,8 @@ describe('FP-019 Page Safety', () => {
 
   it('export/dışa aktarım kontrolleri YOK', () => {
     expect(page).not.toContain('btn-export')
-    expect(page).not.toContain('Dışa Aktar')
     expect(page).not.toContain('exportVideo')
+    expect(page).not.toContain('btn-download-export')
   })
 
   it('download kontrolleri YOK', () => {
@@ -594,5 +594,210 @@ describe('FP-020 Page Safety', () => {
   it('rawProvider/rawPayload YOK', () => {
     expect(page).not.toContain('rawProvider')
     expect(page).not.toContain('rawPayload')
+  })
+})
+
+// ── FP-021: Composition / Render Planning ────────────────
+
+describe('FP-021 Types', () => {
+  const types = readFile('types/index.ts')
+
+  it('COMPOSITION_PLAN_PREPARED stage tanımlı', () => {
+    expect(types).toContain('COMPOSITION_PLAN_PREPARED')
+  })
+
+  it('RENDER_MANIFEST_PREPARED stage tanımlı', () => {
+    expect(types).toContain('RENDER_MANIFEST_PREPARED')
+  })
+
+  it('TurkuCompositionPlanResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuCompositionPlanResponse')
+  })
+
+  it('TurkuRenderManifestResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuRenderManifestResponse')
+  })
+
+  it('TurkuRenderReadinessReport interface tanımlı', () => {
+    expect(types).toContain('TurkuRenderReadinessReport')
+  })
+
+  it('TurkuRenderReadinessStatus type tanımlı', () => {
+    expect(types).toContain('TurkuRenderReadinessStatus')
+  })
+
+  it('TurkuCompositionPreviewResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuCompositionPreviewResponse')
+  })
+
+  it('TurkuCompositionPreviewScene interface tanımlı', () => {
+    expect(types).toContain('TurkuCompositionPreviewScene')
+  })
+
+  it('TurkuRenderReadinessIssue interface tanımlı', () => {
+    expect(types).toContain('TurkuRenderReadinessIssue')
+  })
+
+  // Safety
+  it('types dosyasında renderedVideoUrl YOK', () => {
+    expect(types).not.toContain('renderedVideoUrl')
+  })
+
+  it('types dosyasında downloadUrl YOK', () => {
+    expect(types).not.toContain('downloadUrl')
+  })
+
+  it('types dosyasında exportUrl YOK', () => {
+    expect(types).not.toContain('exportUrl')
+  })
+})
+
+describe('FP-021 API Client', () => {
+  const apiSource = readFile('api/turkuVideoApi.ts')
+
+  it('prepareTurkuCompositionPlan fonksiyonu mevcut', () => {
+    expect(apiSource).toContain('prepareTurkuCompositionPlan')
+  })
+
+  it('prepareTurkuRenderManifest fonksiyonu mevcut', () => {
+    expect(apiSource).toContain('prepareTurkuRenderManifest')
+  })
+
+  it('getTurkuRenderReadiness fonksiyonu mevcut', () => {
+    expect(apiSource).toContain('getTurkuRenderReadiness')
+  })
+
+  it('getTurkuCompositionPreview fonksiyonu mevcut', () => {
+    expect(apiSource).toContain('getTurkuCompositionPreview')
+  })
+
+  it('doğru endpoint path: prepare-composition-plan', () => {
+    expect(apiSource).toContain('prepare-composition-plan')
+  })
+
+  it('doğru endpoint path: prepare-render-manifest', () => {
+    expect(apiSource).toContain('prepare-render-manifest')
+  })
+
+  it('doğru endpoint path: render-readiness', () => {
+    expect(apiSource).toContain('render-readiness')
+  })
+
+  it('doğru endpoint path: composition-preview', () => {
+    expect(apiSource).toContain('composition-preview')
+  })
+
+  it('Bearer header YOK', () => {
+    expect(apiSource).not.toContain('Bearer')
+  })
+
+  it('Authorization header YOK', () => {
+    expect(apiSource).not.toContain('Authorization')
+  })
+})
+
+describe('FP-021 Composition / Render Planning Page', () => {
+  const page = readFile('pages/TurkuVideoWorkflowPage.tsx')
+
+  it('composition planning section mevcut', () => {
+    expect(page).toContain('composition-planning-section')
+  })
+
+  it('readiness panel mevcut', () => {
+    expect(page).toContain('readiness-panel')
+  })
+
+  it('composition timeline mevcut', () => {
+    expect(page).toContain('composition-timeline')
+  })
+
+  it('readiness status gösteriliyor', () => {
+    expect(page).toContain('readiness-status')
+  })
+
+  it('readiness issues gösteriliyor', () => {
+    expect(page).toContain('readiness-issues')
+  })
+
+  it('review flags gösteriliyor', () => {
+    expect(page).toContain('review-flags')
+  })
+
+  it('composition disclaimer gösteriliyor', () => {
+    expect(page).toContain('composition-disclaimer')
+  })
+
+  it('composition safety summary gösteriliyor', () => {
+    expect(page).toContain('composition-safety-summary')
+  })
+
+  it('Kompozisyon Planı Hazırla action mevcut', () => {
+    expect(page).toContain('Kompozisyon Planı Hazırla')
+  })
+
+  it('Render Manifest Hazırla action mevcut', () => {
+    expect(page).toContain('Render Manifest Hazırla')
+  })
+
+  it('prepareTurkuCompositionPlan API çağrısı mevcut', () => {
+    expect(page).toContain('prepareTurkuCompositionPlan')
+  })
+
+  it('prepareTurkuRenderManifest API çağrısı mevcut', () => {
+    expect(page).toContain('prepareTurkuRenderManifest')
+  })
+
+  it('getTurkuCompositionPreview API çağrısı mevcut', () => {
+    expect(page).toContain('getTurkuCompositionPreview')
+  })
+
+  it('getTurkuRenderReadiness API çağrısı mevcut', () => {
+    expect(page).toContain('getTurkuRenderReadiness')
+  })
+
+  it('yayın hazır değil bilgisi gösteriliyor', () => {
+    expect(page).toContain('sadece dahili planlama')
+  })
+
+  it('dışa aktarım hazır değil bilgisi gösteriliyor', () => {
+    expect(page).toContain('aktarım hazır')
+  })
+
+  it('timeline scene detayları gösteriliyor', () => {
+    expect(page).toContain('timeline-scene-')
+    expect(page).toContain('narrationSummary')
+    expect(page).toContain('imageRefLabel')
+    expect(page).toContain('durationSeconds')
+  })
+
+  // Safety
+  it('video player YOK', () => {
+    expect(page).not.toContain('<video')
+    expect(page).not.toContain('videoPlayer')
+  })
+
+  it('download/export/publish butonları YOK', () => {
+    expect(page).not.toContain('btn-download')
+    expect(page).not.toContain('btn-export')
+    expect(page).not.toContain('btn-publish')
+  })
+
+  it('lyrics body YOK', () => {
+    expect(page).not.toContain('lyricsBody')
+    expect(page).not.toContain('lyrics-body')
+  })
+
+  it('dangerouslySetInnerHTML YOK', () => {
+    expect(page).not.toContain('dangerouslySetInnerHTML')
+  })
+
+  it('renderedVideoUrl YOK', () => {
+    expect(page).not.toContain('renderedVideoUrl')
+  })
+
+  it('publicUrl/signedUrl/cdnUrl YOK', () => {
+    expect(page).not.toContain('publicUrl')
+    expect(page).not.toContain('signedUrl')
+    expect(page).not.toContain('cdnUrl')
   })
 })
