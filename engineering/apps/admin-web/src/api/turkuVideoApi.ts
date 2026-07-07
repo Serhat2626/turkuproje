@@ -8,6 +8,10 @@ import type {
   TurkuPreparationResponse,
   TurkuAssetPreparationResponse,
   TurkuImageBatchResponse,
+  TurkuGenerationSafetyResponse,
+  TurkuProviderPlanningGenerationResponse,
+  TurkuPlanningBundleGenerationResponse,
+  TurkuImageBatchRunResponse,
 } from '../types'
 
 /**
@@ -88,4 +92,52 @@ export function completeTurkuImageBatch(
     method: 'POST',
     body: JSON.stringify({ partial }),
   })
+}
+
+// ── FP-020: Provider-Draft Generation & Safety ──
+
+export function generateTurkuStory(
+  id: string
+): Promise<ApiResponse<TurkuProviderPlanningGenerationResponse>> {
+  return request<TurkuProviderPlanningGenerationResponse>(`${BASE}/${id}/generate-story`, {
+    method: 'POST',
+  })
+}
+
+export function generateTurkuScenario(
+  id: string
+): Promise<ApiResponse<TurkuProviderPlanningGenerationResponse>> {
+  return request<TurkuProviderPlanningGenerationResponse>(`${BASE}/${id}/generate-scenario`, {
+    method: 'POST',
+  })
+}
+
+export function generateTurkuStoryboard(
+  id: string
+): Promise<ApiResponse<TurkuProviderPlanningGenerationResponse>> {
+  return request<TurkuProviderPlanningGenerationResponse>(`${BASE}/${id}/generate-storyboard`, {
+    method: 'POST',
+  })
+}
+
+export function generateTurkuPlanningBundle(
+  id: string
+): Promise<ApiResponse<TurkuPlanningBundleGenerationResponse>> {
+  return request<TurkuPlanningBundleGenerationResponse>(`${BASE}/${id}/generate-planning-bundle`, {
+    method: 'POST',
+  })
+}
+
+export function runTurkuImageBatch(
+  id: string
+): Promise<ApiResponse<TurkuImageBatchRunResponse>> {
+  return request<TurkuImageBatchRunResponse>(`${BASE}/${id}/run-image-batch`, {
+    method: 'POST',
+  })
+}
+
+export function getTurkuGenerationSafety(
+  id: string
+): Promise<ApiResponse<TurkuGenerationSafetyResponse>> {
+  return request<TurkuGenerationSafetyResponse>(`${BASE}/${id}/generation-safety`)
 }

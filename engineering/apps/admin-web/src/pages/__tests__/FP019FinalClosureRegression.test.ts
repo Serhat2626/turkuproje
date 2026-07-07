@@ -148,9 +148,9 @@ describe('FP-019 Closure: API Client Completeness', () => {
     })
   }
 
-  it('tam olarak 9 export function var', () => {
+  it('tam olarak 15 export function var', () => {
     const matches = apiSource.match(/export function \w+/g) || []
-    expect(matches).toHaveLength(9)
+    expect(matches).toHaveLength(15)
   })
 
   const FORBIDDEN_METHODS = [

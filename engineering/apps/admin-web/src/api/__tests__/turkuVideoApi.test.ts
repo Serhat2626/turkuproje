@@ -2,10 +2,10 @@ import { describe, it, expect } from 'vitest'
 import * as turkuVideoApi from '../turkuVideoApi'
 
 /**
- * FP-019 Task 05: Türkü Video API client tests.
+ * FP-019 Task 05 + FP-020 Task 05: Türkü Video API client tests.
  *
  * Kontrol noktaları:
- * - Tüm 9 endpoint fonksiyonu mevcut
+ * - Tüm 15 endpoint fonksiyonu mevcut (9 FP-019 + 6 FP-020)
  * - Publish/export/download fonksiyonu yok
  * - Authorization header fonksiyonu yok
  * - Provider/storage/base64 fonksiyonu yok
@@ -48,6 +48,32 @@ describe('turkuVideoApi', () => {
 
   it('completeTurkuImageBatch fonksiyonu mevcut', () => {
     expect(typeof turkuVideoApi.completeTurkuImageBatch).toBe('function')
+  })
+
+  // ── FP-020 Functions ──────────────────────────
+
+  it('generateTurkuStory fonksiyonu mevcut', () => {
+    expect(typeof turkuVideoApi.generateTurkuStory).toBe('function')
+  })
+
+  it('generateTurkuScenario fonksiyonu mevcut', () => {
+    expect(typeof turkuVideoApi.generateTurkuScenario).toBe('function')
+  })
+
+  it('generateTurkuStoryboard fonksiyonu mevcut', () => {
+    expect(typeof turkuVideoApi.generateTurkuStoryboard).toBe('function')
+  })
+
+  it('generateTurkuPlanningBundle fonksiyonu mevcut', () => {
+    expect(typeof turkuVideoApi.generateTurkuPlanningBundle).toBe('function')
+  })
+
+  it('runTurkuImageBatch fonksiyonu mevcut', () => {
+    expect(typeof turkuVideoApi.runTurkuImageBatch).toBe('function')
+  })
+
+  it('getTurkuGenerationSafety fonksiyonu mevcut', () => {
+    expect(typeof turkuVideoApi.getTurkuGenerationSafety).toBe('function')
   })
 
   // ── Forbidden Functions ───────────────────────
@@ -115,8 +141,8 @@ describe('turkuVideoApi', () => {
     expect(source).not.toContain('publicUrl')
   })
 
-  it('tam olarak 9 export fonksiyonu var', () => {
+  it('tam olarak 15 export fonksiyonu var', () => {
     const exports = Object.keys(turkuVideoApi)
-    expect(exports).toHaveLength(9)
+    expect(exports).toHaveLength(15)
   })
 })

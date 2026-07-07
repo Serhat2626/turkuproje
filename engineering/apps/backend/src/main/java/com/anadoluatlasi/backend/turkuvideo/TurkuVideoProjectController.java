@@ -107,6 +107,55 @@ public class TurkuVideoProjectController {
         return ResponseEntity.ok(ApiResponse.success(TurkuVideoProgressResponse.from(project)));
     }
 
+    // ── GET /admin/turku-video-projects/{id}/generation-safety ──
+
+    @GetMapping("/{id}/generation-safety")
+    @Operation(summary = "Üretim güvenlik durumu",
+               description = "Provider modu, üretim uygunluğu ve güvenlik bayraklarını döndürür.")
+    public ResponseEntity<ApiResponse<TurkuGenerationSafetyResponse>> getGenerationSafety(
+            @PathVariable UUID id) {
+
+        TurkuVideoProject project = bootstrapService.getById(id);
+        TurkuProviderMode mode = project.getProviderMode();
+        TurkuVideoWorkflowStage stage = project.getWorkflowStage();
+
+        boolean blocked = mode == TurkuProviderMode.PROVIDER_DISABLED
+                || mode == TurkuProviderMode.PROVIDER_FAILED_SAFE
+                || mode == TurkuProviderMode.HUMAN_REVIEW_REQUIRED;
+
+        String blockedReason = blocked ? switch (mode) {
+            case PROVIDER_DISABLED -> "Sağlayıcı devre dışı";
+            case PROVIDER_FAILED_SAFE -> "Sağlayıcı güvenli hata modunda";
+            case HUMAN_REVIEW_REQUIRED -> "İnsan incelemesi bekleniyor";
+            default -> null;
+        } : null;
+
+        TurkuGenerationSafetyResponse resp = TurkuGenerationSafetyResponse.builder()
+                .projectId(project.getId())
+                .providerMode(mode)
+                .currentStage(stage)
+                .generationAvailable(!blocked)
+                .blockedReasonSummary(blockedReason)
+                .humanReviewRequired(true)
+                .autoApproved(false)
+                .copyrightReviewRequired(true)
+                .lyricsIncluded(false)
+                .canGenerateStory(!blocked && stage == TurkuVideoWorkflowStage.DRAFT_CREATED)
+                .canGenerateScenario(!blocked && stage == TurkuVideoWorkflowStage.STORY_CONTEXT_PREPARED)
+                .canGenerateStoryboard(!blocked && stage == TurkuVideoWorkflowStage.SCENARIO_PREPARED)
+                .canGeneratePlanningBundle(!blocked && stage == TurkuVideoWorkflowStage.DRAFT_CREATED)
+                .canRunImageBatch(!blocked && stage == TurkuVideoWorkflowStage.IMAGE_BATCH_PREPARED)
+                .safeFailureCode(blocked ? mode.name() : null)
+                .reviewFlags(java.util.List.of("HUMAN_REVIEW_REQUIRED",
+                        "COPYRIGHT_REVIEW_REQUIRED", "LYRICS_NOT_INCLUDED"))
+                .safeWarnings(blocked
+                        ? java.util.List.of("Üretim engellendi: " + mode)
+                        : java.util.List.of())
+                .build();
+
+        return ResponseEntity.ok(ApiResponse.success(resp));
+    }
+
     // ── POST /admin/turku-video-projects/{id}/prepare-story ──
 
     @PostMapping("/{id}/prepare-story")

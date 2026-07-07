@@ -380,3 +380,219 @@ describe('FP-019 Route Integration', () => {
     expect(sidebar).toContain('Türkü Video')
   })
 })
+
+// ── F. FP-020 Provider Mode Types ───────────────────────
+
+describe('FP-020 Types', () => {
+  const types = readFile('types/index.ts')
+
+  it('TurkuProviderMode type tanımlı', () => {
+    expect(types).toContain('TurkuProviderMode')
+  })
+
+  it('TurkuProviderFailureCode type tanımlı', () => {
+    expect(types).toContain('TurkuProviderFailureCode')
+  })
+
+  it('TurkuProviderTraceReference interface tanımlı', () => {
+    expect(types).toContain('TurkuProviderTraceReference')
+  })
+
+  it('TurkuGenerationSafetyResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuGenerationSafetyResponse')
+  })
+
+  it('TurkuProviderPlanningGenerationResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuProviderPlanningGenerationResponse')
+  })
+
+  it('TurkuPlanningBundleGenerationResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuPlanningBundleGenerationResponse')
+  })
+
+  it('TurkuImageBatchRunResponse interface tanımlı', () => {
+    expect(types).toContain('TurkuImageBatchRunResponse')
+  })
+
+  it('TurkuImageBatchRunSceneStatus interface tanımlı', () => {
+    expect(types).toContain('TurkuImageBatchRunSceneStatus')
+  })
+
+  it('DETERMINISTIC_STUB provider mode tanımlı', () => {
+    expect(types).toContain('DETERMINISTIC_STUB')
+  })
+
+  it('PROVIDER_DRAFT provider mode tanımlı', () => {
+    expect(types).toContain('PROVIDER_DRAFT')
+  })
+
+  it('PROVIDER_DISABLED provider mode tanımlı', () => {
+    expect(types).toContain('PROVIDER_DISABLED')
+  })
+
+  // Forbidden fields in FP-020 block
+  const FP020_FORBIDDEN = [
+    'token:', 'jwt:', 'session:', 'credential:', 'password:',
+    'secret:', 'apiKey:', 'authorizationHeader:', 'publicUrl:',
+    'signedUrl:', 'cdnUrl:', 'storageKey:', 'base64:',
+    'exportUrl:', 'publishUrl:', 'downloadUrl:',
+    'rawProviderPayload:', 'rawProviderResponse:',
+  ]
+
+  for (const field of FP020_FORBIDDEN) {
+    it(`FP-020 types bloğunda '${field}' YOK`, () => {
+      const fp020Block = types.substring(types.indexOf('FP-020'))
+      expect(fp020Block).not.toContain(field)
+    })
+  }
+})
+
+// ── G. FP-020 Safety Panel ──────────────────────────────
+
+describe('FP-020 Safety Panel', () => {
+  const page = readFile('pages/TurkuVideoWorkflowPage.tsx')
+
+  it('safety panel mevcut', () => {
+    expect(page).toContain('safety-panel')
+  })
+
+  it('provider mode badge gösterilir', () => {
+    expect(page).toContain('provider-mode-badge')
+  })
+
+  it('safety provider mode gösterilir', () => {
+    expect(page).toContain('safety-provider-mode')
+  })
+
+  it('safety generation available gösterilir', () => {
+    expect(page).toContain('safety-generation-available')
+  })
+
+  it('safety human review gösterilir', () => {
+    expect(page).toContain('safety-human-review')
+  })
+
+  it('safety auto approved gösterilir', () => {
+    expect(page).toContain('safety-auto-approved')
+  })
+
+  it('safety copyright review gösterilir', () => {
+    expect(page).toContain('safety-copyright-review')
+  })
+
+  it('safety lyrics gösterilir', () => {
+    expect(page).toContain('safety-lyrics')
+  })
+
+  it('safety blocked alert mevcut', () => {
+    expect(page).toContain('safety-blocked-alert')
+  })
+
+  it('safety failure code gösterilir', () => {
+    expect(page).toContain('safety-failure-code')
+  })
+
+  it('safety review flags gösterilir', () => {
+    expect(page).toContain('safety-review-flags')
+  })
+
+  it('safety warnings gösterilir', () => {
+    expect(page).toContain('safety-warnings')
+  })
+
+  it('safety trace ref gösterilir', () => {
+    expect(page).toContain('safety-trace-ref')
+  })
+})
+
+// ── H. FP-020 Generate Actions ──────────────────────────
+
+describe('FP-020 Generate Actions', () => {
+  const page = readFile('pages/TurkuVideoWorkflowPage.tsx')
+
+  it('generate actions paneli mevcut', () => {
+    expect(page).toContain('generate-actions')
+  })
+
+  it('generate story butonu mevcut', () => {
+    expect(page).toContain('btn-generate-story')
+  })
+
+  it('generate scenario butonu mevcut', () => {
+    expect(page).toContain('btn-generate-scenario')
+  })
+
+  it('generate storyboard butonu mevcut', () => {
+    expect(page).toContain('btn-generate-storyboard')
+  })
+
+  it('generate planning bundle butonu mevcut', () => {
+    expect(page).toContain('btn-generate-planning-bundle')
+  })
+
+  it('run image batch butonu mevcut', () => {
+    expect(page).toContain('btn-run-image-batch')
+  })
+
+  it('generate blocked alert mevcut', () => {
+    expect(page).toContain('generate-blocked-alert')
+  })
+
+  it('generate story API çağrısı mevcut', () => {
+    expect(page).toContain('generateTurkuStory')
+  })
+
+  it('generate scenario API çağrısı mevcut', () => {
+    expect(page).toContain('generateTurkuScenario')
+  })
+
+  it('generate storyboard API çağrısı mevcut', () => {
+    expect(page).toContain('generateTurkuStoryboard')
+  })
+
+  it('generate planning bundle API çağrısı mevcut', () => {
+    expect(page).toContain('generateTurkuPlanningBundle')
+  })
+
+  it('run image batch API çağrısı mevcut', () => {
+    expect(page).toContain('runTurkuImageBatch')
+  })
+
+  it('generation safety API çağrısı mevcut', () => {
+    expect(page).toContain('getTurkuGenerationSafety')
+  })
+})
+
+// ── I. FP-020 Page Safety ───────────────────────────────
+
+describe('FP-020 Page Safety', () => {
+  const page = readFile('pages/TurkuVideoWorkflowPage.tsx')
+
+  it('dangerouslySetInnerHTML YOK', () => {
+    expect(page).not.toContain('dangerouslySetInnerHTML')
+  })
+
+  it('innerHTML YOK', () => {
+    expect(page).not.toContain('innerHTML')
+  })
+
+  it('publish kontrolleri YOK', () => {
+    expect(page).not.toContain('btn-publish')
+    expect(page).not.toContain('publishVideo')
+  })
+
+  it('export kontrolleri YOK', () => {
+    expect(page).not.toContain('btn-export')
+    expect(page).not.toContain('exportVideo')
+  })
+
+  it('download kontrolleri YOK', () => {
+    expect(page).not.toContain('btn-download')
+    expect(page).not.toContain('downloadVideo')
+  })
+
+  it('rawProvider/rawPayload YOK', () => {
+    expect(page).not.toContain('rawProvider')
+    expect(page).not.toContain('rawPayload')
+  })
+})

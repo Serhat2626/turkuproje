@@ -4,6 +4,8 @@ import type {
   TurkuVideoProjectResponse,
   TurkuVideoProgressResponse,
   TurkuVideoWorkflowStage,
+  TurkuGenerationSafetyResponse,
+  TurkuProviderMode,
 } from '../types'
 import * as turkuApi from '../api/turkuVideoApi'
 
@@ -47,6 +49,22 @@ interface StageAction {
   action: (id: string) => Promise<unknown>
 }
 
+const PROVIDER_MODE_LABELS: Record<TurkuProviderMode, string> = {
+  DETERMINISTIC_STUB: 'Deterministik Stub',
+  PROVIDER_DRAFT: 'Sağlayıcı Taslak',
+  PROVIDER_DISABLED: 'Sağlayıcı Devre Dışı',
+  PROVIDER_FAILED_SAFE: 'Güvenli Hata Modu',
+  HUMAN_REVIEW_REQUIRED: 'İnsan İncelemesi Gerekli',
+}
+
+const PROVIDER_MODE_BADGE_CLASS: Record<TurkuProviderMode, string> = {
+  DETERMINISTIC_STUB: 'badge-info',
+  PROVIDER_DRAFT: 'badge-warning',
+  PROVIDER_DISABLED: 'badge-error',
+  PROVIDER_FAILED_SAFE: 'badge-error',
+  HUMAN_REVIEW_REQUIRED: 'badge-warning',
+}
+
 function TurkuVideoWorkflowPage() {
   // ── Bootstrap form state ──
   const [form, setForm] = useState<TurkuVideoBootstrapRequest>({ turkuName: '' })
@@ -56,6 +74,7 @@ function TurkuVideoWorkflowPage() {
   // ── Project state ──
   const [project, setProject] = useState<TurkuVideoProjectResponse | null>(null)
   const [progress, setProgress] = useState<TurkuVideoProgressResponse | null>(null)
+  const [safety, setSafety] = useState<TurkuGenerationSafetyResponse | null>(null)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -69,12 +88,14 @@ function TurkuVideoWorkflowPage() {
 
   const refreshProject = useCallback(async (id: string) => {
     try {
-      const [projRes, progRes] = await Promise.all([
+      const [projRes, progRes, safetyRes] = await Promise.all([
         turkuApi.getTurkuVideoProject(id),
         turkuApi.getTurkuVideoProjectProgress(id),
+        turkuApi.getTurkuGenerationSafety(id),
       ])
       setProject(projRes.data)
       setProgress(progRes.data)
+      setSafety(safetyRes.data)
     } catch {
       // keep current state
     }
@@ -108,6 +129,20 @@ function TurkuVideoWorkflowPage() {
       await refreshProject(project.id)
     } catch (e: unknown) {
       setError(typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: string }).message) : 'İşlem başarısız')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleGenerateAction = async (label: string, apiCall: (id: string) => Promise<unknown>) => {
+    if (!project) return
+    setLoading(true)
+    setError(null)
+    try {
+      await apiCall(project.id)
+      await refreshProject(project.id)
+    } catch (e: unknown) {
+      setError(typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: string }).message) : 'İşlem başarısız: ' + label)
     } finally {
       setLoading(false)
     }
@@ -284,6 +319,100 @@ function TurkuVideoWorkflowPage() {
         </div>
       )}
 
+      {/* ── Provider Mode & Safety Panel ──────────────── */}
+      {project && safety && (
+        <div className="card" data-testid="safety-panel">
+          <div className="card-header">
+            <h2 className="card-title">🛡️ Üretim Güvenlik Durumu</h2>
+            <span
+              className={`badge ${PROVIDER_MODE_BADGE_CLASS[safety.providerMode]}`}
+              data-testid="provider-mode-badge"
+            >
+              {PROVIDER_MODE_LABELS[safety.providerMode]}
+            </span>
+          </div>
+          <div className="card-body">
+            <div className="detail-grid">
+              <div className="detail-item">
+                <span className="detail-label">Sağlayıcı Modu</span>
+                <span className="detail-value" data-testid="safety-provider-mode">{safety.providerMode}</span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Üretim Uygun</span>
+                <span className="detail-value" data-testid="safety-generation-available">
+                  {safety.generationAvailable ? '✅ Evet' : '❌ Hayır'}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">İnsan İncelemesi</span>
+                <span className="detail-value" data-testid="safety-human-review">
+                  {safety.humanReviewRequired ? '✅ Gerekli' : 'Gerekmez'}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Otomatik Onay</span>
+                <span className="detail-value" data-testid="safety-auto-approved">
+                  {safety.autoApproved ? 'Evet' : '❌ Hayır / Asla'}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Telif İncelemesi</span>
+                <span className="detail-value" data-testid="safety-copyright-review">
+                  {safety.copyrightReviewRequired ? '✅ Gerekli' : 'Gerekmez'}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="detail-label">Söz (Şarkı Sözü)</span>
+                <span className="detail-value" data-testid="safety-lyrics">
+                  {safety.lyricsIncluded ? 'Dahil' : '❌ Dahil Değil'}
+                </span>
+              </div>
+            </div>
+
+            {/* Blocked state */}
+            {!safety.generationAvailable && safety.blockedReasonSummary && (
+              <div className="alert alert-error" data-testid="safety-blocked-alert">
+                <span className="alert-icon">🚫</span>
+                <span>{safety.blockedReasonSummary}</span>
+                {safety.safeFailureCode && (
+                  <span className="badge badge-error" data-testid="safety-failure-code">
+                    {safety.safeFailureCode}
+                  </span>
+                )}
+              </div>
+            )}
+
+            {/* Review flags */}
+            {safety.reviewFlags && safety.reviewFlags.length > 0 && (
+              <div className="review-flags" data-testid="safety-review-flags">
+                {safety.reviewFlags.map((flag) => (
+                  <span key={flag} className="badge badge-warning">{flag}</span>
+                ))}
+              </div>
+            )}
+
+            {/* Safe warnings */}
+            {safety.safeWarnings && safety.safeWarnings.length > 0 && (
+              <div className="safe-warnings" data-testid="safety-warnings">
+                {safety.safeWarnings.map((warn, i) => (
+                  <p key={i} className="warning-text">⚠️ {warn}</p>
+                ))}
+              </div>
+            )}
+
+            {/* Safe trace reference */}
+            {safety.lastTraceRef && (
+              <div className="detail-item" data-testid="safety-trace-ref">
+                <span className="detail-label">İz Referansı</span>
+                <span className="detail-value">
+                  {safety.lastTraceRef.providerAlias} / {safety.lastTraceRef.generationStage}
+                </span>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* ── Progress Panel ────────────────────── */}
       {progress && (
         <div className="card" data-testid="progress-panel">
@@ -321,7 +450,7 @@ function TurkuVideoWorkflowPage() {
       {project && (
         <div className="card" data-testid="stage-actions">
           <div className="card-header">
-            <h2 className="card-title">⚡ İş Akışı Aksiyonları</h2>
+            <h2 className="card-title">⚡ Hazırlık Aksiyonları</h2>
             <span className="badge badge-info">Dahili Üretim</span>
           </div>
           <div className="card-body">
@@ -337,6 +466,72 @@ function TurkuVideoWorkflowPage() {
                   {sa.label}
                 </button>
               ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Generate Actions (FP-020) ───────────── */}
+      {project && safety && (
+        <div className="card" data-testid="generate-actions">
+          <div className="card-header">
+            <h2 className="card-title">🧪 Sağlayıcı Üretim Aksiyonları</h2>
+            {safety.providerMode && (
+              <span
+                className={`badge ${PROVIDER_MODE_BADGE_CLASS[safety.providerMode]}`}
+              >
+                {PROVIDER_MODE_LABELS[safety.providerMode]}
+              </span>
+            )}
+          </div>
+          <div className="card-body">
+            {!safety.generationAvailable && (
+              <div className="alert alert-error" data-testid="generate-blocked-alert">
+                <span className="alert-icon">🚫</span>
+                <span>Üretim engellendi: {safety.blockedReasonSummary || safety.safeFailureCode}</span>
+              </div>
+            )}
+            <div className="action-buttons">
+              <button
+                className="btn btn-primary"
+                disabled={loading || !safety.canGenerateStory}
+                onClick={() => handleGenerateAction('Hikâye Üret', turkuApi.generateTurkuStory)}
+                data-testid="btn-generate-story"
+              >
+                📝 Hikâye Üret
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={loading || !safety.canGenerateScenario}
+                onClick={() => handleGenerateAction('Senaryo Üret', turkuApi.generateTurkuScenario)}
+                data-testid="btn-generate-scenario"
+              >
+                🎬 Senaryo Üret
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={loading || !safety.canGenerateStoryboard}
+                onClick={() => handleGenerateAction('Storyboard Üret', turkuApi.generateTurkuStoryboard)}
+                data-testid="btn-generate-storyboard"
+              >
+                🎨 Storyboard Üret
+              </button>
+              <button
+                className="btn btn-accent"
+                disabled={loading || !safety.canGeneratePlanningBundle}
+                onClick={() => handleGenerateAction('Planlama Paketi Üret', turkuApi.generateTurkuPlanningBundle)}
+                data-testid="btn-generate-planning-bundle"
+              >
+                📦 Planlama Paketi Üret
+              </button>
+              <button
+                className="btn btn-primary"
+                disabled={loading || !safety.canRunImageBatch}
+                onClick={() => handleGenerateAction('Görsel Batch Çalıştır', turkuApi.runTurkuImageBatch)}
+                data-testid="btn-run-image-batch"
+              >
+                🖼️ Görsel Batch Çalıştır
+              </button>
             </div>
           </div>
         </div>
@@ -410,7 +605,7 @@ function TurkuVideoWorkflowPage() {
         <div className="form-actions">
           <button
             className="btn btn-ghost"
-            onClick={() => { setProject(null); setProgress(null); setForm({ turkuName: '' }); setError(null) }}
+            onClick={() => { setProject(null); setProgress(null); setSafety(null); setForm({ turkuName: '' }); setError(null) }}
             data-testid="btn-new-project"
           >
             ➕ Yeni Proje Başlat

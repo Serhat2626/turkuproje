@@ -1548,3 +1548,116 @@ export interface TurkuImageBatchResponse {
   reviewFlags: string[]
 }
 
+// ── FP-020: Provider Mode & Generation Safety Types ─────────
+
+export type TurkuProviderMode =
+  | 'DETERMINISTIC_STUB'
+  | 'PROVIDER_DRAFT'
+  | 'PROVIDER_DISABLED'
+  | 'PROVIDER_FAILED_SAFE'
+  | 'HUMAN_REVIEW_REQUIRED'
+
+export type TurkuProviderFailureCode =
+  | 'PROVIDER_DISABLED'
+  | 'PROVIDER_FAILED_SAFE'
+  | 'HUMAN_REVIEW_PENDING'
+  | 'PROMPT_INJECTION_DETECTED'
+  | 'UNSAFE_INPUT'
+  | 'POLICY_VIOLATION'
+  | 'SANITIZATION_FAILED'
+
+export interface TurkuProviderTraceReference {
+  traceId: string
+  providerAlias: string
+  generationStage: string
+  safeTimestamp: string
+}
+
+export interface TurkuGenerationSafetyResponse {
+  projectId: string
+  providerMode: TurkuProviderMode
+  currentStage: TurkuVideoWorkflowStage
+  generationAvailable: boolean
+  blockedReasonSummary: string | null
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  copyrightReviewRequired: boolean
+  lyricsIncluded: boolean
+  canGenerateStory: boolean
+  canGenerateScenario: boolean
+  canGenerateStoryboard: boolean
+  canGeneratePlanningBundle: boolean
+  canRunImageBatch: boolean
+  safeFailureCode: string | null
+  lastTraceRef: TurkuProviderTraceReference | null
+  reviewFlags: string[]
+  safeWarnings: string[]
+}
+
+export interface TurkuProviderGenerationRequest {
+  narrativeAngleHint?: string
+  additionalContextHint?: string
+}
+
+export interface TurkuProviderPlanningGenerationResponse {
+  projectId: string
+  providerMode: TurkuProviderMode
+  currentStage: TurkuVideoWorkflowStage
+  safeOutputSummary: string
+  safeFailureCode: string | null
+  traceRef: TurkuProviderTraceReference | null
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  copyrightReviewRequired: boolean
+  reviewFlags: string[]
+  safeWarnings: string[]
+}
+
+export interface TurkuPlanningBundleGenerationResponse {
+  projectId: string
+  providerMode: TurkuProviderMode
+  currentStage: TurkuVideoWorkflowStage
+  safeOutputSummary: string
+  safeFailureCode: string | null
+  storyGenerated: boolean
+  scenarioGenerated: boolean
+  storyboardGenerated: boolean
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  copyrightReviewRequired: boolean
+  reviewFlags: string[]
+  safeWarnings: string[]
+}
+
+export interface TurkuImageBatchRunRequest {
+  styleOverrideHint?: string
+  aspectRatioHint?: string
+}
+
+export interface TurkuImageBatchRunSceneStatus {
+  sceneNo: number
+  success: boolean
+  safeInternalRef: string
+  safeErrorCode: string | null
+  needsHumanReview: boolean
+}
+
+export interface TurkuImageBatchRunResponse {
+  projectId: string
+  batchId: string
+  providerMode: TurkuProviderMode
+  batchStatus: TurkuImageBatchStatus
+  currentStage: TurkuVideoWorkflowStage
+  safeOutputSummary: string
+  safeFailureCode: string | null
+  traceRef: TurkuProviderTraceReference | null
+  requestCount: number
+  successCount: number
+  failureCount: number
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  copyrightReviewRequired: boolean
+  sceneStatuses: TurkuImageBatchRunSceneStatus[]
+  reviewFlags: string[]
+  safeWarnings: string[]
+}
