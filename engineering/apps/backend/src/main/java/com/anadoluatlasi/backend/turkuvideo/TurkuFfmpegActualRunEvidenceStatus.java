@@ -1,0 +1,19 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-032: Actual local smoke execution evidence status.
+ */
+public enum TurkuFfmpegActualRunEvidenceStatus {
+    NOT_ATTEMPTED,
+    FFMPEG_UNAVAILABLE,
+    FFMPEG_AVAILABLE,
+    REAL_LOCAL_RUN_STARTED,
+    REAL_LOCAL_RUN_SUCCEEDED,
+    REAL_LOCAL_RUN_FAILED_SAFE,
+    REAL_LOCAL_RUN_SKIPPED_UNAVAILABLE,
+    REAL_LOCAL_RUN_SKIPPED_DISABLED,
+    REAL_LOCAL_RUN_SKIPPED_UNSUPPORTED_ENVIRONMENT,
+    VERIFICATION_PASSED,
+    VERIFICATION_FAILED,
+    GATE_DENIED
+}
