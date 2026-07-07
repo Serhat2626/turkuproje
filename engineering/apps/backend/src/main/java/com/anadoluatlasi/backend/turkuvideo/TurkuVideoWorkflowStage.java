@@ -32,6 +32,9 @@ public enum TurkuVideoWorkflowStage {
     /** Some images generated, some failed */
     IMAGE_BATCH_PARTIAL,
 
+    /** Video composition plan assembled from storyboard + images */
+    COMPOSITION_PLAN_PREPARED,
+
     /** Internal preview package assembled */
     INTERNAL_PREVIEW_READY,
 

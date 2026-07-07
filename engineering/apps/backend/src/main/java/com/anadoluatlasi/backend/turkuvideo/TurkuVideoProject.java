@@ -43,6 +43,9 @@ public final class TurkuVideoProject {
     // ── Provider mode (FP-020 Task 02) ──
     private TurkuProviderMode providerMode = TurkuProviderMode.DETERMINISTIC_STUB;
 
+    // ── Composition (FP-021 Task 02) ──
+    private TurkuVideoCompositionPlan compositionPlan;
+
     private TurkuVideoProject(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.turkuName = builder.turkuName;
@@ -91,6 +94,8 @@ public final class TurkuVideoProject {
     public void setImageBatch(TurkuSceneImageBatch v) { this.imageBatch = v; }
     public TurkuProviderMode getProviderMode() { return providerMode; }
     public void setProviderMode(TurkuProviderMode v) { this.providerMode = v; }
+    public TurkuVideoCompositionPlan getCompositionPlan() { return compositionPlan; }
+    public void setCompositionPlan(TurkuVideoCompositionPlan v) { this.compositionPlan = v; }
 
     // ── Stage Mutations (controlled) ──
 

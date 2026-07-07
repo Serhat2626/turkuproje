@@ -46,6 +46,7 @@ public class TurkuVideoProjectController {
     private final TurkuVideoAssetPlanningService assetPlanningService;
     private final TurkuProviderDraftPlanningService providerDraftService;
     private final TurkuProviderImageBatchService providerImageBatchService;
+    private final TurkuVideoCompositionService compositionService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -53,12 +54,14 @@ public class TurkuVideoProjectController {
                                         TurkuVideoAssetPlanningService assetPlanningService,
                                         TurkuProviderDraftPlanningService providerDraftService,
                                         TurkuProviderImageBatchService providerImageBatchService,
+                                        TurkuVideoCompositionService compositionService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
         this.assetPlanningService = assetPlanningService;
         this.providerDraftService = providerDraftService;
         this.providerImageBatchService = providerImageBatchService;
+        this.compositionService = compositionService;
         this.actorResolver = actorResolver;
     }
 
@@ -378,6 +381,35 @@ public class TurkuVideoProjectController {
         resolvePlanningActor(actorRole, actorReference);
         TurkuImageBatchRunResponse response = providerImageBatchService.runImageBatch(id, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Görsel batch çalıştırıldı"));
+    }
+
+    // ── FP-021 Task 02: Composition Plan Endpoint ──
+
+    // ── POST /admin/turku-video-projects/{id}/prepare-composition-plan ──
+
+    @PostMapping("/{id}/prepare-composition-plan")
+    @Operation(summary = "Video kompozisyon planı hazırla",
+               description = "Storyboard + sahne görselleri + anlatım planından dahili video kompozisyon planı oluşturur.")
+    public ResponseEntity<ApiResponse<TurkuCompositionPlanResponse>> prepareCompositionPlan(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuCompositionPlanRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuVideoCompositionPlan plan = compositionService.prepareCompositionPlan(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        TurkuCompositionPlanResponse response = new TurkuCompositionPlanResponse(
+                project.getId(), plan.getCompositionId(),
+                project.getWorkflowStage(),
+                plan.getScenes().size(), plan.getTotalDurationSeconds(),
+                plan.getTimingPlan().isHasTimingConflict(),
+                plan.isHumanReviewRequired(), plan.isCopyrightReviewRequired(),
+                plan.getReviewFlags(),
+                "Kompozisyon planı hazırlandı: " + plan.getScenes().size() + " sahne");
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Kompozisyon planı hazırlandı"));
     }
 
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {

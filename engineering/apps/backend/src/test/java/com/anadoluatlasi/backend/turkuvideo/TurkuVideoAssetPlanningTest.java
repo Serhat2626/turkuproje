@@ -436,14 +436,14 @@ class TurkuVideoAssetPlanningTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 12 POST + 3 GET")
+        @DisplayName("TurkuVideoProjectController: 13 POST + 3 GET")
         void turkuController() {
-            assertThat(countMethods(TurkuVideoProjectController.class, PostMapping.class)).isEqualTo(12);
+            assertThat(countMethods(TurkuVideoProjectController.class, PostMapping.class)).isEqualTo(13);
             assertThat(countMethods(TurkuVideoProjectController.class, GetMapping.class)).isEqualTo(3);
         }
 
         @Test
-        @DisplayName("total 36 = 21 POST + 15 GET")
+        @DisplayName("total 37 = 22 POST + 15 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -453,9 +453,9 @@ class TurkuVideoAssetPlanningTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(21);
+            assertThat(post).as("total POST").isEqualTo(22);
             assertThat(get).as("total GET").isEqualTo(15);
-            assertThat(post + get).as("total").isEqualTo(36);
+            assertThat(post + get).as("total").isEqualTo(37);
         }
 
         @Test

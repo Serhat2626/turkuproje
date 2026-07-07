@@ -47,6 +47,7 @@ public final class TurkuVideoProgressResponse {
                 TurkuVideoWorkflowStage.SCENE_ASSET_PLAN_PREPARED,
                 TurkuVideoWorkflowStage.IMAGE_BATCH_PREPARED,
                 TurkuVideoWorkflowStage.IMAGE_BATCH_COMPLETED,
+                TurkuVideoWorkflowStage.COMPOSITION_PLAN_PREPARED,
                 TurkuVideoWorkflowStage.INTERNAL_PREVIEW_READY
         };
         int idx = Arrays.asList(ordered).indexOf(current);
@@ -62,7 +63,8 @@ public final class TurkuVideoProgressResponse {
             case STORYBOARD_PREPARED -> "prepare-scene-assets";
             case SCENE_ASSET_PLAN_PREPARED -> "prepare-image-batch";
             case IMAGE_BATCH_PREPARED, IMAGE_BATCH_PARTIAL -> "İlerleme bekleniyor";
-            case IMAGE_BATCH_COMPLETED -> "internal-preview";
+            case IMAGE_BATCH_COMPLETED -> "prepare-composition-plan";
+            case COMPOSITION_PLAN_PREPARED -> "Kompozisyon planı hazır — dahili önizleme";
             case INTERNAL_PREVIEW_READY -> "Tamamlandı — dahili önizleme hazır";
             case NEEDS_REVISION -> "Revizyon gerekli";
             case BLOCKED -> "Engellendi";
