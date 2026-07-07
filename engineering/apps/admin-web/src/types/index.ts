@@ -1335,3 +1335,216 @@ export interface SafeWorkflowObservabilitySummary {
   safeWarnings: string[]
   updatedAt: string | null
 }
+
+// ── FP-019: Türkü Video Project Types ───────────────────────
+
+/**
+ * FP-019 Task 05: Türkü video project workflow stages.
+ * No forbidden states (PUBLISHED, EXPORTED, etc.)
+ */
+export type TurkuVideoWorkflowStage =
+  | 'DRAFT_CREATED'
+  | 'STORY_CONTEXT_PREPARED'
+  | 'SCENARIO_PREPARED'
+  | 'STORYBOARD_PREPARED'
+  | 'SCENE_ASSET_PLAN_PREPARED'
+  | 'IMAGE_BATCH_PREPARED'
+  | 'IMAGE_BATCH_COMPLETED'
+  | 'IMAGE_BATCH_PARTIAL'
+  | 'INTERNAL_PREVIEW_READY'
+  | 'NEEDS_REVISION'
+  | 'BLOCKED'
+  | 'ARCHIVED'
+
+export type TurkuSourceConfidence = 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN'
+
+export type TurkuImageBatchStatus = 'PREPARED' | 'PARTIAL' | 'COMPLETED' | 'BLOCKED' | 'FAILED'
+
+/** Bootstrap request */
+export interface TurkuVideoBootstrapRequest {
+  turkuName: string
+  region?: string
+  sourceNotes?: string
+  mood?: string
+  targetDurationMinutes?: number
+  narrationStyle?: string
+  visualStyle?: string
+}
+
+/** Bootstrap response */
+export interface TurkuVideoBootstrapResponse {
+  id: string
+  turkuName: string
+  workflowStage: TurkuVideoWorkflowStage
+  sourceConfidence: TurkuSourceConfidence
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+  safeMessage: string
+}
+
+/** Full project response */
+export interface TurkuVideoProjectResponse {
+  id: string
+  turkuName: string
+  region: string | null
+  sourceNotes: string | null
+  mood: string | null
+  targetDurationMinutes: number | null
+  narrationStyle: string | null
+  visualStyle: string | null
+  workflowStage: TurkuVideoWorkflowStage
+  sourceConfidence: TurkuSourceConfidence
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+  createdByActorReference: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+/** Progress response */
+export interface TurkuVideoProgressResponse {
+  id: string
+  currentStage: TurkuVideoWorkflowStage
+  completedStages: TurkuVideoWorkflowStage[]
+  nextAvailableAction: string
+  safeProgressSummary: string
+}
+
+/** Narrative context */
+export interface TurkuNarrativeContext {
+  turkuName: string
+  region: string | null
+  sourceNotes: string | null
+  mood: string | null
+}
+
+/** Story package */
+export interface TurkuStoryPackage {
+  turkuName: string
+  regionContext: string
+  originSummary: string
+  emotionalTheme: string
+  culturalSignificance: string
+  narrativeAngle: string | null
+  storySummary: string
+  sourceConfidence: TurkuSourceConfidence
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+  reviewFlags: string[]
+}
+
+/** Scenario plan */
+export interface TurkuScenarioPlan {
+  title: string
+  logline: string
+  narrationTone: string
+  targetDurationHintSeconds: number
+  sceneCountHint: number
+  scenarioBeats: string[]
+  reviewFlags: string[]
+}
+
+/** Storyboard scene */
+export interface TurkuStoryboardScene {
+  sceneNo: number
+  sceneTitle: string
+  visualDescription: string
+  narrationSummary: string
+  mood: string
+  estimatedDurationSeconds: number
+  cameraDirection: string
+  transitionHint: string | null
+  musicNote: string | null
+}
+
+/** Storyboard plan */
+export interface TurkuStoryboardPlan {
+  scenes: TurkuStoryboardScene[]
+  totalEstimatedDurationSeconds: number
+  reviewFlags: string[]
+}
+
+/** Scene asset item */
+export interface TurkuSceneAssetItem {
+  sceneNo: number
+  assetPurpose: string
+  visualPromptSummary: string
+  negativePromptSafetyNotes: string
+  styleHint: string
+  mood: string
+  aspectRatioHint: string
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+}
+
+/** Scene asset plan */
+export interface TurkuSceneAssetPlan {
+  planId: string
+  projectId: string
+  items: TurkuSceneAssetItem[]
+  reviewFlags: string[]
+}
+
+/** Image request */
+export interface TurkuSceneImageRequest {
+  sceneNo: number
+  safePromptSummary: string
+  safeNegativeNotes: string
+  styleHint: string
+  aspectRatioHint: string
+}
+
+/** Image result — safe opaque internal ref only */
+export interface TurkuSceneImageResult {
+  sceneNo: number
+  safeInternalRef: string
+  success: boolean
+  safeErrorCode: string | null
+}
+
+/** Image batch */
+export interface TurkuSceneImageBatch {
+  batchId: string
+  projectId: string
+  status: TurkuImageBatchStatus
+  imageRequests: TurkuSceneImageRequest[]
+  imageResults: TurkuSceneImageResult[]
+  reviewFlags: string[]
+}
+
+/** Preparation response (story/scenario/storyboard) */
+export interface TurkuPreparationResponse {
+  projectId: string
+  newStage: TurkuVideoWorkflowStage
+  safeMessage: string
+  sourceConfidence: TurkuSourceConfidence
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+  reviewFlags: string[]
+}
+
+/** Asset preparation response */
+export interface TurkuAssetPreparationResponse {
+  projectId: string
+  newStage: TurkuVideoWorkflowStage
+  safeMessage: string
+  assetCount: number
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+  reviewFlags: string[]
+}
+
+/** Image batch response */
+export interface TurkuImageBatchResponse {
+  projectId: string
+  batchId: string
+  batchStatus: TurkuImageBatchStatus
+  newStage: TurkuVideoWorkflowStage
+  safeMessage: string
+  requestCount: number
+  resultCount: number
+  needsHumanReview: boolean
+  copyrightReviewRequired: boolean
+  reviewFlags: string[]
+}
+

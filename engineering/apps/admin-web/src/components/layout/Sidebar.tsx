@@ -12,6 +12,7 @@ const navItems: NavItem[] = [
   { to: '/knowledge', icon: '🔍', label: 'Bilgi Bankası' },
   { to: '/projects', icon: '📚', label: 'İçerik Projeleri' },
   { to: '/media', icon: '🎨', label: 'Medya' },
+  { to: '/turku-video', icon: '🎵', label: 'Türkü Video' },
   { to: '/artists', icon: '🎵', label: 'Sanatçılar', disabled: true },
   { to: '/prompts', icon: '⚡', label: 'Prompt Şablonları', disabled: true },
 ]

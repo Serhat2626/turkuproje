@@ -318,10 +318,12 @@ describe('FP-014 Task 04 — Types Safety', () => {
 
   forbiddenTypeValues.forEach(value => {
     it(`yasaklı değer '${value}' FP-014 type tanımlarında yok`, () => {
-      // Extract FP-014 section only
-      const fp014Section = TYPES_SOURCE.substring(
-        TYPES_SOURCE.indexOf('FP-014 Task 04: Internal Approval Readiness')
-      )
+      // Extract FP-014 section only (stop before FP-019 additions)
+      const fp014Start = TYPES_SOURCE.indexOf('FP-014 Task 04: Internal Approval Readiness')
+      const fp019Start = TYPES_SOURCE.indexOf('FP-019')
+      const fp014Section = fp019Start > fp014Start
+        ? TYPES_SOURCE.substring(fp014Start, fp019Start)
+        : TYPES_SOURCE.substring(fp014Start)
       expect(fp014Section).not.toContain(`'${value}'`)
     })
   })

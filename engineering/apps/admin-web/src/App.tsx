@@ -5,6 +5,7 @@ import KnowledgeItemsPage from './pages/KnowledgeItemsPage'
 import ContentProjectsPage from './pages/ContentProjectsPage'
 import MediaAssetsPage from './pages/MediaAssetsPage'
 import DraftReviewPage from './pages/DraftReviewPage'
+import TurkuVideoWorkflowPage from './pages/TurkuVideoWorkflowPage'
 
 function App() {
   return (
@@ -15,6 +16,7 @@ function App() {
         <Route path="projects" element={<ContentProjectsPage />} />
         <Route path="drafts/:draftId" element={<DraftReviewPage />} />
         <Route path="media" element={<MediaAssetsPage />} />
+        <Route path="turku-video" element={<TurkuVideoWorkflowPage />} />
       </Route>
     </Routes>
   )
