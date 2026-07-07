@@ -35,6 +35,9 @@ public enum TurkuVideoWorkflowStage {
     /** Video composition plan assembled from storyboard + images */
     COMPOSITION_PLAN_PREPARED,
 
+    /** Render manifest prepared from composition plan */
+    RENDER_MANIFEST_PREPARED,
+
     /** Internal preview package assembled */
     INTERNAL_PREVIEW_READY,
 

@@ -612,7 +612,7 @@ class FP020ProviderContractTest {
     class EndpointTests {
 
         @Test
-        @DisplayName("total exactly 37 = 22 POST + 15 GET")
+        @DisplayName("total exactly 39 = 23 POST + 16 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -622,9 +622,9 @@ class FP020ProviderContractTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(22);
-            assertThat(get).as("total GET").isEqualTo(15);
-            assertThat(post + get).as("total endpoints").isEqualTo(37);
+            assertThat(post).as("total POST").isEqualTo(23);
+            assertThat(get).as("total GET").isEqualTo(16);
+            assertThat(post + get).as("total endpoints").isEqualTo(39);
         }
 
         private long countMethods(Class<?> c, Class<? extends java.lang.annotation.Annotation> ann) {

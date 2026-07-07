@@ -47,6 +47,7 @@ public class TurkuVideoProjectController {
     private final TurkuProviderDraftPlanningService providerDraftService;
     private final TurkuProviderImageBatchService providerImageBatchService;
     private final TurkuVideoCompositionService compositionService;
+    private final TurkuRenderManifestService renderManifestService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -55,6 +56,7 @@ public class TurkuVideoProjectController {
                                         TurkuProviderDraftPlanningService providerDraftService,
                                         TurkuProviderImageBatchService providerImageBatchService,
                                         TurkuVideoCompositionService compositionService,
+                                        TurkuRenderManifestService renderManifestService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
@@ -62,6 +64,7 @@ public class TurkuVideoProjectController {
         this.providerDraftService = providerDraftService;
         this.providerImageBatchService = providerImageBatchService;
         this.compositionService = compositionService;
+        this.renderManifestService = renderManifestService;
         this.actorResolver = actorResolver;
     }
 
@@ -410,6 +413,48 @@ public class TurkuVideoProjectController {
                 "Kompozisyon planı hazırlandı: " + plan.getScenes().size() + " sahne");
 
         return ResponseEntity.ok(ApiResponse.success(response, "Kompozisyon planı hazırlandı"));
+    }
+
+    // ── FP-021 Task 03: Render Manifest + Readiness Endpoints ──
+
+    // ── POST /admin/turku-video-projects/{id}/prepare-render-manifest ──
+
+    @PostMapping("/{id}/prepare-render-manifest")
+    @Operation(summary = "Render manifest hazırla",
+               description = "Kompozisyon planından dahili render manifest oluşturur. Gerçek video üretimi yok.")
+    public ResponseEntity<ApiResponse<TurkuRenderManifestResponse>> prepareRenderManifest(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuRenderManifestRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuRenderManifest manifest = renderManifestService.prepareRenderManifest(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        TurkuRenderManifestResponse response = new TurkuRenderManifestResponse(
+                project.getId(), manifest.getManifestId(),
+                project.getWorkflowStage(),
+                manifest.getScenes().size(), manifest.getTotalDurationSeconds(),
+                manifest.getTargetResolution(), manifest.getTargetFps(),
+                manifest.getTargetFormat(),
+                manifest.isHumanReviewRequired(), manifest.isCopyrightReviewRequired(),
+                manifest.getReviewFlags(),
+                "Render manifest hazırlandı: " + manifest.getScenes().size() + " sahne");
+
+        return ResponseEntity.ok(ApiResponse.success(response, "Render manifest hazırlandı"));
+    }
+
+    // ── GET /admin/turku-video-projects/{id}/render-readiness ──
+
+    @GetMapping("/{id}/render-readiness")
+    @Operation(summary = "Render hazırlık durumu",
+               description = "Dahili render hazırlık raporu döndürür. Yayın/dışa aktarım hazırlığı değil.")
+    public ResponseEntity<ApiResponse<TurkuRenderReadinessReport>> getRenderReadiness(
+            @PathVariable UUID id) {
+
+        TurkuRenderReadinessReport report = renderManifestService.evaluateReadiness(id);
+        return ResponseEntity.ok(ApiResponse.success(report, "Render hazırlık raporu"));
     }
 
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {

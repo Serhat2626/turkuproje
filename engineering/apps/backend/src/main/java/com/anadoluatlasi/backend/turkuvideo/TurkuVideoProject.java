@@ -46,6 +46,9 @@ public final class TurkuVideoProject {
     // ── Composition (FP-021 Task 02) ──
     private TurkuVideoCompositionPlan compositionPlan;
 
+    // ── Render (FP-021 Task 03) ──
+    private TurkuRenderManifest renderManifest;
+
     private TurkuVideoProject(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.turkuName = builder.turkuName;
@@ -96,6 +99,8 @@ public final class TurkuVideoProject {
     public void setProviderMode(TurkuProviderMode v) { this.providerMode = v; }
     public TurkuVideoCompositionPlan getCompositionPlan() { return compositionPlan; }
     public void setCompositionPlan(TurkuVideoCompositionPlan v) { this.compositionPlan = v; }
+    public TurkuRenderManifest getRenderManifest() { return renderManifest; }
+    public void setRenderManifest(TurkuRenderManifest v) { this.renderManifest = v; }
 
     // ── Stage Mutations (controlled) ──
 

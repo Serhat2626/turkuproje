@@ -46,11 +46,11 @@ class FP020ProviderDraftPlanningTest {
     // ── A. Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("A. Endpoint Inventory (37 = 22 POST + 15 GET)")
+    @DisplayName("A. Endpoint Inventory (39 = 23 POST + 16 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total 37 endpoints: 22 POST + 15 GET")
+        @DisplayName("total 39 endpoints: 23 POST + 16 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -60,18 +60,18 @@ class FP020ProviderDraftPlanningTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("POST").isEqualTo(22);
-            assertThat(get).as("GET").isEqualTo(15);
-            assertThat(post + get).as("total").isEqualTo(37);
+            assertThat(post).as("POST").isEqualTo(23);
+            assertThat(get).as("GET").isEqualTo(16);
+            assertThat(post + get).as("total").isEqualTo(39);
         }
 
         @Test
-        @DisplayName("TurkuVideoProjectController has 13 POST, 3 GET")
+        @DisplayName("TurkuVideoProjectController has 14 POST, 4 GET")
         void turkuController() {
             long post = countMethods(TurkuVideoProjectController.class, PostMapping.class);
             long get = countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).isEqualTo(13);
-            assertThat(get).isEqualTo(3);
+            assertThat(post).isEqualTo(14);
+            assertThat(get).isEqualTo(4);
         }
 
         @Test

@@ -44,9 +44,11 @@ class FP020FinalClosureRegressionTest {
         var imageBatchService = new TurkuProviderImageBatchService(repository, gateway, sanitizer, policy);
         var actorResolver = new AdminActorResolver();
         var compositionService = new TurkuVideoCompositionService(repository);
+        var renderManifestService = new TurkuRenderManifestService(repository);
         controller = new TurkuVideoProjectController(
                 bootstrapService, planningService, assetService,
-                draftService, imageBatchService, compositionService, actorResolver);
+                draftService, imageBatchService, compositionService,
+                renderManifestService, actorResolver);
     }
 
     private TurkuVideoProject bootstrapProject() {
@@ -348,11 +350,11 @@ class FP020FinalClosureRegressionTest {
     // ── E. Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("E. Endpoint Inventory (37 = 22 POST + 15 GET)")
+    @DisplayName("E. Endpoint Inventory (39 = 23 POST + 16 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total exactly 37 = 22 POST + 15 GET")
+        @DisplayName("total exactly 39 = 23 POST + 16 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -362,18 +364,18 @@ class FP020FinalClosureRegressionTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(22);
-            assertThat(get).as("total GET").isEqualTo(15);
-            assertThat(post + get).as("total endpoints").isEqualTo(37);
+            assertThat(post).as("total POST").isEqualTo(23);
+            assertThat(get).as("total GET").isEqualTo(16);
+            assertThat(post + get).as("total endpoints").isEqualTo(39);
         }
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 13 POST + 3 GET")
+        @DisplayName("TurkuVideoProjectController: 14 POST + 4 GET")
         void turkuController() {
             assertThat(countMethods(TurkuVideoProjectController.class, PostMapping.class))
-                    .as("POST").isEqualTo(13);
+                    .as("POST").isEqualTo(14);
             assertThat(countMethods(TurkuVideoProjectController.class, GetMapping.class))
-                    .as("GET").isEqualTo(3);
+                    .as("GET").isEqualTo(4);
         }
 
         @Test
