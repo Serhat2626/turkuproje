@@ -907,6 +907,87 @@ function TurkuVideoWorkflowPage() {
         </div>
       )}
 
+      {/* ── FP-024: Render Config / Workspace / Execution / Verification Safety ── */}
+      {project && (
+        <div className="card" data-testid="fp024-render-safety-section">
+          <h2>🔧 Dahili Render Güvenliği (FP-024)</h2>
+
+          {/* Secure Render Config Status */}
+          <div className="preview-section" data-testid="fp024-render-config-panel">
+            <h3>⚙️ Render Yapılandırma Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Mod:</span>
+              <span className="detail-value" data-testid="fp024-config-mode">FFMPEG_DISABLED</span>
+              <span className="detail-label">Yapılandırma:</span>
+              <span className="detail-value" data-testid="fp024-config-status">Güvenli varsayılan — gerçek render kapalı</span>
+              <span className="detail-label">Doğrulama:</span>
+              <span className="detail-value" data-testid="fp024-config-validation">Yapılandırma doğrulaması başarılı</span>
+            </div>
+            <p className="preview-text">Gerçek render kapalı veya güvenli yapılandırma gerektirir.</p>
+          </div>
+
+          {/* Workspace / File Safety */}
+          <div className="preview-section" data-testid="fp024-workspace-safety-panel">
+            <h3>📁 Çalışma Alanı / Dosya Güvenliği</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Çalışma alanı referansı:</span>
+              <span className="detail-value" data-testid="fp024-workspace-ref">Opak dahili referans</span>
+              <span className="detail-label">Uzantı izin listesi:</span>
+              <span className="detail-value" data-testid="fp024-extension-allowlist">mp4, webm, png, jpg, jpeg</span>
+              <span className="detail-label">Maks. boyut:</span>
+              <span className="detail-value" data-testid="fp024-max-size">1000 MB</span>
+              <span className="detail-label">Maks. dosya/iş:</span>
+              <span className="detail-value" data-testid="fp024-max-files">50</span>
+            </div>
+            <p className="preview-text">Dosya yolu gösterilmez. Yalnızca opak dahili referanslar.</p>
+          </div>
+
+          {/* FFmpeg Execution Boundary */}
+          <div className="preview-section" data-testid="fp024-execution-boundary-panel">
+            <h3>🚫 FFmpeg Yürütme Sınırı</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Yürütme modu:</span>
+              <span className="detail-value" data-testid="fp024-execution-mode">DISABLED</span>
+              <span className="detail-label">İşlem yürütme:</span>
+              <span className="detail-value" data-testid="fp024-no-process">Yok — NO_PROCESS_EXECUTION</span>
+              <span className="detail-label">Dosya sistemi erişimi:</span>
+              <span className="detail-value" data-testid="fp024-no-filesystem">Yok</span>
+              <span className="detail-label">Komut satırı:</span>
+              <span className="detail-value" data-testid="fp024-no-commandline">Gösterilmez</span>
+            </div>
+            <p className="preview-text">Gerçek FFmpeg işlemi çalıştırılmaz. Kuru çalıştırma veya simülasyon yalnızca meta veri üretir.</p>
+          </div>
+
+          {/* Artifact Verification */}
+          <div className="preview-section" data-testid="fp024-artifact-verification-panel">
+            <h3>✅ Artifact Doğrulama</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Doğrulama durumu:</span>
+              <span className="detail-value" data-testid="fp024-verification-status">PENDING</span>
+              <span className="detail-label">Format:</span>
+              <span className="detail-value" data-testid="fp024-format-status">mp4 / webm izin listesi</span>
+              <span className="detail-label">Süre/Boyut/Çözünürlük/FPS:</span>
+              <span className="detail-value" data-testid="fp024-bounds-status">Sınırlar dahilinde</span>
+              <span className="detail-label">Artifact referansı:</span>
+              <span className="detail-value" data-testid="fp024-opaque-artifact-ref">Opak dahili referans</span>
+            </div>
+            <p className="preview-text">İndirilebilir video yok. Yayın/Dışa Aktarım Yok.</p>
+          </div>
+
+          {/* Internal-only Safety Labels */}
+          <div className="preview-section" data-testid="fp024-safety-labels">
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp024-label-internal">Dahili render güvenliği</span>
+              <span className="safety-flag" data-testid="fp024-label-no-render">Gerçek render kapalı veya güvenli yapılandırma gerektirir</span>
+              <span className="safety-flag" data-testid="fp024-label-no-path">Dosya yolu gösterilmez</span>
+              <span className="safety-flag" data-testid="fp024-label-no-download">İndirilebilir video yok</span>
+              <span className="safety-flag" data-testid="fp024-label-no-publish">Yayın/Dışa Aktarım Yok</span>
+              <span className="safety-flag" data-testid="fp024-not-publish-ready">notPublishReady</span>
+              <span className="safety-flag" data-testid="fp024-not-export-ready">notExportReady</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">

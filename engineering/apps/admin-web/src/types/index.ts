@@ -1935,3 +1935,154 @@ export interface TurkuRenderArtifactSafetyReport {
   safetyFlags: string[]
   reviewFlags: string[]
 }
+
+// ── FP-024: Secure Render Config / Workspace / Execution / Verification Domain ────────
+
+export type TurkuRenderConfigMode =
+  | 'STUB_ONLY'
+  | 'FFMPEG_DISABLED'
+  | 'FFMPEG_CONFIG_MISSING'
+  | 'FFMPEG_CONFIG_INVALID'
+  | 'FFMPEG_CONFIG_VALID'
+  | 'FFMPEG_FAILED_SAFE'
+
+export type TurkuRenderConfigFailureCode =
+  | 'CONFIG_MISSING'
+  | 'CONFIG_DISABLED'
+  | 'EXECUTABLE_EMPTY'
+  | 'EXECUTABLE_UNSAFE'
+  | 'WORKSPACE_EMPTY'
+  | 'WORKSPACE_UNSAFE'
+  | 'TIMEOUT_OUT_OF_RANGE'
+  | 'MAX_DURATION_OUT_OF_RANGE'
+  | 'MAX_SIZE_OUT_OF_RANGE'
+  | 'RESOLUTION_INVALID'
+  | 'FPS_OUT_OF_RANGE'
+  | 'FORMAT_EMPTY'
+  | 'CODEC_EMPTY'
+  | 'TRAVERSAL_DETECTED'
+  | 'SHELL_DETECTED'
+  | 'URL_DETECTED'
+  | 'SECRET_DETECTED'
+  | 'STORAGE_KEY_DETECTED'
+  | 'GENERAL_FAILURE'
+
+export interface TurkuRenderConfigValidationIssue {
+  code: TurkuRenderConfigFailureCode
+  field: string
+  safeMessage: string
+}
+
+export interface TurkuRenderConfigValidationResult {
+  valid: boolean
+  resolvedMode: TurkuRenderConfigMode
+  issues: TurkuRenderConfigValidationIssue[]
+}
+
+export interface TurkuRenderConfigSafetyEnvelope {
+  configMode: TurkuRenderConfigMode
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuRenderWorkspaceRef {
+  workspaceId: string
+  opaqueRef: string
+}
+
+export interface TurkuRenderSafeFileRef {
+  fileId: string
+  opaqueRef: string
+  extension: string
+  purpose: string
+}
+
+export interface TurkuRenderFileSafetyReport {
+  fileId: string
+  safe: boolean
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+}
+
+export type TurkuFfmpegExecutionMode =
+  | 'DISABLED'
+  | 'CONFIG_MISSING'
+  | 'CONFIG_INVALID'
+  | 'DRY_RUN'
+  | 'SIMULATED_SUCCESS'
+  | 'FAILED_SAFE'
+
+export type TurkuFfmpegExecutionFailureCode =
+  | 'EXECUTION_DISABLED'
+  | 'CONFIG_MISSING'
+  | 'CONFIG_INVALID'
+  | 'WORKSPACE_INVALID'
+  | 'FILE_REF_INVALID'
+  | 'COMMAND_PLAN_INVALID'
+  | 'COMMAND_PLAN_UNSAFE'
+  | 'TIMEOUT_EXCEEDED'
+  | 'LIMITS_EXCEEDED'
+  | 'DRY_RUN_FAILED'
+  | 'SIMULATED_FAILURE'
+  | 'SAFETY_VIOLATION'
+  | 'GENERAL_FAILURE'
+
+export interface TurkuFfmpegExecutionResult {
+  success: boolean
+  executionMode: TurkuFfmpegExecutionMode
+  failureCode: TurkuFfmpegExecutionFailureCode | null
+  safeTraceRef: string
+  opaqueArtifactRef: string | null
+  safeMessage: string
+  durationMs: number
+  safetyEnvelope: TurkuFfmpegExecutionSafetyEnvelope
+}
+
+export interface TurkuFfmpegExecutionSafetyEnvelope {
+  executionMode: TurkuFfmpegExecutionMode
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+  validationNotes: string[]
+}
+
+export type TurkuRenderArtifactVerificationStatus =
+  | 'PENDING'
+  | 'VERIFIED'
+  | 'FORMAT_REJECTED'
+  | 'BOUNDS_EXCEEDED'
+  | 'REF_UNSAFE'
+  | 'METADATA_INCOMPLETE'
+  | 'FAILED_SAFE'
+
+export interface TurkuRenderArtifactVerificationIssue {
+  code: string
+  field: string
+  safeMessage: string
+}
+
+export interface TurkuRenderArtifactVerificationReport {
+  artifactRef: string | null
+  status: TurkuRenderArtifactVerificationStatus
+  rendererMode: string
+  expectedFormat: string | null
+  safeTraceRef: string
+  issues: TurkuRenderArtifactVerificationIssue[]
+  humanReviewRequired: boolean
+  copyrightReviewRequired: boolean
+  autoApproved: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+}
