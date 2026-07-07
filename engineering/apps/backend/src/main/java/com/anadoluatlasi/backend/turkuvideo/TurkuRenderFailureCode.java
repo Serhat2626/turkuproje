@@ -1,0 +1,12 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+public enum TurkuRenderFailureCode {
+    MANIFEST_INCOMPLETE,
+    READINESS_CHECK_FAILED,
+    RENDERER_UNAVAILABLE,
+    RENDERER_TIMEOUT,
+    RENDERER_INTERNAL_ERROR,
+    SAFETY_VIOLATION,
+    COPYRIGHT_REVIEW_PENDING,
+    HUMAN_REVIEW_REQUIRED
+}

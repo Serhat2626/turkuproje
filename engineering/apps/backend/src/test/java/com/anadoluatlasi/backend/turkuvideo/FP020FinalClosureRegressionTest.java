@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 
+
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -42,13 +43,14 @@ class FP020FinalClosureRegressionTest {
         var assetService = new TurkuVideoAssetPlanningService(repository);
         var draftService = new TurkuProviderDraftPlanningService(repository, gateway, sanitizer, policy);
         var imageBatchService = new TurkuProviderImageBatchService(repository, gateway, sanitizer, policy);
-        var actorResolver = new AdminActorResolver();
         var compositionService = new TurkuVideoCompositionService(repository);
         var renderManifestService = new TurkuRenderManifestService(repository);
+        var renderJobService = new TurkuRenderJobService(repository, renderManifestService);
+        var actorResolver = new AdminActorResolver();
         controller = new TurkuVideoProjectController(
                 bootstrapService, planningService, assetService,
                 draftService, imageBatchService, compositionService,
-                renderManifestService, actorResolver);
+                renderManifestService, renderJobService, actorResolver);
     }
 
     private TurkuVideoProject bootstrapProject() {
@@ -350,11 +352,11 @@ class FP020FinalClosureRegressionTest {
     // ── E. Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("E. Endpoint Inventory (40 = 23 POST + 17 GET)")
+    @DisplayName("E. Endpoint Inventory (42 = 24 POST + 18 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total exactly 40 = 23 POST + 17 GET")
+        @DisplayName("total exactly 42 = 24 POST + 18 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -364,18 +366,18 @@ class FP020FinalClosureRegressionTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(23);
-            assertThat(get).as("total GET").isEqualTo(17);
-            assertThat(post + get).as("total endpoints").isEqualTo(40);
+            assertThat(post).as("total POST").isEqualTo(24);
+            assertThat(get).as("total GET").isEqualTo(18);
+            assertThat(post + get).as("total endpoints").isEqualTo(42);
         }
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 14 POST + 5 GET")
+        @DisplayName("TurkuVideoProjectController: 15 POST + 6 GET")
         void turkuController() {
             assertThat(countMethods(TurkuVideoProjectController.class, PostMapping.class))
-                    .as("POST").isEqualTo(14);
+                    .as("POST").isEqualTo(15);
             assertThat(countMethods(TurkuVideoProjectController.class, GetMapping.class))
-                    .as("GET").isEqualTo(5);
+                    .as("GET").isEqualTo(6);
         }
 
         @Test

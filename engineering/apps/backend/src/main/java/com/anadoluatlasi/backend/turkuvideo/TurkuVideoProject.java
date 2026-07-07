@@ -102,6 +102,11 @@ public final class TurkuVideoProject {
     public TurkuRenderManifest getRenderManifest() { return renderManifest; }
     public void setRenderManifest(TurkuRenderManifest v) { this.renderManifest = v; }
 
+    // ── Render Job (FP-022 Task 02) ──
+    private TurkuRenderJob renderJob;
+    public TurkuRenderJob getRenderJob() { return renderJob; }
+    public void setRenderJob(TurkuRenderJob v) { this.renderJob = v; }
+
     // ── Stage Mutations (controlled) ──
 
     public void advanceTo(TurkuVideoWorkflowStage newStage) {

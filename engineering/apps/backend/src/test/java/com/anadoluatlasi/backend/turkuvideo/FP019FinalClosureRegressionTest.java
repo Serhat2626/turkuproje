@@ -386,13 +386,13 @@ class FP019FinalClosureRegressionTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 14 POST + 5 GET = 19")
+        @DisplayName("TurkuVideoProjectController: 15 POST + 6 GET = 21")
         void turkuController() {
             long post = countMethods(TurkuVideoProjectController.class, PostMapping.class);
             long get = countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("türkü POST").isEqualTo(14);
-            assertThat(get).as("türkü GET").isEqualTo(5);
-            assertThat(post + get).as("türkü total").isEqualTo(19);
+            assertThat(post).as("türkü POST").isEqualTo(15);
+            assertThat(get).as("türkü GET").isEqualTo(6);
+            assertThat(post + get).as("türkü total").isEqualTo(21);
         }
 
         @Test
@@ -405,7 +405,7 @@ class FP019FinalClosureRegressionTest {
         }
 
         @Test
-        @DisplayName("total exactly 40 = 23 POST + 17 GET")
+        @DisplayName("total exactly 42 = 24 POST + 18 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -415,9 +415,9 @@ class FP019FinalClosureRegressionTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(23);
-            assertThat(get).as("total GET").isEqualTo(17);
-            assertThat(post + get).as("total endpoints").isEqualTo(40);
+            assertThat(post).as("total POST").isEqualTo(24);
+            assertThat(get).as("total GET").isEqualTo(18);
+            assertThat(post + get).as("total endpoints").isEqualTo(42);
         }
 
         @Test
@@ -567,7 +567,7 @@ class FP019FinalClosureRegressionTest {
         @Test
         @DisplayName("enum has exactly 12 values")
         void count() {
-            assertThat(TurkuVideoWorkflowStage.values()).hasSize(14);
+            assertThat(TurkuVideoWorkflowStage.values()).hasSize(15);
         }
     }
 }

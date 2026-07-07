@@ -48,6 +48,7 @@ public class TurkuVideoProjectController {
     private final TurkuProviderImageBatchService providerImageBatchService;
     private final TurkuVideoCompositionService compositionService;
     private final TurkuRenderManifestService renderManifestService;
+    private final TurkuRenderJobService renderJobService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -57,6 +58,7 @@ public class TurkuVideoProjectController {
                                         TurkuProviderImageBatchService providerImageBatchService,
                                         TurkuVideoCompositionService compositionService,
                                         TurkuRenderManifestService renderManifestService,
+                                        TurkuRenderJobService renderJobService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
@@ -65,6 +67,7 @@ public class TurkuVideoProjectController {
         this.providerImageBatchService = providerImageBatchService;
         this.compositionService = compositionService;
         this.renderManifestService = renderManifestService;
+        this.renderJobService = renderJobService;
         this.actorResolver = actorResolver;
     }
 
@@ -545,6 +548,32 @@ public class TurkuVideoProjectController {
                 AdminActorBoundaryPolicy.ActionCategory.TURKU_PROJECT_BOOTSTRAP, actor);
 
         return actor;
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/prepare-render-job ──
+
+    @PostMapping("/{id}/prepare-render-job")
+    @Operation(summary = "Dahili render job hazırla",
+               description = "Render manifest'ten dahili render job oluşturur. Yayın/dışa aktarım yok.")
+    public ResponseEntity<ApiResponse<TurkuRenderJobResponse>> prepareRenderJob(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuRenderJobRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuRenderJobResponse response = renderJobService.prepareRenderJob(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── GET /admin/turku-video-projects/{id}/render-job ──
+
+    @GetMapping("/{id}/render-job")
+    @Operation(summary = "Render job durumu",
+               description = "Dahili render job durumunu döndürür. Yayın/dışa aktarım yok.")
+    public ResponseEntity<ApiResponse<TurkuRenderJobResponse>> getRenderJob(
+            @PathVariable UUID id) {
+        TurkuRenderJobResponse response = renderJobService.getRenderJob(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
     }
 
     // ── Exception Handling ──

@@ -8,6 +8,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 
+
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.stream.Collectors;
@@ -35,13 +36,14 @@ class FP020GenerationSafetyTest {
         var assetService = new TurkuVideoAssetPlanningService(repository);
         var draftService = new TurkuProviderDraftPlanningService(repository, gateway, sanitizer, policy);
         var imageBatchService = new TurkuProviderImageBatchService(repository, gateway, sanitizer, policy);
-        var actorResolver = new AdminActorResolver();
         var compositionService = new TurkuVideoCompositionService(repository);
         var renderManifestService = new TurkuRenderManifestService(repository);
+        var renderJobService = new TurkuRenderJobService(repository, renderManifestService);
+        var actorResolver = new AdminActorResolver();
         controller = new TurkuVideoProjectController(
                 bootstrapService, planningService, assetService,
                 draftService, imageBatchService, compositionService,
-                renderManifestService, actorResolver);
+                renderManifestService, renderJobService, actorResolver);
     }
 
     private TurkuVideoProject createProject() {
@@ -55,11 +57,11 @@ class FP020GenerationSafetyTest {
     // ── A. Endpoint Inventory ───────────────────────────────
 
     @Nested
-    @DisplayName("A. Endpoint Inventory (40 = 23 POST + 17 GET)")
+    @DisplayName("A. Endpoint Inventory (42 = 24 POST + 18 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total 40 endpoints: 23 POST + 17 GET")
+        @DisplayName("total 42 endpoints: 24 POST + 18 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -69,18 +71,18 @@ class FP020GenerationSafetyTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("POST").isEqualTo(23);
-            assertThat(get).as("GET").isEqualTo(17);
-            assertThat(post + get).as("total").isEqualTo(40);
+            assertThat(post).as("POST").isEqualTo(24);
+            assertThat(get).as("GET").isEqualTo(18);
+            assertThat(post + get).as("total").isEqualTo(42);
         }
 
         @Test
-        @DisplayName("TurkuVideoProjectController has 14 POST, 4 GET")
+        @DisplayName("TurkuVideoProjectController has 15 POST, 6 GET")
         void turkuController() {
             long post = countMethods(TurkuVideoProjectController.class, PostMapping.class);
             long get = countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).isEqualTo(14);
-            assertThat(get).isEqualTo(5);
+            assertThat(post).isEqualTo(15);
+            assertThat(get).isEqualTo(6);
         }
 
         @Test

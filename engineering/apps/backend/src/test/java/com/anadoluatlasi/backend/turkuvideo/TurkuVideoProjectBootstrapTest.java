@@ -355,7 +355,7 @@ class TurkuVideoProjectBootstrapTest {
         @Test
         @DisplayName("exactly 12 allowed stages")
         void exactCount() {
-            assertThat(TurkuVideoWorkflowStage.values()).hasSize(14);
+            assertThat(TurkuVideoWorkflowStage.values()).hasSize(15);
         }
     }
 
@@ -522,12 +522,12 @@ class TurkuVideoProjectBootstrapTest {
     class EndpointInventory {
 
         @Test
-        @DisplayName("TurkuVideoProjectController: 14 POST + 5 GET")
+        @DisplayName("TurkuVideoProjectController: 15 POST + 6 GET")
         void turkuVideoController() {
             long post = countMethods(TurkuVideoProjectController.class, PostMapping.class);
             long get = countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).isEqualTo(14);
-            assertThat(get).isEqualTo(5);
+            assertThat(post).isEqualTo(15);
+            assertThat(get).isEqualTo(6);
         }
 
         @Test
@@ -552,7 +552,7 @@ class TurkuVideoProjectBootstrapTest {
         }
 
         @Test
-        @DisplayName("total 40 = 23 POST + 17 GET")
+        @DisplayName("total 42 = 24 POST + 18 GET")
         void total() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -562,9 +562,9 @@ class TurkuVideoProjectBootstrapTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(23);
-            assertThat(get).as("total GET").isEqualTo(17);
-            assertThat(post + get).as("total endpoints").isEqualTo(40);
+            assertThat(post).as("total POST").isEqualTo(24);
+            assertThat(get).as("total GET").isEqualTo(18);
+            assertThat(post + get).as("total endpoints").isEqualTo(42);
         }
 
         @Test

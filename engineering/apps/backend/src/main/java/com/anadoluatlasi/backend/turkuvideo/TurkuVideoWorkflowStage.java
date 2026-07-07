@@ -38,6 +38,9 @@ public enum TurkuVideoWorkflowStage {
     /** Render manifest prepared from composition plan */
     RENDER_MANIFEST_PREPARED,
 
+    /** Internal render job prepared from manifest */
+    RENDER_JOB_PREPARED,
+
     /** Internal preview package assembled */
     INTERNAL_PREVIEW_READY,
 
