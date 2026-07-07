@@ -44,15 +44,18 @@ public class TurkuVideoProjectController {
     private final TurkuVideoProjectBootstrapService bootstrapService;
     private final TurkuVideoPlanningService planningService;
     private final TurkuVideoAssetPlanningService assetPlanningService;
+    private final TurkuProviderDraftPlanningService providerDraftService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
                                         TurkuVideoPlanningService planningService,
                                         TurkuVideoAssetPlanningService assetPlanningService,
+                                        TurkuProviderDraftPlanningService providerDraftService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
         this.assetPlanningService = assetPlanningService;
+        this.providerDraftService = providerDraftService;
         this.actorResolver = actorResolver;
     }
 
@@ -243,6 +246,72 @@ public class TurkuVideoProjectController {
                 "Batch güncellendi"));
     }
 
+    // ── FP-020 Task 03: Provider-Draft Generation Endpoints ──
+
+    // ── POST /admin/turku-video-projects/{id}/generate-story ──
+
+    @PostMapping("/{id}/generate-story")
+    @Operation(summary = "Sağlayıcı ile hikâye üret",
+               description = "Provider-draft yolu ile hikâye paketi üretir. Güvenlik zarfı ile sarılır.")
+    public ResponseEntity<ApiResponse<TurkuProviderPlanningGenerationResponse>> generateStory(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuProviderGenerationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuProviderPlanningGenerationResponse response = providerDraftService.generateStory(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Hikâye üretimi tamamlandı"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/generate-scenario ──
+
+    @PostMapping("/{id}/generate-scenario")
+    @Operation(summary = "Sağlayıcı ile senaryo üret",
+               description = "Provider-draft yolu ile senaryo planı üretir. Güvenlik zarfı ile sarılır.")
+    public ResponseEntity<ApiResponse<TurkuProviderPlanningGenerationResponse>> generateScenario(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuProviderGenerationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuProviderPlanningGenerationResponse response = providerDraftService.generateScenario(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Senaryo üretimi tamamlandı"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/generate-storyboard ──
+
+    @PostMapping("/{id}/generate-storyboard")
+    @Operation(summary = "Sağlayıcı ile storyboard üret",
+               description = "Provider-draft yolu ile storyboard planı üretir. Güvenlik zarfı ile sarılır.")
+    public ResponseEntity<ApiResponse<TurkuProviderPlanningGenerationResponse>> generateStoryboard(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuProviderGenerationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuProviderPlanningGenerationResponse response = providerDraftService.generateStoryboard(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Storyboard üretimi tamamlandı"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/generate-planning-bundle ──
+
+    @PostMapping("/{id}/generate-planning-bundle")
+    @Operation(summary = "Sağlayıcı ile planlama paketi üret",
+               description = "Provider-draft yolu ile hikâye+senaryo+storyboard paketini sıralı üretir.")
+    public ResponseEntity<ApiResponse<TurkuPlanningBundleGenerationResponse>> generatePlanningBundle(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuProviderGenerationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuPlanningBundleGenerationResponse response = providerDraftService.generatePlanningBundle(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Planlama paketi üretimi tamamlandı"));
+    }
+
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {
         return resolvePlanningActor(role, reference);
     }
@@ -281,7 +350,11 @@ public class TurkuVideoProjectController {
             case "PROJECT_NOT_FOUND" -> HttpStatus.NOT_FOUND;
             case "TURKU_NAME_REQUIRED", "TURKU_NAME_TOO_LONG",
                  "UNSAFE_INPUT", "FIELD_TOO_LONG", "INVALID_DURATION",
-                 "INVALID_STAGE_TRANSITION", "MISSING_PREREQUISITE" -> HttpStatus.BAD_REQUEST;
+                 "INVALID_STAGE_TRANSITION", "MISSING_PREREQUISITE",
+                 "PROMPT_INJECTION_DETECTED" -> HttpStatus.BAD_REQUEST;
+            case "SANITIZATION_CRITICAL_VIOLATION", "SANITIZATION_SECRET_VIOLATION",
+                 "POLICY_AUTO_APPROVED_VIOLATION", "POLICY_HUMAN_REVIEW_VIOLATION",
+                 "POLICY_LYRICS_VIOLATION", "POLICY_COPYRIGHT_VIOLATION" -> HttpStatus.FORBIDDEN;
             default -> HttpStatus.INTERNAL_SERVER_ERROR;
         };
         return ResponseEntity.status(status).body(ApiResponse.error(ex.getMessage()));
