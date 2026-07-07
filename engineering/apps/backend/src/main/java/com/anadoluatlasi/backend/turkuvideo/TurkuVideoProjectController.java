@@ -45,17 +45,20 @@ public class TurkuVideoProjectController {
     private final TurkuVideoPlanningService planningService;
     private final TurkuVideoAssetPlanningService assetPlanningService;
     private final TurkuProviderDraftPlanningService providerDraftService;
+    private final TurkuProviderImageBatchService providerImageBatchService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
                                         TurkuVideoPlanningService planningService,
                                         TurkuVideoAssetPlanningService assetPlanningService,
                                         TurkuProviderDraftPlanningService providerDraftService,
+                                        TurkuProviderImageBatchService providerImageBatchService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
         this.assetPlanningService = assetPlanningService;
         this.providerDraftService = providerDraftService;
+        this.providerImageBatchService = providerImageBatchService;
         this.actorResolver = actorResolver;
     }
 
@@ -310,6 +313,22 @@ public class TurkuVideoProjectController {
         resolvePlanningActor(actorRole, actorReference);
         TurkuPlanningBundleGenerationResponse response = providerDraftService.generatePlanningBundle(id, request);
         return ResponseEntity.ok(ApiResponse.success(response, "Planlama paketi üretimi tamamlandı"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/run-image-batch ──
+
+    @PostMapping("/{id}/run-image-batch")
+    @Operation(summary = "Sağlayıcı ile görsel batch çalıştır",
+               description = "Provider-draft yolu ile sahne görsellerini batch olarak üretir. Güvenlik zarfı ile sarılır.")
+    public ResponseEntity<ApiResponse<TurkuImageBatchRunResponse>> runImageBatch(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuImageBatchRunRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuImageBatchRunResponse response = providerImageBatchService.runImageBatch(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "Görsel batch çalıştırıldı"));
     }
 
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {
