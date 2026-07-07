@@ -36,6 +36,10 @@ public final class TurkuVideoProject {
     private TurkuScenarioPlan scenarioPlan;
     private TurkuStoryboardPlan storyboardPlan;
 
+    // ── Asset outputs (Task 04) ──
+    private TurkuSceneAssetPlan sceneAssetPlan;
+    private TurkuSceneImageBatch imageBatch;
+
     private TurkuVideoProject(Builder builder) {
         this.id = builder.id != null ? builder.id : UUID.randomUUID();
         this.turkuName = builder.turkuName;
@@ -78,6 +82,10 @@ public final class TurkuVideoProject {
     public void setStoryPackage(TurkuStoryPackage v) { this.storyPackage = v; }
     public void setScenarioPlan(TurkuScenarioPlan v) { this.scenarioPlan = v; }
     public void setStoryboardPlan(TurkuStoryboardPlan v) { this.storyboardPlan = v; }
+    public TurkuSceneAssetPlan getSceneAssetPlan() { return sceneAssetPlan; }
+    public TurkuSceneImageBatch getImageBatch() { return imageBatch; }
+    public void setSceneAssetPlan(TurkuSceneAssetPlan v) { this.sceneAssetPlan = v; }
+    public void setImageBatch(TurkuSceneImageBatch v) { this.imageBatch = v; }
 
     // ── Stage Mutations (controlled) ──
 

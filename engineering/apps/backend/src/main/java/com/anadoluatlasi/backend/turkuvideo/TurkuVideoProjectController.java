@@ -43,13 +43,16 @@ public class TurkuVideoProjectController {
 
     private final TurkuVideoProjectBootstrapService bootstrapService;
     private final TurkuVideoPlanningService planningService;
+    private final TurkuVideoAssetPlanningService assetPlanningService;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
                                         TurkuVideoPlanningService planningService,
+                                        TurkuVideoAssetPlanningService assetPlanningService,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
+        this.assetPlanningService = assetPlanningService;
         this.actorResolver = actorResolver;
     }
 
@@ -167,7 +170,78 @@ public class TurkuVideoProjectController {
                 "Storyboard hazır"));
     }
 
-    // ── Actor Resolution ──
+    // ── POST /admin/turku-video-projects/{id}/prepare-scene-assets ──
+
+    @PostMapping("/{id}/prepare-scene-assets")
+    @Operation(summary = "Sahne varlık planı hazırla",
+               description = "Storyboard sahnelerine dayalı görsel varlık planı hazırlar.")
+    public ResponseEntity<ApiResponse<TurkuAssetPreparationResponse>> prepareSceneAssets(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuSceneAssetPreparationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuSceneAssetPlan plan = assetPlanningService.prepareSceneAssets(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                new TurkuAssetPreparationResponse(id, project.getWorkflowStage(),
+                        "Sahne varlık planı hazırlandı (" + plan.getItems().size() + " varlık)",
+                        plan.getItems().size(), project.isNeedsHumanReview(),
+                        project.isCopyrightReviewRequired(), plan.getReviewFlags()),
+                "Varlık planı hazır"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/prepare-image-batch ──
+
+    @PostMapping("/{id}/prepare-image-batch")
+    @Operation(summary = "Görsel üretim batch'i hazırla",
+               description = "Sahne varlıklarına dayalı görsel üretim batch'i hazırlar.")
+    public ResponseEntity<ApiResponse<TurkuImageBatchResponse>> prepareImageBatch(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuImageBatchPreparationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuSceneImageBatch batch = assetPlanningService.prepareImageBatch(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                new TurkuImageBatchResponse(id, batch.getBatchId(),
+                        batch.getStatus(), project.getWorkflowStage(),
+                        "Görsel üretim batch'i hazırlandı",
+                        batch.getImageRequests().size(), batch.getImageResults().size(),
+                        project.isNeedsHumanReview(), project.isCopyrightReviewRequired(),
+                        batch.getReviewFlags()),
+                "Batch hazır"));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/complete-image-batch ──
+
+    @PostMapping("/{id}/complete-image-batch")
+    @Operation(summary = "Görsel batch'ini tamamla/kısmi işaretle",
+               description = "Görsel üretim batch'ini tamamlandı veya kısmi olarak işaretler.")
+    public ResponseEntity<ApiResponse<TurkuImageBatchResponse>> completeImageBatch(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuImageBatchCompletionRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuSceneImageBatch batch = assetPlanningService.completeImageBatch(id, request);
+        TurkuVideoProject project = bootstrapService.getById(id);
+
+        return ResponseEntity.ok(ApiResponse.success(
+                new TurkuImageBatchResponse(id, batch.getBatchId(),
+                        batch.getStatus(), project.getWorkflowStage(),
+                        "Batch durumu güncellendi: " + batch.getStatus(),
+                        batch.getImageRequests().size(), batch.getImageResults().size(),
+                        project.isNeedsHumanReview(), project.isCopyrightReviewRequired(),
+                        batch.getReviewFlags()),
+                "Batch güncellendi"));
+    }
 
     private ResolvedAdminActor resolveBootstrapActor(ReviewActorRole role, String reference) {
         return resolvePlanningActor(role, reference);
