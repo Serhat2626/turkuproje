@@ -1173,6 +1173,91 @@ function TurkuVideoWorkflowPage() {
           </div>
         </div>
       )}
+
+      {/* ── FP-027: Queue / Retry / Expiration ── */}
+      {project && (
+        <div className="card" data-testid="fp027-queue-section">
+          <h2>📦 Dahili Render Kuyruğu (FP-027)</h2>
+
+          {/* Panel A — Queue Status */}
+          <div className="preview-section" data-testid="fp027-queue-status-panel">
+            <h3>📋 Kuyruk Durumu</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Kuyruk referansı:</span>
+              <span className="detail-value" data-testid="fp027-queue-ref">Opak dahili referans</span>
+              <span className="detail-label">Kuyruk durumu:</span>
+              <span className="detail-value" data-testid="fp027-queue-state">NOT_QUEUED</span>
+              <span className="detail-label">Dahili mi:</span>
+              <span className="detail-value" data-testid="fp027-internal-only">Evet</span>
+              <span className="detail-label">Yayın durumu:</span>
+              <span className="detail-value" data-testid="fp027-public-delivery">Kullanılamaz</span>
+            </div>
+            <p className="preview-text">Dahili render kuyruğu — sadece dahili işleme.</p>
+          </div>
+
+          {/* Panel B — Retry Policy */}
+          <div className="preview-section" data-testid="fp027-retry-panel">
+            <h3>🔄 Retry Politikası</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Deneme sayısı:</span>
+              <span className="detail-value" data-testid="fp027-attempt-count">0 / 3</span>
+              <span className="detail-label">Retry gecikme:</span>
+              <span className="detail-value" data-testid="fp027-retry-delay">60 saniye</span>
+              <span className="detail-label">Yeniden denenebilir:</span>
+              <span className="detail-value" data-testid="fp027-retriable">Hayır</span>
+            </div>
+            <p className="preview-text">Retry bekleme güvenliği — sınırlı deneme, güvenli gecikme.</p>
+          </div>
+
+          {/* Panel C — Expiration Policy */}
+          <div className="preview-section" data-testid="fp027-expiration-panel">
+            <h3>⏰ Süre Aşımı Politikası</h3>
+            <div className="detail-grid">
+              <span className="detail-label">Süre aşımı durumu:</span>
+              <span className="detail-value" data-testid="fp027-expiration-status">Süre aşımı yok</span>
+              <span className="detail-label">Maks kuyruk süresi:</span>
+              <span className="detail-value" data-testid="fp027-max-queue-duration">3600 saniye</span>
+              <span className="detail-label">Maks retry bekleme:</span>
+              <span className="detail-value" data-testid="fp027-max-retry-wait">1800 saniye</span>
+            </div>
+            <p className="preview-text">Süre aşımı politikası — sınırlı bekleme süresi.</p>
+          </div>
+
+          {/* Panel D — Dispatch Safety */}
+          <div className="preview-section" data-testid="fp027-dispatch-safety-panel">
+            <h3>🛡️ Dispatch Güvenlik Özeti</h3>
+            <div className="detail-grid">
+              <span className="detail-label">FP-025 hazırlık:</span>
+              <span className="detail-value" data-testid="fp027-readiness-required">Gerekli</span>
+              <span className="detail-label">FP-026 insan onayı:</span>
+              <span className="detail-value" data-testid="fp027-review-required">Gerekli</span>
+              <span className="detail-label">Otomatik onay:</span>
+              <span className="detail-value" data-testid="fp027-auto-approval">Kapalı</span>
+              <span className="detail-label">Yayın:</span>
+              <span className="detail-value" data-testid="fp027-no-publish">Kullanılamaz</span>
+            </div>
+            <p className="preview-text">Dispatch için insan onayı gerekli — otomatik onay kapalı.</p>
+          </div>
+
+          {/* Safety Labels */}
+          <div className="preview-section" data-testid="fp027-safety-labels">
+            <div className="safety-flags">
+              <span className="safety-flag" data-testid="fp027-label-queue">Dahili render kuyruğu</span>
+              <span className="safety-flag" data-testid="fp027-label-retry">Retry bekleme güvenliği</span>
+              <span className="safety-flag" data-testid="fp027-label-expiration">Süre aşımı politikası</span>
+              <span className="safety-flag" data-testid="fp027-label-dispatch">Dispatch için insan onayı gerekli</span>
+              <span className="safety-flag" data-testid="fp027-label-no-auto">Otomatik onay kapalı</span>
+              <span className="safety-flag" data-testid="fp027-label-internal">Sadece dahili işleme</span>
+              <span className="safety-flag" data-testid="fp027-label-no-publish">Yayın/Dışa aktarım yok</span>
+              <span className="safety-flag" data-testid="fp027-label-no-download">İndirilebilir video yok</span>
+              <span className="safety-flag" data-testid="fp027-label-no-player">Video oynatıcı yok</span>
+              <span className="safety-flag" data-testid="fp027-label-no-url">Public/CDN URL yok</span>
+              <span className="safety-flag" data-testid="fp027-label-no-path">Dosya yolu gösterilmez</span>
+              <span className="safety-flag" data-testid="fp027-label-no-cmd">Komut/log gösterilmez</span>
+            </div>
+          </div>
+        </div>
+      )}
       {/* ── New project button ────────────────── */}
       {project && (
         <div className="form-actions">

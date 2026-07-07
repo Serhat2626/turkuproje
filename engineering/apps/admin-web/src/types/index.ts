@@ -2300,3 +2300,117 @@ export interface TurkuInternalRenderReviewActionResult {
   action: TurkuInternalRenderReviewAction
   reasonCode: TurkuInternalRenderReviewReasonCode
 }
+
+// ── FP-027: Internal Render Queue / Retry / Expiration ──────────
+
+export type TurkuInternalRenderQueueState =
+  | 'NOT_QUEUED'
+  | 'QUEUE_READY'
+  | 'QUEUED_INTERNAL'
+  | 'DISPATCHING_INTERNAL'
+  | 'IN_PROGRESS_INTERNAL'
+  | 'RETRY_WAIT_INTERNAL'
+  | 'SUCCEEDED_INTERNAL'
+  | 'FAILED_INTERNAL'
+  | 'CANCELLED_INTERNAL'
+  | 'EXPIRED_INTERNAL'
+
+export type TurkuInternalRenderQueueAction =
+  | 'MARK_QUEUE_READY'
+  | 'ENQUEUE_INTERNAL'
+  | 'DISPATCH_INTERNAL'
+  | 'MARK_IN_PROGRESS'
+  | 'MARK_RETRY_WAIT'
+  | 'MARK_SUCCEEDED'
+  | 'MARK_FAILED'
+  | 'CANCEL_INTERNAL'
+  | 'EXPIRE_INTERNAL'
+
+export type TurkuInternalRenderQueueReasonCode =
+  | 'NOT_QUEUED'
+  | 'QUEUE_READY'
+  | 'ENQUEUED'
+  | 'DISPATCHING'
+  | 'IN_PROGRESS'
+  | 'RETRY_WAIT'
+  | 'SUCCEEDED'
+  | 'FAILED_PERMANENT'
+  | 'CANCELLED'
+  | 'EXPIRED'
+  | 'TRANSITION_NOT_ALLOWED'
+  | 'TERMINAL_STATE'
+  | 'QUEUE_REF_INVALID'
+  | 'READINESS_NOT_MET'
+  | 'REVIEW_NOT_APPROVED'
+  | 'MAX_RETRIES_EXHAUSTED'
+  | 'RETRY_DELAY_ACTIVE'
+  | 'PUBLIC_DELIVERY_FORBIDDEN'
+  | 'AUTO_APPROVAL_FORBIDDEN'
+  | 'GENERIC_STATUS_UPDATE_FORBIDDEN'
+
+export type TurkuInternalRenderRetryReasonCode =
+  | 'EXECUTION_FAILED_RETRIABLE'
+  | 'TIMEOUT_RETRIABLE'
+  | 'TRANSIENT_ERROR_RETRIABLE'
+  | 'MAX_RETRIES_EXHAUSTED'
+  | 'NOT_RETRIABLE_PERMANENT'
+  | 'CANCELLED_NO_RETRY'
+  | 'EXPIRED_NO_RETRY'
+
+export type TurkuInternalRenderExpirationReasonCode =
+  | 'QUEUE_DURATION_EXCEEDED'
+  | 'RETRY_WAIT_DURATION_EXCEEDED'
+  | 'STALE_INTERNAL_STATE'
+  | 'ADMIN_FORCED_EXPIRATION'
+  | 'NOT_EXPIRED'
+
+export interface TurkuInternalRenderQueueSummary {
+  queueItemRef: string
+  jobRef: string
+  reviewRef: string | null
+  queueState: TurkuInternalRenderQueueState
+  reasonCode: TurkuInternalRenderQueueReasonCode
+  attemptNumber: number
+  maxAttempts: number
+  retriable: boolean
+  expired: boolean
+  humanReviewRequired: boolean
+  autoApproved: boolean
+  publicDeliveryAvailable: boolean
+  internalOnly: boolean
+  notPublishReady: boolean
+  notExportReady: boolean
+  safetyFlags: string[]
+}
+
+export interface TurkuInternalRenderQueueActionResult {
+  allowed: boolean
+  summary: TurkuInternalRenderQueueSummary | null
+  action: TurkuInternalRenderQueueAction
+  reasonCode: TurkuInternalRenderQueueReasonCode
+}
+
+export interface TurkuInternalRenderRetryPolicy {
+  maxAttempts: number
+  retryDelaySeconds: number
+}
+
+export interface TurkuInternalRenderRetrySnapshot {
+  currentAttempt: number
+  maxAttempts: number
+  retryDelaySeconds: number
+  retriable: boolean
+  reasonCode: TurkuInternalRenderRetryReasonCode
+}
+
+export interface TurkuInternalRenderExpirationPolicy {
+  maxQueueDurationSeconds: number
+  maxRetryWaitDurationSeconds: number
+}
+
+export interface TurkuInternalRenderExpirationSnapshot {
+  expired: boolean
+  reasonCode: TurkuInternalRenderExpirationReasonCode
+  maxQueueDurationSeconds: number
+  maxRetryWaitDurationSeconds: number
+}
