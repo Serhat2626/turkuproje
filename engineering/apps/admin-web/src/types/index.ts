@@ -3248,3 +3248,45 @@ export interface TurkuExecutionGateResult {
   requiredOperatorGates: string[]
   futureExecutionStepLabels: string[]
 }
+
+// ── RPE-002: Image Provider Configuration ───────────────────
+
+export type TurkuImageProviderType =
+  | 'PLACEHOLDER_LOCAL'
+  | 'DETERMINISTIC_FAKE'
+  | 'FUTURE_EXTERNAL_API'
+
+export type TurkuProviderConfigStatus =
+  | 'NOT_CONFIGURED'
+  | 'CONFIGURATION_DRAFT'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_OPERATOR_REVIEW'
+  | 'FAILED_SAFE'
+
+export type TurkuProviderConfigIssueCode =
+  | 'CREDENTIAL_NOT_PRESENT'
+  | 'PROVIDER_TYPE_NOT_SELECTED'
+  | 'FALLBACK_NOT_CONFIGURED'
+  | 'SAFETY_VALIDATION_FAILED'
+  | 'OPERATOR_REVIEW_PENDING'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuCredentialVaultBoundary {
+  vaultLabel: string
+  credentialPresent: boolean
+  presenceStatusLabel: string
+}
+
+export interface TurkuProviderConfigResult {
+  status: TurkuProviderConfigStatus
+  issues: TurkuProviderConfigIssueCode[]
+  opaqueConfigRef: string | null
+  providerLabel: string | null
+  providerType: TurkuImageProviderType | null
+  capabilityLabels: string[]
+  vaultBoundary: TurkuCredentialVaultBoundary | null
+  selectionPolicySummary: string | null
+  fallbackPolicySummary: string | null
+  executionEnabled: boolean
+  safetyValidationSummary: string
+}
