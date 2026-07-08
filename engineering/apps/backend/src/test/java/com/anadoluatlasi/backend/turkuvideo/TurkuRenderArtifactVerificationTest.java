@@ -384,9 +384,9 @@ class TurkuRenderArtifactVerificationTest {
     @DisplayName("J. Enum Values")
     class EnumValues {
         @Test
-        @DisplayName("verification status has 7 values")
+        @DisplayName("verification status has 15 values")
         void statusCount() {
-            assertThat(TurkuRenderArtifactVerificationStatus.values()).hasSize(7);
+            assertThat(TurkuRenderArtifactVerificationStatus.values()).hasSize(15);
         }
 
         @Test
