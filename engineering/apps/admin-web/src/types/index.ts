@@ -2624,3 +2624,70 @@ export interface TurkuFfmpegSmokeRunResult {
   autoApproved: boolean
   safetyFlags: string[]
 }
+
+// ── FP-042/043: Internal Render Review Package ──
+
+export type TurkuRenderReviewPackageStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'ARTIFACT_METADATA_ATTACHED'
+  | 'READY_FOR_INTERNAL_REVIEW_ONLY'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuRenderReviewPackageIssueCode =
+  | 'NONE'
+  | 'NO_PRIMARY_ARTIFACT'
+  | 'ARTIFACT_NOT_VERIFIED'
+  | 'ARTIFACT_REJECTED'
+  | 'ARTIFACT_FAILED'
+  | 'ARTIFACT_ROLE_UNKNOWN'
+  | 'TOO_MANY_ARTIFACTS'
+  | 'DUPLICATE_ARTIFACT_REF'
+  | 'MISSING_ARTIFACT_REF'
+  | 'LIFECYCLE_STATUS_INVALID'
+  | 'BUNDLE_REF_MISSING'
+  | 'METADATA_INCOMPLETE'
+
+export type TurkuRenderReviewArtifactRole =
+  | 'PRIMARY_VIDEO_CLIP'
+  | 'POSTER_FRAME'
+  | 'AUDIO_STUB'
+  | 'VERIFICATION_REPORT'
+  | 'INTERNAL_METADATA'
+  | 'UNKNOWN'
+
+export type TurkuRenderReviewVerificationStatus =
+  | 'PASSED'
+  | 'REJECTED_DURATION'
+  | 'REJECTED_SIZE'
+  | 'REJECTED_MULTIPLE'
+
+export interface TurkuRenderReviewArtifactSummary {
+  opaqueArtifactRef: string
+  role: TurkuRenderReviewArtifactRole
+  verificationStatus: TurkuRenderReviewVerificationStatus
+  format: string
+  durationSeconds: number
+  fps: number
+  width: number
+  height: number
+  sizeBytes: number
+  verified: boolean
+}
+
+export interface TurkuRenderReviewPackage {
+  opaqueReviewPackageRef: string
+  opaqueJobRef: string
+  opaqueBundleRef: string
+  status: TurkuRenderReviewPackageStatus
+  issueCodes: TurkuRenderReviewPackageIssueCode[]
+  artifactSummaries: TurkuRenderReviewArtifactSummary[]
+  sceneCount: number
+  inputClipCount: number
+  totalDurationSeconds: number
+  maxWidth: number
+  maxHeight: number
+  maxFps: number
+  totalSizeBytes: number
+  internalOnly: true
+}
