@@ -3340,3 +3340,43 @@ export interface TurkuRenderPipelineConfigResult {
   renderExecutionEnabled: boolean
   validationSummary: string
 }
+
+// ── RPE-004: Execution Package + Manual Gate ────────────────
+
+export type TurkuExecutionPackageStatus =
+  | 'PACKAGE_DRAFT'
+  | 'NOT_READY'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_MANUAL_GATE'
+  | 'FAILED_SAFE'
+
+export type TurkuExecutionPackageIssueCode =
+  | 'WORK_ORDER_NOT_ELIGIBLE'
+  | 'IMAGE_PROVIDER_NOT_CONFIGURED'
+  | 'RENDER_PIPELINE_NOT_CONFIGURED'
+  | 'MANUAL_GATE_NOT_PASSED'
+  | 'SAFETY_PREREQUISITE_NOT_MET'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuManualGate {
+  order: number
+  gateLabel: string
+  instruction: string
+  passed: boolean
+  blockedReason: string | null
+}
+
+export interface TurkuExecutionPackageResult {
+  status: TurkuExecutionPackageStatus
+  blockedReasons: TurkuExecutionPackageIssueCode[]
+  opaquePackageRef: string | null
+  opaqueWorkOrderRef: string | null
+  safeTurkuTitleLabel: string | null
+  providerConfigSummary: string
+  renderConfigSummary: string
+  manualGates: TurkuManualGate[]
+  executionCapabilities: TurkuExecutionCapability[]
+  operatorExecutionSummary: string
+  futureExecutionStepLabels: string[]
+  validationSummary: string
+}
