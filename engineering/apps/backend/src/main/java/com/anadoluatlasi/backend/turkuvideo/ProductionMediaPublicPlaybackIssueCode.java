@@ -1,0 +1,14 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+public enum ProductionMediaPublicPlaybackIssueCode {
+    DELIVERY_GATE_MISSING,
+    DELIVERY_GATE_NOT_APPROVED,
+    DELIVERY_GATE_REJECTED,
+    DELIVERY_GATE_FAILED,
+    STORAGE_REF_MISSING,
+    STORAGE_REF_NOT_VERIFIED,
+    PLAYBACK_PREP_MISSING,
+    FORMAT_NOT_SUPPORTED,
+    SIZE_EXCEEDS_LIMIT,
+    INTERNAL_ERROR
+}

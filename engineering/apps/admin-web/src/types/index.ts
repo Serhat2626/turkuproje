@@ -2893,3 +2893,40 @@ export interface ProductionMediaReviewDecisionResult {
   opaqueDecisionRef: string | null
   internalOnly: true
 }
+
+// ── PD-007: Controlled Public Playback MVP ──────────────────
+
+export type ProductionMediaPublicPlaybackStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'DELIVERY_GATE_ACCEPTED'
+  | 'CONTROLLED_PLAYBACK_HANDLE_CREATED'
+  | 'READY_FOR_CONTROLLED_PUBLIC_PLAYBACK'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type ProductionMediaPublicPlaybackIssueCode =
+  | 'DELIVERY_GATE_MISSING'
+  | 'DELIVERY_GATE_NOT_APPROVED'
+  | 'DELIVERY_GATE_REJECTED'
+  | 'DELIVERY_GATE_FAILED'
+  | 'STORAGE_REF_MISSING'
+  | 'STORAGE_REF_NOT_VERIFIED'
+  | 'PLAYBACK_PREP_MISSING'
+  | 'FORMAT_NOT_SUPPORTED'
+  | 'SIZE_EXCEEDS_LIMIT'
+  | 'INTERNAL_ERROR'
+
+export interface ProductionMediaPublicPlaybackResult {
+  status: ProductionMediaPublicPlaybackStatus
+  issueCodes: ProductionMediaPublicPlaybackIssueCode[]
+  opaquePublicPlaybackRef: string | null
+  opaqueDeliveryGateRef: string | null
+  opaqueArtifactRef: string | null
+  mediaFormat: string
+  durationSeconds: number
+  fps: number
+  width: number
+  height: number
+  sizeBytes: number
+  controlledPlaybackEligible: boolean
+}
