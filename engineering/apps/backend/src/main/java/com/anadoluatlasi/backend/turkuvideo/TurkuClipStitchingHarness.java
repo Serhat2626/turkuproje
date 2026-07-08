@@ -19,15 +19,22 @@ public class TurkuClipStitchingHarness {
     private static final long MAX_OUTPUT_SIZE = 150L * 1024 * 1024;
 
     private final TurkuRenderArtifactLifecycleService lifecycleService;
+    private final TurkuFfmpegLocalDevProcessRunner runner;
     private final boolean stitchingEnabled;
 
     public TurkuClipStitchingHarness(TurkuRenderArtifactLifecycleService lifecycleService,
-            boolean stitchingEnabled) {
+            TurkuFfmpegLocalDevProcessRunner runner, boolean stitchingEnabled) {
         this.lifecycleService = lifecycleService != null ? lifecycleService : new TurkuRenderArtifactLifecycleService();
+        this.runner = runner != null ? runner : new TurkuFfmpegLocalDevProcessRunner();
         this.stitchingEnabled = stitchingEnabled;
     }
 
-    public TurkuClipStitchingHarness() { this(null, false); }
+    public TurkuClipStitchingHarness(TurkuRenderArtifactLifecycleService lifecycleService,
+            boolean stitchingEnabled) {
+        this(lifecycleService, null, stitchingEnabled);
+    }
+
+    public TurkuClipStitchingHarness() { this(null, null, false); }
 
     /**
      * Validate and fake-stitch input clips (CI-safe).
@@ -79,9 +86,26 @@ public class TurkuClipStitchingHarness {
         var validation = validate(inputClips);
         if (validation != null) return validation;
 
-        // Real stitching would delegate to runner here
-        // For now, gate passes but uses fake execution
-        return fakeStitch(inputClips);
+        // Real stitching — delegate to runner
+        var clips = inputClips != null ? inputClips : List.<TurkuClipStitchingInputClipRef>of();
+        int totalDuration = clips.stream().mapToInt(TurkuClipStitchingInputClipRef::getDurationSeconds).sum();
+        int maxW = clips.stream().mapToInt(TurkuClipStitchingInputClipRef::getWidth).max().orElse(0);
+        int maxH = clips.stream().mapToInt(TurkuClipStitchingInputClipRef::getHeight).max().orElse(0);
+        int maxFps = clips.stream().mapToInt(TurkuClipStitchingInputClipRef::getFps).max().orElse(0);
+        String format = clips.get(0).getFormat();
+
+        var processResult = runner.stitchClips(clips.size(), totalDuration,
+                maxFps, maxW, maxH, format, binaryPolicy);
+
+        if (processResult.getStatus() == TurkuFfmpegProcessStatus.PROCESS_COMPLETED_SAFE) {
+            String stitchRef = "stitch:" + UUID.randomUUID();
+            long totalSize = clips.stream().mapToLong(TurkuClipStitchingInputClipRef::getSizeBytes).sum();
+            return new TurkuClipStitchingResult(stitchRef,
+                    TurkuClipStitchingStatus.STITCHED_ARTIFACT_VERIFIED, List.of(),
+                    clips.size(), totalDuration, maxW, maxH, maxFps, totalSize,
+                    format, processResult.getOutputRef(), true, true);
+        }
+        return TurkuClipStitchingResult.gateDenied(TurkuClipStitchingStatus.FAILED_SAFE);
     }
 
     private TurkuClipStitchingResult validate(List<TurkuClipStitchingInputClipRef> inputClips) {

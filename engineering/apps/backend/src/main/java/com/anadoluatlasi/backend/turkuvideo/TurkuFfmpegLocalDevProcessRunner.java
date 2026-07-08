@@ -183,5 +183,110 @@ public class TurkuFfmpegLocalDevProcessRunner {
         };
     }
 
+    /**
+     * FP-041: Real clip stitching using concat demuxer.
+     * Uses ProcessBuilder — all paths temp/internal, NOT exposed.
+     * Returns only opaque ref + safe metadata.
+     */
+    public TurkuFfmpegProcessResult stitchClips(int clipCount, int totalDurationSeconds,
+            int fps, int width, int height, String format,
+            TurkuFfmpegBinaryPolicy binaryPolicy) {
+
+        // 1. Gate check
+        var gateResult = gate.evaluate(binaryPolicy, "stitch-job", null, null);
+        if (gateResult.getStatus() == TurkuFfmpegBoundaryResultStatus.DENIED)
+            return TurkuFfmpegProcessResult.denied(mapGateReason(gateResult.getReasonCode()));
+
+        // 2. Not enabled → skip
+        if (!processEnabled || gateResult.getMode() != TurkuFfmpegRealExecutionMode.REAL_DEV_TEST_ONLY)
+            return TurkuFfmpegProcessResult.skipped();
+
+        // 3. Real stitching
+        return executeStitching(clipCount, totalDurationSeconds, fps, width, height,
+                format != null ? format : "mp4");
+    }
+
+    /**
+     * Real stitching execution. Generates N synthetic clips then concats.
+     * All temp files internal — paths NOT exposed.
+     */
+    private TurkuFfmpegProcessResult executeStitching(int clipCount, int totalDuration,
+            int fps, int width, int height, String format) {
+        long startMs = System.currentTimeMillis();
+        java.io.File stitchedFile = null;
+        var clipFiles = new java.util.ArrayList<java.io.File>();
+        java.io.File concatList = null;
+        try {
+            int perClipDuration = Math.max(1, totalDuration / clipCount);
+
+            // Generate synthetic clips
+            for (int i = 0; i < clipCount; i++) {
+                var clipFile = java.io.File.createTempFile("turku_stitch_clip_" + i + "_", "." + format);
+                clipFile.deleteOnExit();
+                clipFiles.add(clipFile);
+
+                String testSrc = String.format("testsrc=duration=%d:size=%dx%d:rate=%d",
+                        perClipDuration, width, height, fps);
+
+                ProcessBuilder pb = new ProcessBuilder(
+                        "ffmpeg", "-y",
+                        "-f", "lavfi", "-i", testSrc,
+                        "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                        "-t", String.valueOf(perClipDuration),
+                        "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                        "-c:a", "aac", "-shortest",
+                        clipFile.getAbsolutePath()
+                );
+                pb.redirectErrorStream(true);
+                Process process = pb.start();
+                process.getInputStream().readAllBytes();
+                boolean ok = process.waitFor(30, TimeUnit.SECONDS);
+                if (!ok || process.exitValue() != 0)
+                    return TurkuFfmpegProcessResult.failed();
+            }
+
+            // Write concat list
+            concatList = java.io.File.createTempFile("turku_concat_list_", ".txt");
+            concatList.deleteOnExit();
+            try (var writer = new java.io.FileWriter(concatList)) {
+                for (var f : clipFiles)
+                    writer.write("file '" + f.getAbsolutePath().replace("\\", "/") + "'\n");
+            }
+
+            // Stitch
+            stitchedFile = java.io.File.createTempFile("turku_stitched_", "." + format);
+            stitchedFile.deleteOnExit();
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffmpeg", "-y",
+                    "-f", "concat", "-safe", "0",
+                    "-i", concatList.getAbsolutePath(),
+                    "-c", "copy",
+                    stitchedFile.getAbsolutePath()
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+            process.getInputStream().readAllBytes();
+            boolean finished = process.waitFor(60, TimeUnit.SECONDS);
+            long durationMs = System.currentTimeMillis() - startMs;
+
+            if (!finished) {
+                process.destroyForcibly();
+                return TurkuFfmpegProcessResult.timedOut(durationMs);
+            }
+            if (process.exitValue() != 0)
+                return TurkuFfmpegProcessResult.failed();
+
+            long fileSize = stitchedFile.length();
+            if (fileSize <= 0)
+                return TurkuFfmpegProcessResult.failed();
+
+            var outputRef = TurkuFfmpegInternalOutputRef.create().toOpaqueRef();
+            return TurkuFfmpegProcessResult.completed(outputRef, durationMs);
+        } catch (Exception e) {
+            return TurkuFfmpegProcessResult.failed();
+        }
+    }
+
     public boolean isProcessEnabled() { return processEnabled; }
 }
