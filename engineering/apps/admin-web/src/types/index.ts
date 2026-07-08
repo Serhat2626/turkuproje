@@ -3100,3 +3100,43 @@ export interface TurkuAnimaticTimelinePlanResult {
   totalItems: number
   totalDurationMs: number
 }
+
+// ── RP-005: MVP Readiness Package ───────────────────────────
+
+export type TurkuMvpReadinessStatus =
+  | 'NOT_READY'
+  | 'READY_FOR_MANUAL_REVIEW'
+  | 'BLOCKED_BY_SAFETY'
+  | 'PARTIALLY_READY'
+  | 'FAILED_SAFE'
+
+export type TurkuMvpReadinessIssueCode =
+  | 'REQUEST_MISSING'
+  | 'REQUEST_NOT_READY'
+  | 'STORYBOARD_MISSING'
+  | 'STORYBOARD_NOT_READY'
+  | 'ASSET_PLAN_MISSING'
+  | 'ASSET_PLAN_NOT_READY'
+  | 'ASSET_PLAN_HAS_BLOCKED_SCENES'
+  | 'TIMELINE_MISSING'
+  | 'TIMELINE_NOT_READY'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuMvpReadinessResult {
+  status: TurkuMvpReadinessStatus
+  blockingIssues: TurkuMvpReadinessIssueCode[]
+  opaqueRequestRef: string | null
+  safeTurkuTitleLabel: string | null
+  storyboardReadinessSummary: string
+  assetPlanReadinessSummary: string
+  timelineReadinessSummary: string
+  totalScenes: number
+  blockedScenes: number
+  timelineItems: number
+  totalDurationMs: number
+  copyrightSafeIntentPresent: boolean
+  allScenesPlanned: boolean
+  timelineComplete: boolean
+  noBlockedScenes: boolean
+  nextAllowedManualStepLabels: string[]
+}
