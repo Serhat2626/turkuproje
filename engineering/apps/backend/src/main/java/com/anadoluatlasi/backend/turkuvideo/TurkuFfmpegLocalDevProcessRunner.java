@@ -58,7 +58,7 @@ public class TurkuFfmpegLocalDevProcessRunner {
     }
 
     /**
-     * Real process execution. Isolated in this one method.
+     * Real process execution — version probe. Isolated in this one method.
      * stdout/stderr are consumed but NOT exposed in result.
      */
     private TurkuFfmpegProcessResult executeProcess(TurkuFfmpegProcessRequest request) {
@@ -84,6 +84,88 @@ public class TurkuFfmpegLocalDevProcessRunner {
             if (exitCode != 0)
                 return TurkuFfmpegProcessResult.failed();
 
+            var outputRef = TurkuFfmpegInternalOutputRef.create().toOpaqueRef();
+            return TurkuFfmpegProcessResult.completed(outputRef, durationMs);
+        } catch (Exception e) {
+            return TurkuFfmpegProcessResult.failed();
+        }
+    }
+
+    /**
+     * FP-034: Real video clip generation using synthetic testsrc input.
+     * Uses ProcessBuilder — output file is temp, path NOT exposed.
+     * Returns only opaque ref + safe metadata.
+     */
+    public TurkuFfmpegProcessResult generateClip(TurkuFfmpegProcessRequest request,
+            TurkuFfmpegBinaryPolicy binaryPolicy) {
+
+        // 1. Validate
+        if (request == null || !request.isValid())
+            return TurkuFfmpegProcessResult.invalid(TurkuFfmpegProcessReasonCode.FORMAT_NOT_ALLOWED);
+
+        // 2. Gate check
+        var gateResult = gate.evaluate(binaryPolicy, request.getJobRef(), null, null);
+        if (gateResult.getStatus() == TurkuFfmpegBoundaryResultStatus.DENIED) {
+            return TurkuFfmpegProcessResult.denied(mapGateReason(gateResult.getReasonCode()));
+        }
+
+        // 3. Not enabled → skip
+        if (!processEnabled || gateResult.getMode() != TurkuFfmpegRealExecutionMode.REAL_DEV_TEST_ONLY)
+            return TurkuFfmpegProcessResult.skipped();
+
+        // 4. Real clip generation
+        return executeClipGeneration(request);
+    }
+
+    /**
+     * Real clip generation. Synthetic testsrc input — no copyrighted media.
+     * Output path is temp, consumed internally, NOT exposed.
+     */
+    private TurkuFfmpegProcessResult executeClipGeneration(TurkuFfmpegProcessRequest request) {
+        long startMs = System.currentTimeMillis();
+        java.io.File tempFile = null;
+        try {
+            // Create temp output — path never exposed to DTO/API/UI
+            tempFile = java.io.File.createTempFile("turku_internal_clip_", "." + request.getFormat());
+            tempFile.deleteOnExit();
+
+            // Build synthetic testsrc command — no copyrighted media
+            String testSrc = String.format("testsrc=duration=%d:size=%dx%d:rate=%d",
+                    request.getDurationSeconds(), request.getWidth(), request.getHeight(), request.getFps());
+
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffmpeg", "-y",
+                    "-f", "lavfi", "-i", testSrc,
+                    "-f", "lavfi", "-i", "anullsrc=r=44100:cl=mono",
+                    "-t", String.valueOf(request.getDurationSeconds()),
+                    "-c:v", "libx264", "-pix_fmt", "yuv420p",
+                    "-c:a", "aac", "-shortest",
+                    tempFile.getAbsolutePath()
+            );
+            pb.redirectErrorStream(true);
+            Process process = pb.start();
+
+            // Consume output (not exposed)
+            process.getInputStream().readAllBytes();
+
+            boolean finished = process.waitFor(request.getTimeoutSeconds(), TimeUnit.SECONDS);
+            long durationMs = System.currentTimeMillis() - startMs;
+
+            if (!finished) {
+                process.destroyForcibly();
+                return TurkuFfmpegProcessResult.timedOut(durationMs);
+            }
+
+            int exitCode = process.exitValue();
+            if (exitCode != 0)
+                return TurkuFfmpegProcessResult.failed();
+
+            // Verify file exists and has content
+            long fileSize = tempFile.length();
+            if (fileSize <= 0)
+                return TurkuFfmpegProcessResult.failed();
+
+            // Return opaque ref only — file path NOT exposed
             var outputRef = TurkuFfmpegInternalOutputRef.create().toOpaqueRef();
             return TurkuFfmpegProcessResult.completed(outputRef, durationMs);
         } catch (Exception e) {

@@ -1,0 +1,19 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-034: Video clip generation status.
+ */
+public enum TurkuFfmpegClipGenerationStatus {
+    NOT_ATTEMPTED,
+    MANUAL_FLAG_NOT_ENABLED,
+    PROCESS_DISABLED,
+    GATE_DENIED,
+    ENVIRONMENT_DENIED,
+    FFMPEG_UNAVAILABLE,
+    CLIP_GENERATION_STARTED,
+    CLIP_GENERATION_SUCCEEDED,
+    CLIP_GENERATION_FAILED_SAFE,
+    CLIP_GENERATION_TIMED_OUT,
+    VERIFICATION_PASSED,
+    VERIFICATION_FAILED
+}
