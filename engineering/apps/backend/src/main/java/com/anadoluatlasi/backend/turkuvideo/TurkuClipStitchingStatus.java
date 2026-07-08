@@ -1,0 +1,20 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-040: Clip stitching status.
+ * No READY_FOR_PUBLISH. No COMPLETED.
+ */
+public enum TurkuClipStitchingStatus {
+    CREATED_INTERNAL_ONLY,
+    GATED_FOR_LOCAL_MANUAL_RUN,
+    VALIDATED_INPUT_CLIPS,
+    STITCHING_SYNTHETIC_CLIPS,
+    STITCHED_ARTIFACT_VERIFIED,
+    REJECTED_UNSAFE,
+    FAILED_SAFE,
+    GATE_DENIED,
+    MANUAL_FLAG_NOT_ENABLED,
+    PROCESS_DISABLED,
+    FFMPEG_UNAVAILABLE,
+    INPUT_INVALID
+}

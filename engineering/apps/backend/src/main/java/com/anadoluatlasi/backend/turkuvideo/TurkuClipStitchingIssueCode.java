@@ -1,0 +1,22 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-040: Clip stitching issue codes.
+ */
+public enum TurkuClipStitchingIssueCode {
+    NONE,
+    TOO_FEW_CLIPS,
+    TOO_MANY_CLIPS,
+    CLIP_NOT_VERIFIED,
+    CLIP_DURATION_EXCEEDED,
+    TOTAL_DURATION_EXCEEDED,
+    CLIP_FPS_EXCEEDED,
+    CLIP_RESOLUTION_EXCEEDED,
+    OUTPUT_SIZE_EXCEEDED,
+    FORMAT_UNSUPPORTED,
+    DUPLICATE_CLIP_REF,
+    CLIP_REF_MISSING,
+    STITCH_REF_MISSING,
+    STITCHING_FAILED,
+    VERIFICATION_FAILED
+}
