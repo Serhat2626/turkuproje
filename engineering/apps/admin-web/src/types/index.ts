@@ -3140,3 +3140,36 @@ export interface TurkuMvpReadinessResult {
   noBlockedScenes: boolean
   nextAllowedManualStepLabels: string[]
 }
+
+// ── MP-001: Manual Production Enablement ────────────────────
+
+export type TurkuManualEnablementStatus =
+  | 'NOT_ELIGIBLE'
+  | 'ELIGIBLE_FOR_MANUAL_PREP'
+  | 'BLOCKED_BY_SAFETY'
+  | 'MANUAL_REVIEW_REQUIRED'
+  | 'FAILED_SAFE'
+
+export type TurkuManualEnablementIssueCode =
+  | 'READINESS_NOT_READY'
+  | 'READINESS_MISSING'
+  | 'STORYBOARD_INCOMPLETE'
+  | 'ASSET_PLAN_INCOMPLETE'
+  | 'TIMELINE_INCOMPLETE'
+  | 'BLOCKED_SCENES_PRESENT'
+  | 'COPYRIGHT_INTENT_MISSING'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuManualEnablementResult {
+  status: TurkuManualEnablementStatus
+  blockedReasons: TurkuManualEnablementIssueCode[]
+  opaqueReadinessRef: string | null
+  safeTurkuTitleLabel: string | null
+  operatorSummary: string
+  safetyPrerequisites: string[]
+  manualStepLabels: string[]
+  copyrightSafeIntentPresent: boolean
+  allScenesPlanned: boolean
+  timelineComplete: boolean
+  noBlockedScenes: boolean
+}
