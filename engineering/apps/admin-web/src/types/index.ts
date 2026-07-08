@@ -3014,3 +3014,48 @@ export interface TurkuStoryboardDraftResult {
   targetHeight: number
   targetFps: number
 }
+
+// ── RP-003: Scene Asset Plan + Visual Brief ─────────────────
+
+export type TurkuSceneAssetPlanStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'DRAFT_ACCEPTED'
+  | 'VISUAL_BRIEF_GENERATED'
+  | 'READY_FOR_ASSET_GENERATION_BOUNDARY'
+  | 'BLOCKED_CONTENT_UNSAFE'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuSceneAssetPlanIssueCode =
+  | 'DRAFT_MISSING'
+  | 'DRAFT_NOT_READY'
+  | 'SCENE_MISSING'
+  | 'SCENE_PURPOSE_EMPTY'
+  | 'VISUAL_DIRECTION_EMPTY'
+  | 'CONTENT_BLOCKED_UNSAFE'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuSceneAssetPlanEntry {
+  sceneNumber: number
+  status: TurkuSceneAssetPlanStatus
+  issueCodes: TurkuSceneAssetPlanIssueCode[]
+  visualBriefSummary: string | null
+  shotType: string | null
+  framing: string | null
+  atmosphere: string | null
+  historicalCulturalStyle: string | null
+  safetyClassification: string | null
+  blockedReason: string | null
+}
+
+export interface TurkuSceneAssetPlanResult {
+  overallStatus: TurkuSceneAssetPlanStatus
+  overallIssueCodes: TurkuSceneAssetPlanIssueCode[]
+  opaquePlanRef: string | null
+  opaqueDraftRef: string | null
+  safeTurkuTitleLabel: string | null
+  plannerMode: string | null
+  entries: TurkuSceneAssetPlanEntry[]
+  totalPlannedScenes: number
+  blockedSceneCount: number
+}
