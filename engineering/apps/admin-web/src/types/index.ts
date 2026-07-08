@@ -3059,3 +3059,44 @@ export interface TurkuSceneAssetPlanResult {
   totalPlannedScenes: number
   blockedSceneCount: number
 }
+
+// ── RP-004: Animatic Timeline Plan ──────────────────────────
+
+export type TurkuAnimaticTimelinePlanStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'ASSET_PLAN_ACCEPTED'
+  | 'TIMELINE_ITEMS_GENERATED'
+  | 'READY_FOR_ASSEMBLY_BOUNDARY'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuAnimaticTimelinePlanIssueCode =
+  | 'ASSET_PLAN_MISSING'
+  | 'ASSET_PLAN_NOT_READY'
+  | 'DRAFT_REF_MISSING'
+  | 'NO_ENTRIES'
+  | 'DURATION_INVALID'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuAnimaticTimelineItem {
+  sceneNumber: number
+  startMs: number
+  durationMs: number
+  transitionType: string
+  cameraMovement: string
+  visualPacingSummary: string
+  narrativeBeatSummary: string
+}
+
+export interface TurkuAnimaticTimelinePlanResult {
+  status: TurkuAnimaticTimelinePlanStatus
+  issueCodes: TurkuAnimaticTimelinePlanIssueCode[]
+  opaqueTimelineRef: string | null
+  opaquePlanRef: string | null
+  opaqueDraftRef: string | null
+  safeTurkuTitleLabel: string | null
+  plannerMode: string | null
+  items: TurkuAnimaticTimelineItem[]
+  totalItems: number
+  totalDurationMs: number
+}
