@@ -282,9 +282,9 @@ describe('FP-022 Forbidden Controls', () => {
 // ── F. API Export Count ─────────────────────────────
 
 describe('FP-022 API Export Count', () => {
-  it('tam olarak 23 export fonksiyonu var (19 + 4 FP-022)', async () => {
+  it('tam olarak 25 export fonksiyonu var (19 + 4 FP-022)', async () => {
     const turkuVideoApi = await import('../../api/turkuVideoApi')
     const exports = Object.keys(turkuVideoApi)
-    expect(exports).toHaveLength(23)
+    expect(exports).toHaveLength(25)
   })
 })

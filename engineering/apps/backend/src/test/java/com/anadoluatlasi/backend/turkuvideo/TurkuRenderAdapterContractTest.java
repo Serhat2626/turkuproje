@@ -36,11 +36,11 @@ class TurkuRenderAdapterContractTest {
     // ── A. Endpoint Inventory (unchanged) ──
 
     @Nested
-    @DisplayName("A. Endpoint Inventory (44 = 25 POST + 19 GET)")
+    @DisplayName("A. Endpoint Inventory (46 = 26 POST + 20 GET)")
     class EndpointInventory {
 
         @Test
-        @DisplayName("total 44 = 25 POST + 19 GET")
+        @DisplayName("total 46 = 26 POST + 20 GET")
         void totalEndpoints() {
             long post = countMethods(AdminReviewController.class, PostMapping.class)
                     + countMethods(AdminPipelineController.class, PostMapping.class)
@@ -50,9 +50,9 @@ class TurkuRenderAdapterContractTest {
                     + countMethods(AdminPipelineController.class, GetMapping.class)
                     + countMethods(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + countMethods(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post).as("total POST").isEqualTo(25);
-            assertThat(get).as("total GET").isEqualTo(19);
-            assertThat(post + get).as("total endpoints").isEqualTo(44);
+            assertThat(post).as("total POST").isEqualTo(26);
+            assertThat(get).as("total GET").isEqualTo(20);
+            assertThat(post + get).as("total endpoints").isEqualTo(46);
         }
 
         @Test

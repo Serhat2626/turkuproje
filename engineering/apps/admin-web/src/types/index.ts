@@ -2691,3 +2691,63 @@ export interface TurkuRenderReviewPackage {
   totalSizeBytes: number
   internalOnly: true
 }
+
+// FP-049: Internal dry-run trigger types
+
+export type TurkuStoryboardInternalRenderChainStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'STORYBOARD_ACCEPTED'
+  | 'SCENE_PLANS_CREATED'
+  | 'MULTI_SCENE_JOB_READY'
+  | 'SYNTHETIC_CLIPS_GENERATED'
+  | 'STITCHED_ARTIFACT_VERIFIED'
+  | 'REVIEW_PACKAGE_READY_INTERNAL_ONLY'
+  | 'ADMIN_METADATA_VISIBLE'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuStoryboardInternalRenderChainIssueCode =
+  | 'NONE'
+  | 'ADAPTER_FAILED'
+  | 'SCENE_PLAN_FAILED'
+  | 'MULTI_SCENE_JOB_FAILED'
+  | 'CLIP_GENERATION_FAILED'
+  | 'STITCHING_FAILED'
+  | 'LIFECYCLE_VERIFICATION_FAILED'
+  | 'REVIEW_PACKAGE_FAILED'
+  | 'ADMIN_VISIBILITY_UNAVAILABLE'
+  | 'SAFETY_VIOLATION'
+
+export interface TurkuInternalDryRunSceneInput {
+  opaqueSceneRef: string
+  sceneOrder: number
+  targetDurationSeconds: number
+  targetFps: number
+  targetWidth: number
+  targetHeight: number
+  targetFormat: string
+}
+
+export interface TurkuInternalDryRunTriggerRequest {
+  opaqueStoryboardRef: string
+  opaqueStoryRef: string
+  sceneInputs: TurkuInternalDryRunSceneInput[]
+}
+
+export interface TurkuInternalDryRunTriggerResponse {
+  opaqueChainRef: string
+  opaqueStoryboardRef: string
+  status: TurkuStoryboardInternalRenderChainStatus
+  issueCodes: TurkuStoryboardInternalRenderChainIssueCode[]
+  sceneCount: number
+  generatedClipCount: number
+  stitchedArtifactPresent: boolean
+  reviewPackageStatus: string | null
+  adminMetadataVisible: boolean
+  totalDurationSeconds: number
+  maxWidth: number
+  maxHeight: number
+  maxFps: number
+  totalSizeBytes: number
+  internalOnly: true
+}

@@ -50,6 +50,7 @@ public class TurkuVideoProjectController {
     private final TurkuRenderManifestService renderManifestService;
     private final TurkuRenderJobService renderJobService;
     private final TurkuRenderExecutionService renderExecutionService;
+    private final TurkuStoryboardInternalRenderChainHarness storyboardChainHarness;
     private final AdminActorResolver actorResolver;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -61,6 +62,7 @@ public class TurkuVideoProjectController {
                                         TurkuRenderManifestService renderManifestService,
                                         TurkuRenderJobService renderJobService,
                                         TurkuRenderExecutionService renderExecutionService,
+                                        TurkuStoryboardInternalRenderChainHarness storyboardChainHarness,
                                         AdminActorResolver actorResolver) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
@@ -71,6 +73,7 @@ public class TurkuVideoProjectController {
         this.renderManifestService = renderManifestService;
         this.renderJobService = renderJobService;
         this.renderExecutionService = renderExecutionService;
+        this.storyboardChainHarness = storyboardChainHarness;
         this.actorResolver = actorResolver;
     }
 
@@ -602,6 +605,40 @@ public class TurkuVideoProjectController {
     public ResponseEntity<ApiResponse<TurkuRenderExecutionSafetyResponse>> getRenderExecutionSafety(
             @PathVariable UUID id) {
         TurkuRenderExecutionSafetyResponse response = renderExecutionService.getRenderExecutionSafety(id);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── POST /admin/turku-video-projects/{id}/trigger-internal-dry-run ──
+
+    @PostMapping("/{id}/trigger-internal-dry-run")
+    @Operation(summary = "Dahili hikaye-video dry-run tetikle",
+               description = "FP-047 storyboard render zincirini fake/test-double ile çalıştırır. Gerçek render yok. Yayın/dışa aktarım yok.")
+    public ResponseEntity<ApiResponse<TurkuInternalDryRunTriggerResponse>> triggerInternalDryRun(
+            @PathVariable UUID id,
+            @RequestBody TurkuInternalDryRunTriggerRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+        resolvePlanningActor(actorRole, actorReference);
+        var fixture = new TurkuStoryboardInternalRenderChainFixture(
+                request.getOpaqueStoryboardRef(),
+                request.getOpaqueStoryRef(),
+                request.getSceneInputs());
+        var summary = storyboardChainHarness.execute(fixture);
+        var response = new TurkuInternalDryRunTriggerResponse(summary);
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── GET /admin/turku-video-projects/{id}/internal-dry-run-status ──
+
+    @GetMapping("/{id}/internal-dry-run-status")
+    @Operation(summary = "Dahili dry-run durumu",
+               description = "Dahili dry-run meta veri durumunu döndürür. Yayın/dışa aktarım yok.")
+    public ResponseEntity<ApiResponse<TurkuInternalDryRunTriggerResponse>> getInternalDryRunStatus(
+            @PathVariable UUID id) {
+        // Fake fixture — returns metadata-only summary
+        var fixture = TurkuStoryboardInternalRenderChainFixture.turkuFixture(3);
+        var summary = storyboardChainHarness.execute(fixture);
+        var response = new TurkuInternalDryRunTriggerResponse(summary);
         return ResponseEntity.ok(ApiResponse.success(response));
     }
 

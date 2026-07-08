@@ -177,8 +177,8 @@ describe('turkuVideoApi', () => {
     expect(source).not.toContain('publicUrl')
   })
 
-  it('tam olarak 23 export fonksiyonu var', () => {
+  it('tam olarak 25 export fonksiyonu var', () => {
     const exports = Object.keys(turkuVideoApi)
-    expect(exports).toHaveLength(23)
+    expect(exports).toHaveLength(25)
   })
 })

@@ -399,9 +399,9 @@ class TurkuInternalRenderQueueTest {
     }
 
     // ── K. Endpoint Inventory ──
-    @Nested @DisplayName("K. Endpoint Inventory (44 = 25 POST + 19 GET)")
+    @Nested @DisplayName("K. Endpoint Inventory (46 = 26 POST + 20 GET)")
     class Endpoints {
-        @Test @DisplayName("44 = 25 POST + 19 GET")
+        @Test @DisplayName("46 = 26 POST + 20 GET")
         void total() {
             long post = count(AdminReviewController.class, PostMapping.class)
                     + count(AdminPipelineController.class, PostMapping.class)
@@ -411,9 +411,9 @@ class TurkuInternalRenderQueueTest {
                     + count(AdminPipelineController.class, GetMapping.class)
                     + count(AdminWorkflowObservabilityController.class, GetMapping.class)
                     + count(TurkuVideoProjectController.class, GetMapping.class);
-            assertThat(post + get).isEqualTo(44);
-            assertThat(post).isEqualTo(25);
-            assertThat(get).isEqualTo(19);
+            assertThat(post + get).isEqualTo(46);
+            assertThat(post).isEqualTo(26);
+            assertThat(get).isEqualTo(20);
         }
         private long count(Class<?> c, Class<? extends java.lang.annotation.Annotation> a) {
             return Arrays.stream(c.getDeclaredMethods()).filter(m -> m.isAnnotationPresent(a)).count();

@@ -24,8 +24,8 @@ function readFile(relativePath: string): string {
 // ── A. API Client Completeness ──────────────────────
 
 describe('FP-022 Closure: API Client', () => {
-  it('tam olarak 23 export fonksiyonu var', () => {
-    expect(Object.keys(turkuVideoApi)).toHaveLength(23)
+  it('tam olarak 25 export fonksiyonu var', () => {
+    expect(Object.keys(turkuVideoApi)).toHaveLength(25)
   })
 
   // FP-019 functions

@@ -19,6 +19,8 @@ import type {
   TurkuRenderJobResponse,
   TurkuRenderExecutionResponse,
   TurkuRenderExecutionSafetyResponse,
+  TurkuInternalDryRunTriggerRequest,
+  TurkuInternalDryRunTriggerResponse,
 } from '../types'
 
 /**
@@ -207,4 +209,22 @@ export function getTurkuRenderExecutionSafety(
   id: string
 ): Promise<ApiResponse<TurkuRenderExecutionSafetyResponse>> {
   return request<TurkuRenderExecutionSafetyResponse>(`${BASE}/${id}/render-execution-safety`)
+}
+
+// FP-049: Internal dry-run trigger
+
+export function triggerInternalDryRun(
+  id: string,
+  data: TurkuInternalDryRunTriggerRequest
+): Promise<ApiResponse<TurkuInternalDryRunTriggerResponse>> {
+  return request<TurkuInternalDryRunTriggerResponse>(`${BASE}/${id}/trigger-internal-dry-run`, {
+    method: 'POST',
+    body: JSON.stringify(data),
+  })
+}
+
+export function getInternalDryRunStatus(
+  id: string
+): Promise<ApiResponse<TurkuInternalDryRunTriggerResponse>> {
+  return request<TurkuInternalDryRunTriggerResponse>(`${BASE}/${id}/internal-dry-run-status`)
 }
