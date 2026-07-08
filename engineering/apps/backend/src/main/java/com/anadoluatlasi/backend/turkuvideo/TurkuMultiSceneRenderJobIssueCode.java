@@ -1,0 +1,24 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * FP-038: Multi-scene render job issue codes.
+ */
+public enum TurkuMultiSceneRenderJobIssueCode {
+    NONE,
+    EMPTY_SCENE_LIST,
+    TOO_MANY_SCENES,
+    SCENE_ORDER_NOT_POSITIVE,
+    SCENE_ORDER_NOT_CONTIGUOUS,
+    SCENE_ORDER_DUPLICATE,
+    SCENE_REF_DUPLICATE,
+    SCENE_REF_MISSING,
+    JOB_REF_MISSING,
+    SCENE_NOT_READY,
+    SCENE_REJECTED,
+    SCENE_FAILED,
+    MISSING_PRIMARY_VIDEO,
+    DURATION_PER_SCENE_EXCEEDS_LIMIT,
+    TOTAL_DURATION_EXCEEDS_LIMIT,
+    FPS_EXCEEDS_LIMIT,
+    RESOLUTION_EXCEEDS_LIMIT
+}
