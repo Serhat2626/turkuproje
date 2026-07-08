@@ -3468,3 +3468,49 @@ export interface TurkuImageGenerationExecutionResult {
   fakeResultCount: number
   validationSummary: string
 }
+
+// ── RPE-007: Artifact Verification + Render Package ─────────
+
+export type TurkuArtifactVerificationStatus =
+  | 'NOT_VERIFIED'
+  | 'FAKE_VERIFIED'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_OPERATOR_REVIEW'
+  | 'FAILED_SAFE'
+
+export type TurkuRenderPackageStatus =
+  | 'NOT_READY'
+  | 'DRAFT'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_MANUAL_GATE'
+  | 'FAILED_SAFE'
+
+export interface TurkuSceneArtifactReadiness {
+  sceneNo: number
+  opaqueArtifactRef: string
+  artifactLabel: string
+  verified: boolean
+  verificationNote: string
+}
+
+export interface TurkuArtifactVerificationReport {
+  status: TurkuArtifactVerificationStatus
+  opaqueVerificationRef: string | null
+  opaqueGenerationRef: string | null
+  sceneReadiness: TurkuSceneArtifactReadiness[]
+  totalScenes: number
+  verifiedScenes: number
+  validationSummary: string
+}
+
+export interface TurkuRenderPackageResult {
+  status: TurkuRenderPackageStatus
+  opaqueRenderPackageRef: string | null
+  opaqueVerificationRef: string | null
+  renderInputManifestSummary: string
+  renderPrerequisiteLabels: string[]
+  localManualRenderEnabled: boolean
+  localManualRenderNote: string
+  blockedReasons: string[]
+  validationSummary: string
+}
