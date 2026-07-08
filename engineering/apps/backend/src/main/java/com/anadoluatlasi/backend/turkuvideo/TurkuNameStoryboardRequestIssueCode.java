@@ -1,0 +1,15 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+public enum TurkuNameStoryboardRequestIssueCode {
+    TITLE_EMPTY,
+    TITLE_TOO_LONG,
+    TITLE_CONTAINS_LYRICS,
+    TITLE_CONTAINS_MULTILINE,
+    TITLE_CONTAINS_URL,
+    SCENE_COUNT_OUT_OF_RANGE,
+    DURATION_OUT_OF_RANGE,
+    FPS_OUT_OF_RANGE,
+    RESOLUTION_OUT_OF_RANGE,
+    MEDIA_INPUT_DETECTED,
+    INTERNAL_ERROR
+}

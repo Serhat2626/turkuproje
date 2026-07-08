@@ -2930,3 +2930,41 @@ export interface ProductionMediaPublicPlaybackResult {
   sizeBytes: number
   controlledPlaybackEligible: boolean
 }
+
+// ── RP-001: Türkü Name Storyboard Request ───────────────────
+
+export type TurkuNameStoryboardRequestStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'TURKU_NAME_ACCEPTED'
+  | 'COPYRIGHT_SAFE_INTENT_CREATED'
+  | 'READY_FOR_STORYBOARD_GENERATION_BOUNDARY'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuNameStoryboardRequestIssueCode =
+  | 'TITLE_EMPTY'
+  | 'TITLE_TOO_LONG'
+  | 'TITLE_CONTAINS_LYRICS'
+  | 'TITLE_CONTAINS_MULTILINE'
+  | 'TITLE_CONTAINS_URL'
+  | 'SCENE_COUNT_OUT_OF_RANGE'
+  | 'DURATION_OUT_OF_RANGE'
+  | 'FPS_OUT_OF_RANGE'
+  | 'RESOLUTION_OUT_OF_RANGE'
+  | 'MEDIA_INPUT_DETECTED'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuNameStoryboardRequestResult {
+  status: TurkuNameStoryboardRequestStatus
+  issueCodes: TurkuNameStoryboardRequestIssueCode[]
+  opaqueStoryboardRequestRef: string | null
+  safeTurkuTitleLabel: string | null
+  inspirationMode: string | null
+  targetSceneCount: number
+  targetDurationMs: number
+  targetFormat: string | null
+  targetWidth: number
+  targetHeight: number
+  targetFps: number
+  copyrightSafeIntentSummary: string | null
+}
