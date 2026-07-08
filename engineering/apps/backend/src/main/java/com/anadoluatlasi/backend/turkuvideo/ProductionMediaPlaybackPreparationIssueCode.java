@@ -1,0 +1,13 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+public enum ProductionMediaPlaybackPreparationIssueCode {
+    STORAGE_REF_MISSING,
+    STORAGE_REF_NOT_VERIFIED,
+    STORAGE_REF_REJECTED,
+    STORAGE_REF_FAILED,
+    FORMAT_NOT_SUPPORTED,
+    SIZE_EXCEEDS_PLAYBACK_LIMIT,
+    DURATION_EXCEEDS_LIMIT,
+    RESOLUTION_NOT_SUPPORTED,
+    INTERNAL_ERROR
+}
