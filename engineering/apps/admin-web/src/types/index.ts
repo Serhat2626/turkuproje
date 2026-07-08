@@ -3212,3 +3212,39 @@ export interface TurkuWorkOrderPreviewResult {
   blockedItems: number
   workOrderStepLabels: string[]
 }
+
+// ── RPE-001: Execution Safety Gate ──────────────────────────
+
+export type TurkuExecutionGateStatus =
+  | 'EXECUTION_NOT_ENABLED'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_OPERATOR_GATE'
+  | 'ELIGIBLE_FOR_FUTURE_EXECUTION_REVIEW'
+  | 'FAILED_SAFE'
+
+export type TurkuExecutionGateIssueCode =
+  | 'WORK_ORDER_MISSING'
+  | 'WORK_ORDER_NOT_ELIGIBLE'
+  | 'CHECKLIST_INCOMPLETE'
+  | 'IMAGE_PROVIDER_NOT_CONFIGURED'
+  | 'RENDER_ENVIRONMENT_NOT_CONFIGURED'
+  | 'OPERATOR_GATE_NOT_PASSED'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuExecutionCapability {
+  capabilityLabel: string
+  enabled: boolean
+  disabledReason: string
+}
+
+export interface TurkuExecutionGateResult {
+  status: TurkuExecutionGateStatus
+  blockedReasons: TurkuExecutionGateIssueCode[]
+  opaqueExecutionRef: string | null
+  opaqueWorkOrderRef: string | null
+  safeTurkuTitleLabel: string | null
+  auditDecisionSummary: string
+  capabilities: TurkuExecutionCapability[]
+  requiredOperatorGates: string[]
+  futureExecutionStepLabels: string[]
+}
