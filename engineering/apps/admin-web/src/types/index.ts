@@ -3380,3 +3380,45 @@ export interface TurkuExecutionPackageResult {
   futureExecutionStepLabels: string[]
   validationSummary: string
 }
+
+// ── RPE-005: Image Prompt Package + Manual Approval ─────────
+
+export type TurkuImagePromptPackageStatus =
+  | 'DRAFT'
+  | 'PENDING_MANUAL_APPROVAL'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_OPERATOR_REVIEW'
+  | 'FAILED_SAFE'
+
+export type TurkuImagePromptPackageIssueCode =
+  | 'EXECUTION_PACKAGE_NOT_READY'
+  | 'SCENE_VISUAL_BRIEF_MISSING'
+  | 'SAFETY_CONSTRAINT_VIOLATED'
+  | 'PROMPT_CONTENT_BLOCKED'
+  | 'OPERATOR_REVIEW_PENDING'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuSceneImagePrompt {
+  sceneNo: number
+  safePromptSummary: string
+  safeNegativeConstraints: string
+  safetyConstraintLabels: string[]
+  aspectRatio: string
+  styleHint: string
+  blocked: boolean
+  blockedReason: string | null
+}
+
+export interface TurkuImagePromptPackageResult {
+  status: TurkuImagePromptPackageStatus
+  issues: TurkuImagePromptPackageIssueCode[]
+  opaquePromptPackageRef: string | null
+  opaqueExecutionPackageRef: string | null
+  safeTurkuTitleLabel: string | null
+  scenePrompts: TurkuSceneImagePrompt[]
+  totalScenes: number
+  blockedScenes: number
+  manualApprovalGranted: boolean
+  approvalGateLabel: string
+  validationSummary: string
+}
