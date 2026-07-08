@@ -2792,3 +2792,33 @@ export interface TurkuInternalDryRunRecordSummary {
   sizeBytes: number
   internalOnly: true
 }
+
+// ── FP-053: Dry Run Operational Summary ──
+
+export type TurkuInternalDryRunOperationalSummaryStatus =
+  | 'NO_RECORDS'
+  | 'ALL_ACCEPTED'
+  | 'MIXED'
+  | 'ALL_FAILED'
+  | 'ALL_REJECTED'
+
+export type TurkuInternalDryRunOperationalSummaryIssueCode =
+  | 'NO_RECORDS_AVAILABLE'
+  | 'HIGH_FAILURE_RATE'
+  | 'HIGH_REJECTION_RATE'
+  | 'STITCH_SUCCESS_LOW'
+  | 'AGGREGATE_LIMIT_EXCEEDED'
+
+export interface TurkuInternalDryRunOperationalSummary {
+  totalRecordCount: number
+  acceptedCount: number
+  failedCount: number
+  rejectedCount: number
+  readyForAdminHistoryOnlyCount: number
+  overallStatus: TurkuInternalDryRunOperationalSummaryStatus
+  issueCodes: TurkuInternalDryRunOperationalSummaryIssueCode[]
+  totalSceneCount: number
+  totalClipCount: number
+  stitchedCount: number
+  internalOnly: true
+}
