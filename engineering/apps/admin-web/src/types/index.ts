@@ -2822,3 +2822,39 @@ export interface TurkuInternalDryRunOperationalSummary {
   stitchedCount: number
   internalOnly: true
 }
+
+// ── PD-004: Internal Preview Player Boundary ────────────────
+
+export type ProductionMediaPlaybackPreparationStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'PRIVATE_STORAGE_REF_ACCEPTED'
+  | 'PLAYBACK_METADATA_PREPARED_INTERNAL_ONLY'
+  | 'READY_FOR_INTERNAL_PREVIEW_ONLY'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type ProductionMediaPlaybackPreparationIssueCode =
+  | 'STORAGE_REF_MISSING'
+  | 'STORAGE_REF_NOT_VERIFIED'
+  | 'STORAGE_REF_REJECTED'
+  | 'STORAGE_REF_FAILED'
+  | 'FORMAT_NOT_SUPPORTED'
+  | 'SIZE_EXCEEDS_PLAYBACK_LIMIT'
+  | 'DURATION_EXCEEDS_LIMIT'
+  | 'RESOLUTION_NOT_SUPPORTED'
+  | 'INTERNAL_ERROR'
+
+export interface ProductionMediaPlaybackPreparationResult {
+  opaquePlaybackPreparationRef: string
+  opaqueStorageObjectRef: string
+  opaqueArtifactRef: string
+  mediaFormat: string
+  durationSeconds: number
+  fps: number
+  width: number
+  height: number
+  sizeBytes: number
+  status: ProductionMediaPlaybackPreparationStatus
+  issueCodes: ProductionMediaPlaybackPreparationIssueCode[]
+  internalPreviewEligible: boolean
+}
