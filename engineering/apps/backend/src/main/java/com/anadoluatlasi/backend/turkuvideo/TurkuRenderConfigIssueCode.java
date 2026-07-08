@@ -1,0 +1,11 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+public enum TurkuRenderConfigIssueCode {
+    RENDER_ENVIRONMENT_MISSING,
+    FFMPEG_NOT_AVAILABLE,
+    OUTPUT_FORMAT_NOT_SELECTED,
+    RESOLUTION_NOT_SELECTED,
+    SAFETY_PREREQUISITE_NOT_MET,
+    OPERATOR_REVIEW_PENDING,
+    INTERNAL_ERROR
+}

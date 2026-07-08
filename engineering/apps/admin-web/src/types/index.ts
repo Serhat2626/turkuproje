@@ -3290,3 +3290,53 @@ export interface TurkuProviderConfigResult {
   executionEnabled: boolean
   safetyValidationSummary: string
 }
+
+// ── RPE-003: Render Pipeline Configuration ──────────────────
+
+export type TurkuRenderConfigStatus =
+  | 'NOT_CONFIGURED'
+  | 'CONFIGURATION_DRAFT'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_OPERATOR_REVIEW'
+  | 'FAILED_SAFE'
+
+export type TurkuRenderConfigIssueCode =
+  | 'RENDER_ENVIRONMENT_MISSING'
+  | 'FFMPEG_NOT_AVAILABLE'
+  | 'OUTPUT_FORMAT_NOT_SELECTED'
+  | 'RESOLUTION_NOT_SELECTED'
+  | 'SAFETY_PREREQUISITE_NOT_MET'
+  | 'OPERATOR_REVIEW_PENDING'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuRenderEnvironmentBoundary {
+  environmentLabel: string
+  environmentConfigured: boolean
+  configurationStatusLabel: string
+}
+
+export interface TurkuFfmpegCapabilityMetadata {
+  capabilityLabel: string
+  available: boolean
+  availabilityNote: string
+}
+
+export interface TurkuOutputFormatPolicy {
+  formatLabel: string
+  width: number
+  height: number
+  frameRate: number
+  policyNote: string
+}
+
+export interface TurkuRenderPipelineConfigResult {
+  status: TurkuRenderConfigStatus
+  issues: TurkuRenderConfigIssueCode[]
+  opaqueRenderConfigRef: string | null
+  environmentBoundary: TurkuRenderEnvironmentBoundary | null
+  ffmpegCapabilities: TurkuFfmpegCapabilityMetadata[]
+  outputFormatPolicy: TurkuOutputFormatPolicy | null
+  safetyPrerequisiteLabels: string[]
+  renderExecutionEnabled: boolean
+  validationSummary: string
+}
