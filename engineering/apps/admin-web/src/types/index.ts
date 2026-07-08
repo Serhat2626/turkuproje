@@ -2751,3 +2751,44 @@ export interface TurkuInternalDryRunTriggerResponse {
   totalSizeBytes: number
   internalOnly: true
 }
+
+// ── FP-051: Dry Run Record & Audit-Safe History ──
+
+export type TurkuInternalDryRunRecordStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'TRIGGER_ACCEPTED'
+  | 'DRY_RUN_STARTED'
+  | 'METADATA_CAPTURED'
+  | 'READY_FOR_ADMIN_HISTORY_ONLY'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuInternalDryRunRecordIssueCode =
+  | 'TRIGGER_REJECTED'
+  | 'DRY_RUN_CHAIN_FAILED'
+  | 'METADATA_CAPTURE_FAILED'
+  | 'INVALID_FIXTURE_INPUT'
+  | 'SCENE_COUNT_MISMATCH'
+  | 'CLIP_COUNT_MISMATCH'
+  | 'STITCH_NOT_PRESENT'
+  | 'REVIEW_PACKAGE_MISSING'
+  | 'ADMIN_VISIBILITY_BLOCKED'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuInternalDryRunRecordSummary {
+  opaqueRecordRef: string
+  opaqueDryRunRef: string
+  opaqueStoryboardRef: string
+  status: TurkuInternalDryRunRecordStatus
+  issueCodes: TurkuInternalDryRunRecordIssueCode[]
+  sceneCount: number
+  generatedClipCount: number
+  inputClipCount: number
+  stitchedArtifactPresent: boolean
+  durationSeconds: number
+  fps: number
+  width: number
+  height: number
+  sizeBytes: number
+  internalOnly: true
+}
