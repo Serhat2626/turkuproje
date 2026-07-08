@@ -3422,3 +3422,49 @@ export interface TurkuImagePromptPackageResult {
   approvalGateLabel: string
   validationSummary: string
 }
+
+// ── RPE-006: Image Generation Execution ─────────────────────
+
+export type TurkuImageGenerationExecutionMode =
+  | 'DISABLED'
+  | 'CI_FAKE'
+  | 'LOCAL_MANUAL_ONLY'
+
+export type TurkuImageGenerationStatus =
+  | 'NOT_STARTED'
+  | 'FAKE_RESULT_AVAILABLE'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_MANUAL_GATE'
+  | 'FAILED_SAFE'
+
+export type TurkuImageGenerationIssueCode =
+  | 'PROMPT_PACKAGE_NOT_APPROVED'
+  | 'MANUAL_GATE_NOT_PASSED'
+  | 'PROVIDER_EXECUTION_DISABLED'
+  | 'SAFETY_CONSTRAINT_VIOLATED'
+  | 'OPERATOR_REVIEW_PENDING'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuFakeImageResultMetadata {
+  sceneNo: number
+  opaqueArtifactRef: string
+  artifactLabel: string
+  formatHint: string
+  widthHint: number
+  heightHint: number
+  generationNote: string
+}
+
+export interface TurkuImageGenerationExecutionResult {
+  status: TurkuImageGenerationStatus
+  issues: TurkuImageGenerationIssueCode[]
+  opaqueGenerationRef: string | null
+  opaquePromptPackageRef: string | null
+  executionMode: TurkuImageGenerationExecutionMode
+  providerDisabledReason: string
+  manualGatePassed: boolean
+  fakeResults: TurkuFakeImageResultMetadata[]
+  totalScenes: number
+  fakeResultCount: number
+  validationSummary: string
+}
