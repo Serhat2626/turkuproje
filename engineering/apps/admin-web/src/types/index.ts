@@ -2858,3 +2858,38 @@ export interface ProductionMediaPlaybackPreparationResult {
   issueCodes: ProductionMediaPlaybackPreparationIssueCode[]
   internalPreviewEligible: boolean
 }
+
+// ── PD-005: Human Review Decision Workflow ──────────────────
+
+export type ProductionMediaReviewDecisionType =
+  | 'APPROVE_FOR_INTERNAL_DELIVERY_PREP'
+  | 'REJECT_FOR_INTERNAL_REVISION'
+  | 'REQUEST_INTERNAL_FIX'
+  | 'MARK_UNSAFE_INTERNAL_ONLY'
+
+export type ProductionMediaReviewDecisionStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'REVIEW_METADATA_ACCEPTED'
+  | 'DECISION_RECORDED_INTERNAL_ONLY'
+  | 'APPROVED_FOR_INTERNAL_DELIVERY_PREP'
+  | 'REJECTED_FOR_INTERNAL_REVISION'
+  | 'INTERNAL_FIX_REQUESTED'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type ProductionMediaReviewDecisionIssueCode =
+  | 'PREVIEW_METADATA_MISSING'
+  | 'PREVIEW_NOT_ELIGIBLE'
+  | 'STORAGE_REF_MISSING'
+  | 'REVIEW_PACKAGE_MISSING'
+  | 'DECISION_TYPE_INVALID'
+  | 'ARTIFACT_NOT_VERIFIED'
+  | 'INTERNAL_ERROR'
+
+export interface ProductionMediaReviewDecisionResult {
+  status: ProductionMediaReviewDecisionStatus
+  decisionType: ProductionMediaReviewDecisionType | null
+  issueCodes: ProductionMediaReviewDecisionIssueCode[]
+  opaqueDecisionRef: string | null
+  internalOnly: true
+}

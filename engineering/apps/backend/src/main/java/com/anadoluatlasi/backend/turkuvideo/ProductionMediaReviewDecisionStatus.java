@@ -1,0 +1,15 @@
+package com.anadoluatlasi.backend.turkuvideo;
+
+/**
+ * PD-005: Review decision statuses. No READY_FOR_PUBLISH/COMPLETED/PUBLIC/AUTO_APPROVED.
+ */
+public enum ProductionMediaReviewDecisionStatus {
+    CREATED_INTERNAL_ONLY,
+    REVIEW_METADATA_ACCEPTED,
+    DECISION_RECORDED_INTERNAL_ONLY,
+    APPROVED_FOR_INTERNAL_DELIVERY_PREP,
+    REJECTED_FOR_INTERNAL_REVISION,
+    INTERNAL_FIX_REQUESTED,
+    REJECTED_UNSAFE,
+    FAILED_SAFE
+}
