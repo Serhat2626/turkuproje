@@ -3173,3 +3173,42 @@ export interface TurkuManualEnablementResult {
   timelineComplete: boolean
   noBlockedScenes: boolean
 }
+
+// ── MP-002: Manual Production Checklist + Work Order ────────
+
+export type TurkuWorkOrderPreviewStatus =
+  | 'DRAFT_PREVIEW'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_MANUAL_REVIEW'
+  | 'ELIGIBLE_FOR_MANUAL_PREPARATION'
+  | 'FAILED_SAFE'
+
+export type TurkuWorkOrderPreviewIssueCode =
+  | 'ENABLEMENT_NOT_ELIGIBLE'
+  | 'ENABLEMENT_MISSING'
+  | 'CHECKLIST_INCOMPLETE'
+  | 'SAFETY_PREREQUISITE_FAILED'
+  | 'BLOCKED_SCENES_UNRESOLVED'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuProductionChecklistItem {
+  order: number
+  label: string
+  instruction: string
+  prerequisiteMet: boolean
+  blockedReason: string | null
+}
+
+export interface TurkuWorkOrderPreviewResult {
+  status: TurkuWorkOrderPreviewStatus
+  blockedReasons: TurkuWorkOrderPreviewIssueCode[]
+  opaqueWorkOrderRef: string | null
+  opaqueEnablementRef: string | null
+  safeTurkuTitleLabel: string | null
+  operatorSummary: string
+  checklistItems: TurkuProductionChecklistItem[]
+  totalItems: number
+  completedItems: number
+  blockedItems: number
+  workOrderStepLabels: string[]
+}
