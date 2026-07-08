@@ -2968,3 +2968,49 @@ export interface TurkuNameStoryboardRequestResult {
   targetFps: number
   copyrightSafeIntentSummary: string | null
 }
+
+// ── RP-002: Safe Storyboard Draft Orchestration ─────────────
+
+export type TurkuStoryboardDraftStatus =
+  | 'CREATED_INTERNAL_ONLY'
+  | 'REQUEST_ACCEPTED'
+  | 'DRAFT_ORCHESTRATION_STARTED'
+  | 'SCENES_GENERATED_SAFE'
+  | 'READY_FOR_ADMIN_PREVIEW'
+  | 'REJECTED_UNSAFE'
+  | 'FAILED_SAFE'
+
+export type TurkuStoryboardDraftIssueCode =
+  | 'REQUEST_MISSING'
+  | 'REQUEST_NOT_READY'
+  | 'TITLE_MISSING'
+  | 'SCENE_COUNT_INVALID'
+  | 'DURATION_INVALID'
+  | 'COPYRIGHT_INTENT_MISSING'
+  | 'ORCHESTRATION_FAILED'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuStoryboardDraftScene {
+  sceneNumber: number
+  purpose: string
+  mood: string
+  visualDirection: string
+  durationMs: number
+}
+
+export interface TurkuStoryboardDraftResult {
+  status: TurkuStoryboardDraftStatus
+  issueCodes: TurkuStoryboardDraftIssueCode[]
+  opaqueDraftRef: string | null
+  opaqueRequestRef: string | null
+  safeTurkuTitleLabel: string | null
+  copyrightSafeIntentSummary: string | null
+  orchestrationMode: string | null
+  scenes: TurkuStoryboardDraftScene[]
+  totalSceneCount: number
+  totalDurationMs: number
+  targetFormat: string | null
+  targetWidth: number
+  targetHeight: number
+  targetFps: number
+}
