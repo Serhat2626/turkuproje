@@ -3633,3 +3633,55 @@ export interface TurkuLiveStorageResult {
   blockedReasons: string[]
   validationSummary: string
 }
+
+// ── LIVE-004: FFmpeg Render + Render Artifact Verification ───
+
+export type TurkuLiveRenderMode =
+  | 'CI_FAKE'
+  | 'LOCAL_MANUAL_REAL_FFMPEG'
+
+export type TurkuLiveRenderStatus =
+  | 'NOT_STARTED'
+  | 'FAKE_RENDER_AVAILABLE'
+  | 'REAL_RENDER_AVAILABLE_INTERNAL'
+  | 'BLOCKED_BY_KILL_SWITCH'
+  | 'BLOCKED_BY_OPERATOR_GATE'
+  | 'BLOCKED_BY_ARTIFACT_READINESS'
+  | 'FAILED_SAFE'
+
+export type TurkuLiveRenderIssueCode =
+  | 'ARTIFACTS_NOT_VERIFIED'
+  | 'KILL_SWITCH_ACTIVE'
+  | 'OPERATOR_GATE_NOT_PASSED'
+  | 'RENDER_PACKAGE_MISSING'
+  | 'FFMPEG_UNAVAILABLE'
+  | 'SAFETY_VIOLATION'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuLiveRenderArtifact {
+  opaqueRenderRef: string
+  artifactLabel: string
+  formatHint: string
+  durationSecondsHint: number
+  resolutionHint: string
+  sizeLabel: string
+  verified: boolean
+  verificationNote: string
+  humanReviewRequired: boolean
+}
+
+export interface TurkuLiveRenderResult {
+  status: TurkuLiveRenderStatus
+  mode: TurkuLiveRenderMode
+  issues: TurkuLiveRenderIssueCode[]
+  opaqueRenderJobRef: string | null
+  opaqueStorageRef: string | null
+  killSwitchActive: boolean
+  operatorGatePassed: boolean
+  artifactsReady: boolean
+  renderArtifact: TurkuLiveRenderArtifact | null
+  inputSceneCount: number
+  blockedReasons: string[]
+  sanitizedRenderSummary: string
+  validationSummary: string
+}
