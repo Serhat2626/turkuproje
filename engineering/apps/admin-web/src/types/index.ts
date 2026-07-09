@@ -3514,3 +3514,38 @@ export interface TurkuRenderPackageResult {
   blockedReasons: string[]
   validationSummary: string
 }
+
+// ── LIVE-001: Provider Credential Enablement + Kill Switch ──
+
+export type TurkuLiveProviderStatus =
+  | 'DISABLED_BY_DEFAULT'
+  | 'CREDENTIAL_PRESENT'
+  | 'BLOCKED_BY_KILL_SWITCH'
+  | 'WAITING_FOR_OPERATOR_ENABLEMENT'
+  | 'FAILED_SAFE'
+
+export type TurkuLiveProviderIssueCode =
+  | 'CREDENTIAL_NOT_PRESENT'
+  | 'KILL_SWITCH_ACTIVE'
+  | 'OPERATOR_ENABLEMENT_REQUIRED'
+  | 'PREREQUISITE_NOT_MET'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuKillSwitch {
+  active: boolean
+  reason: string
+  activatedBy: string
+}
+
+export interface TurkuLiveProviderReadinessReport {
+  status: TurkuLiveProviderStatus
+  issues: TurkuLiveProviderIssueCode[]
+  credentialPresent: boolean
+  credentialSourceLabel: string
+  operatorEnabled: boolean
+  killSwitch: TurkuKillSwitch
+  prerequisiteLabels: string[]
+  blockedReasons: string[]
+  providerTypeLabel: string
+  validationSummary: string
+}
