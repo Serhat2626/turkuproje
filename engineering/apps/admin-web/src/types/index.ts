@@ -3685,3 +3685,51 @@ export interface TurkuLiveRenderResult {
   sanitizedRenderSummary: string
   validationSummary: string
 }
+
+// ── LIVE-005: Human Review + Controlled Delivery ────────────
+
+export type TurkuLiveReviewDecision =
+  | 'PENDING'
+  | 'APPROVED_FOR_CONTROLLED_DELIVERY'
+  | 'REJECTED'
+  | 'NEEDS_REVISION'
+
+export type TurkuLiveDeliveryStatus =
+  | 'NOT_ELIGIBLE'
+  | 'PENDING_HUMAN_REVIEW'
+  | 'ELIGIBLE_FOR_CONTROLLED_DELIVERY'
+  | 'BLOCKED_BY_REVIEW'
+  | 'BLOCKED_BY_SAFETY'
+  | 'FAILED_SAFE'
+
+export type TurkuLiveDeliveryIssueCode =
+  | 'RENDER_NOT_VERIFIED'
+  | 'HUMAN_REVIEW_NOT_COMPLETED'
+  | 'REVIEW_REJECTED'
+  | 'REVIEW_NEEDS_REVISION'
+  | 'SAFETY_VIOLATION'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuLiveReviewChecklistItem {
+  label: string
+  checked: boolean
+  note: string
+}
+
+export interface TurkuLiveControlledDeliveryResult {
+  status: TurkuLiveDeliveryStatus
+  issues: TurkuLiveDeliveryIssueCode[]
+  opaqueDeliveryRef: string | null
+  opaqueRenderRef: string | null
+  reviewDecision: TurkuLiveReviewDecision
+  reviewChecklist: TurkuLiveReviewChecklistItem[]
+  renderArtifactLabel: string
+  formatHint: string
+  resolutionHint: string
+  durationLabel: string
+  sizeLabel: string
+  exportEligible: boolean
+  exportEligibilityNote: string
+  blockedReasons: string[]
+  validationSummary: string
+}
