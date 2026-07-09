@@ -3592,3 +3592,44 @@ export interface TurkuLiveGenerationResult {
   sanitizedProviderSummary: string
   validationSummary: string
 }
+
+// ── LIVE-003: Artifact Storage + Verification ───────────────
+
+export type TurkuLiveStorageStatus =
+  | 'NOT_STORED'
+  | 'FAKE_STORED'
+  | 'REAL_STORED_INTERNAL'
+  | 'BLOCKED_BY_SAFETY'
+  | 'WAITING_FOR_MANUAL_GATE'
+  | 'FAILED_SAFE'
+
+export type TurkuLiveStorageIssueCode =
+  | 'GENERATION_RESULT_MISSING'
+  | 'MANUAL_GATE_NOT_PASSED'
+  | 'STORAGE_HANDOFF_FAILED'
+  | 'SAFETY_VIOLATION'
+  | 'INTERNAL_ERROR'
+
+export interface TurkuLiveStoredArtifact {
+  sceneNo: number
+  opaqueInternalRef: string
+  artifactLabel: string
+  formatHint: string
+  widthHint: number
+  heightHint: number
+  verified: boolean
+  verificationNote: string
+}
+
+export interface TurkuLiveStorageResult {
+  status: TurkuLiveStorageStatus
+  issues: TurkuLiveStorageIssueCode[]
+  opaqueStorageRef: string | null
+  opaqueGenerationRef: string | null
+  storedArtifacts: TurkuLiveStoredArtifact[]
+  totalScenes: number
+  storedCount: number
+  verifiedCount: number
+  blockedReasons: string[]
+  validationSummary: string
+}
