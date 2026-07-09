@@ -3549,3 +3549,46 @@ export interface TurkuLiveProviderReadinessReport {
   providerTypeLabel: string
   validationSummary: string
 }
+
+// ── LIVE-002: Manual-Gated Real Image Generation ────────────
+
+export type TurkuLiveGenerationMode =
+  | 'CI_FAKE'
+  | 'LOCAL_MANUAL_REAL_PROVIDER'
+
+export type TurkuLiveGenerationStatus =
+  | 'NOT_STARTED'
+  | 'FAKE_RESULT_AVAILABLE'
+  | 'REAL_PROVIDER_RESULT_AVAILABLE'
+  | 'BLOCKED_BY_KILL_SWITCH'
+  | 'BLOCKED_BY_OPERATOR_GATE'
+  | 'BLOCKED_BY_PROVIDER_READINESS'
+  | 'FAILED_SAFE'
+
+export interface TurkuLiveImageResultMetadata {
+  sceneNo: number
+  opaqueArtifactRef: string
+  artifactLabel: string
+  formatHint: string
+  widthHint: number
+  heightHint: number
+  generationMode: TurkuLiveGenerationMode
+  sanitizedProviderSummary: string
+  humanReviewRequired: boolean
+}
+
+export interface TurkuLiveGenerationResult {
+  status: TurkuLiveGenerationStatus
+  mode: TurkuLiveGenerationMode
+  opaqueGenerationRef: string | null
+  opaquePromptPackageRef: string | null
+  killSwitchActive: boolean
+  operatorGatePassed: boolean
+  providerReady: boolean
+  results: TurkuLiveImageResultMetadata[]
+  totalScenes: number
+  generatedCount: number
+  blockedReasons: string[]
+  sanitizedProviderSummary: string
+  validationSummary: string
+}
