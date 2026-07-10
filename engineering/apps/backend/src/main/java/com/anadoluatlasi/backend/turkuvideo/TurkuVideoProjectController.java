@@ -866,15 +866,24 @@ public class TurkuVideoProjectController {
 
     @GetMapping("/{id}/video")
     @Operation(summary = "Video izle", description = "MinIO'dan üretilen videoyu stream eder.")
-    public ResponseEntity<byte[]> getVideo(@PathVariable UUID id) {
+    public ResponseEntity<org.springframework.core.io.InputStreamResource> getVideo(@PathVariable UUID id) {
         String path = String.format("turku-video/%s/video/final.mp4", id);
-        try (var stream = minioClient.getObject(GetObjectArgs.builder()
-                .bucket(minioConfig.getBucketName()).object(path).build())) {
-            byte[] bytes = stream.readAllBytes();
+        try {
+            // Önce dosya boyutunu öğren
+            io.minio.StatObjectResponse stat = minioClient.statObject(
+                    io.minio.StatObjectArgs.builder()
+                            .bucket(minioConfig.getBucketName()).object(path).build());
+
+            // Stream olarak aç (büyük dosyalar için bellek tasarrufu)
+            var stream = minioClient.getObject(GetObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName()).object(path).build());
+
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType("video/mp4"))
+                    .contentLength(stat.size())
                     .header("Content-Disposition", "inline; filename=turku-video.mp4")
-                    .body(bytes);
+                    .header("Accept-Ranges", "bytes")
+                    .body(new org.springframework.core.io.InputStreamResource(stream));
         } catch (Exception e) {
             return ResponseEntity.notFound().build();
         }
