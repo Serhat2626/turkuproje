@@ -880,6 +880,85 @@ public class TurkuVideoProjectController {
         }
     }
 
+    // ── Music Upload ──
+
+    @PostMapping(value = "/{id}/upload-music", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Operation(summary = "Müzik yükle",
+            description = "Fon müziği veya sözlü türkü kaydı yükler. type: 'fon' veya 'turku'")
+    public ResponseEntity<ApiResponse<Map<String, String>>> uploadMusic(
+            @PathVariable UUID id,
+            @RequestParam("type") String type,
+            @RequestParam("file") org.springframework.web.multipart.MultipartFile file) {
+
+        if (!"fon".equals(type) && !"turku".equals(type)) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("type 'fon' veya 'turku' olmalı"));
+        }
+
+        if (file.isEmpty()) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Dosya boş"));
+        }
+
+        // Dosya uzantısını belirle
+        String originalName = file.getOriginalFilename();
+        String ext = "mp3";
+        if (originalName != null && originalName.contains(".")) {
+            ext = originalName.substring(originalName.lastIndexOf('.') + 1).toLowerCase();
+        }
+
+        String minioPath = String.format("turku-video/%s/music/%s.%s", id, type, ext);
+
+        try {
+            minioClient.putObject(io.minio.PutObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .object(minioPath)
+                    .stream(file.getInputStream(), file.getSize(), -1)
+                    .contentType(file.getContentType() != null ? file.getContentType() : "audio/mpeg")
+                    .build());
+
+            return ResponseEntity.ok(ApiResponse.success(Map.of(
+                    "path", minioPath,
+                    "type", type,
+                    "size", String.valueOf(file.getSize()),
+                    "message", type.equals("fon")
+                            ? "Fon müziği yüklendi — video üretiminde arka planda çalacak"
+                            : "Türkü kaydı yüklendi — videonun sonunda tam sesle çalacak"
+            )));
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("Müzik yükleme hatası: " + e.getMessage()));
+        }
+    }
+
+    // ── GET Music Status ──
+
+    @GetMapping("/{id}/music-status")
+    @Operation(summary = "Müzik durumu", description = "Yüklenmiş müzik dosyalarının durumunu döner")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getMusicStatus(@PathVariable UUID id) {
+        Map<String, Object> status = new java.util.HashMap<>();
+
+        // Fon müziği kontrolü
+        status.put("fonUploaded", checkMinioExists(
+                String.format("turku-video/%s/music/fon.mp3", id)));
+        // Türkü kaydı kontrolü
+        status.put("turkuUploaded", checkMinioExists(
+                String.format("turku-video/%s/music/turku.mp3", id)));
+
+        return ResponseEntity.ok(ApiResponse.success(status));
+    }
+
+    private boolean checkMinioExists(String path) {
+        try {
+            minioClient.statObject(io.minio.StatObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName()).object(path).build());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
     // ── Exception Handling ──
 
     @ExceptionHandler(TurkuVideoProjectException.class)

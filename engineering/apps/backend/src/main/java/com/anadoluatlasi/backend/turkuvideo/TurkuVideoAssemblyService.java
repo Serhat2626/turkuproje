@@ -116,8 +116,28 @@ public class TurkuVideoAssemblyService {
             }
 
             // Segmentleri birleştir
+            Path concatVideo = tempDir.resolve("concat_raw.mp4");
+            concatenateSegments(segmentFiles, concatVideo, tempDir);
+
+            if (!Files.exists(concatVideo) || Files.size(concatVideo) == 0) {
+                throw new RuntimeException("Concat video oluşturulamadı");
+            }
+
+            // Fon müziği ve türkü kaydı kontrol et
             Path finalVideo = tempDir.resolve("final.mp4");
-            concatenateSegments(segmentFiles, finalVideo, tempDir);
+            String fonPath = String.format("turku-video/%s/music/fon.mp3", projectId);
+            String turkuPath = String.format("turku-video/%s/music/turku.mp3", projectId);
+            boolean hasFon = existsInMinio(fonPath);
+            boolean hasTurku = existsInMinio(turkuPath);
+
+            if (hasFon || hasTurku) {
+                log.info("Müzik mix başlıyor: fon={}, türkü={}", hasFon, hasTurku);
+                mixMusicIntoVideo(concatVideo, finalVideo, tempDir, projectId, hasFon, hasTurku);
+            } else {
+                // Müzik yok — direkt concat kullan
+                log.info("Müzik dosyası yok, concat video direkt kullanılıyor");
+                Files.move(concatVideo, finalVideo);
+            }
 
             if (!Files.exists(finalVideo) || Files.size(finalVideo) == 0) {
                 throw new RuntimeException("Final video oluşturulamadı");
@@ -128,8 +148,8 @@ public class TurkuVideoAssemblyService {
             uploadToMinio(videoMinioPath, finalVideo);
 
             long videoSize = Files.size(finalVideo);
-            log.info("Video birleştirme tamamlandı: projectId={}, segments={}, size={}MB",
-                    projectId, segmentFiles.size(), videoSize / (1024 * 1024));
+            log.info("Video birleştirme tamamlandı: projectId={}, segments={}, size={}MB, hasFon={}, hasTurku={}",
+                    projectId, segmentFiles.size(), videoSize / (1024 * 1024), hasFon, hasTurku);
 
             return VideoAssemblyResult.builder()
                     .projectId(projectId)
@@ -233,6 +253,88 @@ public class TurkuVideoAssemblyService {
                 outputFile.toAbsolutePath().toString()
         );
         runFFmpeg(cmd, "concat");
+    }
+
+    // ── FFmpeg: Müzik Mix ──
+
+    /**
+     * Fon müziği ve/veya türkü kaydını videoya ekler.
+     * - Fon müziği: narration altında %12 ses ile loop olarak çalar
+     * - Türkü: videonun sonuna tam sesle eklenir
+     */
+    private void mixMusicIntoVideo(Path inputVideo, Path outputVideo, Path tempDir,
+                                    UUID projectId, boolean hasFon, boolean hasTurku) throws Exception {
+        Path currentVideo = inputVideo;
+
+        // Adım 1: Fon müziği ekle (varsa)
+        if (hasFon) {
+            String fonMinioPath = String.format("turku-video/%s/music/fon.mp3", projectId);
+            Path fonFile = downloadFromMinio(fonMinioPath, tempDir.resolve("fon_music.mp3"));
+            Path fonMixed = tempDir.resolve("fon_mixed.mp4");
+
+            // Fon müziğini %12 ses ile loop olarak arka plana ekle
+            // amix: narration (ana ses) + fon müziği (düşük ses)
+            List<String> cmd = new ArrayList<>(List.of(
+                    "ffmpeg", "-y",
+                    "-i", currentVideo.toAbsolutePath().toString(),
+                    "-stream_loop", "-1",
+                    "-i", fonFile.toAbsolutePath().toString(),
+                    "-filter_complex",
+                    "[1:a]volume=0.12[bg];[0:a][bg]amix=inputs=2:duration=first:dropout_transition=3[out]",
+                    "-map", "0:v", "-map", "[out]",
+                    "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+                    "-shortest",
+                    fonMixed.toAbsolutePath().toString()
+            ));
+            runFFmpeg(cmd, "fon müzik mix");
+            currentVideo = fonMixed;
+            log.info("Fon müziği eklendi: size={}KB", Files.size(fonFile) / 1024);
+        }
+
+        // Adım 2: Türkü kaydını sona ekle (varsa)
+        if (hasTurku) {
+            String turkuMinioPath = String.format("turku-video/%s/music/turku.mp3", projectId);
+            Path turkuFile = downloadFromMinio(turkuMinioPath, tempDir.resolve("turku_music.mp3"));
+
+            // Türkü ses dosyasından video segment oluştur (son görsel + türkü ses)
+            // Son sahne görselini kullan, yoksa siyah ekran
+            Path turkuSegment = tempDir.resolve("turku_segment.mp4");
+
+            // Siyah ekran + türkü tam ses (türkü uzunluğu kadar)
+            List<String> turkuCmd = new ArrayList<>(List.of(
+                    "ffmpeg", "-y",
+                    "-f", "lavfi", "-i", "color=c=black:s=1920x1080:r=24",
+                    "-i", turkuFile.toAbsolutePath().toString(),
+                    "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+                    "-pix_fmt", "yuv420p",
+                    "-shortest",
+                    turkuSegment.toAbsolutePath().toString()
+            ));
+            runFFmpeg(turkuCmd, "türkü segment");
+
+            // Ana video + türkü segmentini birleştir
+            Path concatWithTurku = tempDir.resolve("concat_turku.txt");
+            Files.writeString(concatWithTurku,
+                    "file '" + currentVideo.toAbsolutePath().toString().replace("\\", "/") + "'\n" +
+                    "file '" + turkuSegment.toAbsolutePath().toString().replace("\\", "/") + "'\n");
+
+            Path turkuFinal = tempDir.resolve("turku_final.mp4");
+            // concat ile codec uyumu olması için re-encode
+            List<String> concatCmd = new ArrayList<>(List.of(
+                    "ffmpeg", "-y",
+                    "-f", "concat", "-safe", "0",
+                    "-i", concatWithTurku.toAbsolutePath().toString(),
+                    "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+                    "-pix_fmt", "yuv420p",
+                    turkuFinal.toAbsolutePath().toString()
+            ));
+            runFFmpeg(concatCmd, "türkü concat");
+            currentVideo = turkuFinal;
+            log.info("Türkü kaydı eklendi: turkuSize={}KB", Files.size(turkuFile) / 1024);
+        }
+
+        // Son video'yu output'a kopyala
+        Files.copy(currentVideo, outputVideo);
     }
 
     // ── FFmpeg Process Runner ──

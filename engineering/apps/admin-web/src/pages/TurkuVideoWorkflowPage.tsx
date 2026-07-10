@@ -835,6 +835,104 @@ function TurkuVideoWorkflowPage() {
         </div>
       )}
 
+      {/* ── Müzik Yükleme ── */}
+      {project && (
+        <div className="card" style={{ marginTop: '24px' }}>
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            🎵 Müzik Yönetimi
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: '16px' }}>
+            Video üretiminden ÖNCE müzik dosyalarını yükleyin. Fon müziği narration altında %12 sesle çalar, türkü kaydı videonun sonuna eklenir.
+          </p>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            {/* Fon Müziği */}
+            <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <span>🎸</span>
+                <strong>Fon Müziği</strong>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>(enstrümantal)</span>
+              </div>
+              <input
+                type="file"
+                accept="audio/*"
+                id="fon-music-upload"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file || !project) return
+                  try {
+                    setActiveAction('Fon müziği yükleniyor...')
+                    const res = await import('../api/turkuVideoApi').then(m => m.uploadMusic(project.id, 'fon', file))
+                    if (res.data) {
+                      setSuccessMessage('✅ Fon müziği yüklendi!')
+                    } else {
+                      setError('Fon müziği yükleme hatası')
+                    }
+                  } catch (err: any) {
+                    setError(err.message)
+                  } finally {
+                    setActiveAction(null)
+                  }
+                }}
+              />
+              <label
+                htmlFor="fon-music-upload"
+                style={{
+                  display: 'inline-block', padding: '8px 16px', borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white',
+                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600
+                }}
+              >
+                📁 Dosya Seç
+              </label>
+            </div>
+
+            {/* Türkü Kaydı */}
+            <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <span>🎤</span>
+                <strong>Türkü Kaydı</strong>
+                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>(sözlü, telifsiz)</span>
+              </div>
+              <input
+                type="file"
+                accept="audio/*"
+                id="turku-music-upload"
+                style={{ display: 'none' }}
+                onChange={async (e) => {
+                  const file = e.target.files?.[0]
+                  if (!file || !project) return
+                  try {
+                    setActiveAction('Türkü kaydı yükleniyor...')
+                    const res = await import('../api/turkuVideoApi').then(m => m.uploadMusic(project.id, 'turku', file))
+                    if (res.data) {
+                      setSuccessMessage('✅ Türkü kaydı yüklendi!')
+                    } else {
+                      setError('Türkü kaydı yükleme hatası')
+                    }
+                  } catch (err: any) {
+                    setError(err.message)
+                  } finally {
+                    setActiveAction(null)
+                  }
+                }}
+              />
+              <label
+                htmlFor="turku-music-upload"
+                style={{
+                  display: 'inline-block', padding: '8px 16px', borderRadius: '8px',
+                  background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white',
+                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600
+                }}
+              >
+                📁 Dosya Seç
+              </label>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── Video Üretimi ── */}
       {project && (
         <div className="card" style={{ marginTop: '24px' }}>

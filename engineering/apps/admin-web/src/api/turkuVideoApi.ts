@@ -280,3 +280,29 @@ export function generateAllImages(
 ): Promise<ApiResponse<any>> {
   return request<any>(`${BASE}/${id}/generate-images`, { method: 'POST' })
 }
+
+// ── Music Upload ──
+
+export async function uploadMusic(
+  id: string,
+  type: 'fon' | 'turku',
+  file: File
+): Promise<ApiResponse<any>> {
+  const formData = new FormData()
+  formData.append('file', file)
+  formData.append('type', type)
+
+  const token = localStorage.getItem('auth_token')
+  const res = await fetch(`${BASE}/${id}/upload-music`, {
+    method: 'POST',
+    headers: token ? { 'Authorization': `Bearer ${token}` } : {},
+    body: formData,
+  })
+  return res.json()
+}
+
+export function getMusicStatus(
+  id: string
+): Promise<ApiResponse<{ fonUploaded: boolean; turkuUploaded: boolean }>> {
+  return request<{ fonUploaded: boolean; turkuUploaded: boolean }>(`${BASE}/${id}/music-status`)
+}
