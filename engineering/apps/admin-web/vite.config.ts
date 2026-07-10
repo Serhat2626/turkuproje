@@ -10,6 +10,7 @@ export default defineConfig({
       '/api': {
         target: 'http://localhost:8080',
         changeOrigin: true,
+        timeout: 600000, // 10 dakika — DALL-E pipeline uzun sürebilir
       }
     }
   }

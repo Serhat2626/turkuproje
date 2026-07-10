@@ -164,6 +164,16 @@ function TurkuVideoWorkflowPage() {
       } catch {
         // content not available yet
       }
+      // Video availability check — MinIO'da video var mı?
+      try {
+        const videoUrl = turkuApi.getVideoUrl(id)
+        const headRes = await fetch(videoUrl, { method: 'HEAD' })
+        if (headRes.ok) {
+          setVideoReady(true)
+        }
+      } catch {
+        // video not available yet
+      }
     } catch {
       // Proje backend'de bulunamazsa localStorage temizle
       localStorage.removeItem('turkuActiveProjectId')
