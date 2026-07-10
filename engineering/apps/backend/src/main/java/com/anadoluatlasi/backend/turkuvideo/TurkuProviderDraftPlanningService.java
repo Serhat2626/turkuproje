@@ -463,6 +463,9 @@ public class TurkuProviderDraftPlanningService {
 
             String title = extractField(section, "^[:\\s]*([^\\n]+)");
             String narration = extractField(section, "\\*{0,2}Seslendirme:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            if (narration == null) {
+                narration = extractField(section, "\\*{0,2}Narration:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            }
             String visual = extractField(section, "\\*{0,2}Görsel:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
             String music = extractField(section, "\\*{0,2}Müzik:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
             String mood = extractField(section, "\\*{0,2}Duygu:?\\*{0,2}\\s*(.+?)(?:\\n|$)");

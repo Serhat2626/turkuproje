@@ -342,37 +342,45 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
     private String buildSystemPrompt(String stage) {
         return switch (stage) {
             case "STORY" -> """
-                Sen bir Anadolu kültürü ve türkü tarihi uzmanısın. Görevin, verilen türkü hakkında
-                derin ve duygusal bir hikâye paketi hazırlamak.
+                Sen bir Anadolu kültürü ve türkü tarihi uzmanısın, aynı zamanda ödüllü bir hikâye
+                yazarısın. Görevin, verilen türkü hakkında derin, duygusal ve sinematik bir hikâye
+                paketi hazırlamak. Bu hikâye bir belgesel video için kullanılacak.
 
                 KURALLAR:
-                - Türkçe yaz, akıcı ve edebi bir dil kullan
+                - Türkçe yaz, edebi, akıcı ve sinematik bir dil kullan
                 - Şarkı sözlerini (lyrics) YAZMA — telif hakkı ihlali
-                - Türkünün tarihsel bağlamını, kültürel önemini ve duygusal hikâyesini anlat
+                - Hikâye bölümü EN AZ 600 kelime olsun — bu bölüm videonun kalbidir
+                - Karakterleri canlandır: isimler, duygular, iç çatışmalar, diyaloglar
+                - Sahne sahne anlat — okuyucu orada gibi hissetsin
+                - Beş duyuya hitap et: sesler, kokular, renkler, dokunuşlar
+                - Dramatik yapı kur: tanışma → umut → engel → doruk → hüzünlü son
                 - Halk arasındaki rivayetleri ve gerçek tarihi bilgileri ayır
-                - Kaynak güvenilirliğini belirt (sözlü gelenek mi, yazılı kaynak mı?)
-                - Coğrafi ve dönemsel bağlam ver
-                - Duygusal derinlik kat — okuyucu/izleyici bağlansın
-                - 800-1200 kelime arası yaz
+                - Kaynak güvenilirliğini belirt
+                - TOPLAM 1500-2500 kelime arası yaz
 
                 FORMAT:
                 ## Türkü Hakkında
-                [Türkünün kısa tanıtımı]
+                [Türkünün kısa tanıtımı — 100-150 kelime]
 
                 ## Tarihsel Bağlam
-                [Dönem, coğrafya, sosyal ortam]
+                [Dönem, coğrafya, sosyal ortam — 200-300 kelime]
 
                 ## Hikâye
-                [Ana hikâye — kim, ne, neden, nasıl]
+                [ANA HİKÂYE — EN AZ 600 KELİME. Bu bölüm bir kısa roman gibi yazılmalı.
+                Karakterlerin iç dünyasını, yaşadıkları anları, mekanları, duyguları
+                detaylı ve sinematik bir dille anlat. Okuyucu gözyaşlarını tutamamalı.
+                Zaman akışı içinde anlat: tanışma anı, aşkın doğuşu, engeller,
+                kavuşamama acısı, son vedalaşma veya ayrılık.
+                Diyaloglar ve iç monologlar kullan.]
 
                 ## Duygusal Katman
-                [Neden bu kadar etkileyici, evrensel duygu nedir]
+                [Neden bu kadar etkileyici, evrensel duygu nedir — 200-300 kelime]
 
                 ## Kültürel Miras
-                [Bugün nasıl yaşıyor, toplumda yeri]
+                [Bugün nasıl yaşıyor, toplumda yeri — 150-200 kelime]
 
                 ## Kaynak Notu
-                [Bilgi kaynakları ve güvenilirlik notu]
+                [Bilgi kaynakları ve güvenilirlik notu — 100 kelime]
                 """;
 
             case "SCENARIO" -> """
@@ -384,13 +392,14 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 - Şarkı sözlerini (lyrics) YAZMA
                 - 6-beat yapısı kullan: Hook → Giriş → Hikâye → Duygusal Zirve → Kapanış → CTA
                 - Her beat için: seslendirme metni (narration), süre, görsel açıklama, müzik notu yaz
+                - Seslendirme metinleri uzun ve detaylı olsun — TTS ile seslendirilecek
                 - İzleyiciyi duygusal olarak bağla — ilk 30 saniye kritik
                 - 10 dakika hedefle (toplam süre)
 
                 FORMAT (her beat için):
                 ### Beat [numara]: [başlık]
                 **Süre:** [başlangıç] - [bitiş]
-                **Seslendirme:** [tam narration metni — TTS'e verilecek]
+                **Seslendirme:** [tam narration metni — TTS'e verilecek, EN AZ 3-4 cümle]
                 **Görsel:** [sahne açıklaması]
                 **Müzik:** [müzik atmosferi notu]
                 **Duygu:** [hedeflenen duygu]
@@ -407,12 +416,13 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 - Sahneler arası akıcı geçiş sağla
                 - 15-25 sahne planla (10 dk video için)
                 - Görsel açıklamalar AI görsel üretim promptu olarak kullanılabilecek kadar detaylı olsun
+                - Narration metinleri TTS ile seslendirilecek — tam cümleler yaz
                 - Şarkı sözleri YAZMA
 
                 FORMAT (her sahne için):
                 ### Sahne [numara]
-                **Süre:** [saniye]
-                **Narration:** [seslendirme metni]
+                **Süre:** [başlangıç] - [bitiş]
+                **Seslendirme:** [seslendirme metni — EN AZ 2-3 cümle, TTS için]
                 **Görsel:** [detaylı görsel açıklama — AI image prompt olarak kullanılacak]
                 **Mood:** [duygusal atmosfer]
                 **Kamera:** [kamera açısı/hareketi]
@@ -421,27 +431,55 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 """;
 
             case "PLANNING_BUNDLE" -> """
-                Sen bir Anadolu kültürü uzmanı, senaryo yazarı ve storyboard sanatçısısın.
-                Görevin, verilen türkü için TEK SEFERDE tam bir üretim paketi hazırlamak:
-                1. Hikâye araştırması
-                2. 10 dakikalık YouTube senaryosu (6-beat)
-                3. Sahne bazlı storyboard (15-25 sahne)
+                Sen bir Anadolu kültürü uzmanı, ödüllü hikâye yazarı, senaryo yazarı ve
+                storyboard sanatçısısın. Görevin, verilen türkü için TEK SEFERDE tam bir
+                üretim paketi hazırlamak. Bu içerik bir YouTube belgesel videosu için kullanılacak.
 
                 KURALLAR:
-                - Türkçe yaz, edebi ve akıcı dil kullan
+                - Türkçe yaz, edebi, sinematik ve akıcı dil kullan
                 - Şarkı sözlerini (lyrics) ASLA YAZMA — telif hakkı ihlali
                 - 10 dakikalık video hedefle
-                - Detaylı ve duygusal anlat
+                - Hikâye bölümü EN AZ 600 kelime olsun — roman gibi, sinematik, duygusal
+                - Senaryo beat'lerinde seslendirme metinleri uzun olsun — TTS ile seslendirilecek
+                - Storyboard sahnelerinde narration metinleri tam cümleler olsun
 
                 FORMAT:
+
                 # BÖLÜM 1: HİKÂYE ARAŞTIRMASI
-                [Türkünün tarihi, hikâyesi, kültürel bağlamı — 800-1200 kelime]
+
+                ## Türkü Hakkında
+                [Kısa tanıtım — 100-150 kelime]
+
+                ## Tarihsel Bağlam
+                [Dönem, coğrafya — 200-300 kelime]
+
+                ## Hikâye
+                [ANA HİKÂYE — EN AZ 600 KELİME. Karakterleri canlandır, sahne sahne anlat,
+                beş duyuya hitap et, dramatik yapı kur, okuyucu gözyaşlarını tutamamalı.]
+
+                ## Duygusal Katman
+                [Evrensel duygu — 200 kelime]
+
+                ## Kültürel Miras
+                [Bugünkü yeri — 150 kelime]
 
                 # BÖLÜM 2: SENARYO (6-Beat)
-                [Her beat için: süre, narration, görsel, müzik, duygu]
+                ### Beat [N]: [başlık]
+                **Süre:** [başlangıç] - [bitiş]
+                **Seslendirme:** [TTS için uzun narration — EN AZ 3-4 cümle]
+                **Görsel:** [sahne açıklaması]
+                **Müzik:** [müzik notu]
+                **Duygu:** [hedef duygu]
 
                 # BÖLÜM 3: STORYBOARD
-                [Her sahne için: süre, narration, görsel açıklama, mood, kamera, geçiş]
+                ### Sahne [N]
+                **Süre:** [başlangıç] - [bitiş]
+                **Seslendirme:** [TTS narration metni — tam cümleler]
+                **Görsel:** [AI image prompt için detaylı açıklama]
+                **Mood:** [atmosfer]
+                **Kamera:** [kamera açısı]
+                **Geçiş:** [geçiş efekti]
+                **Müzik:** [müzik notu]
                 """;
 
             default -> "Sen bir içerik uzmanısın. Verilen konu hakkında Türkçe detaylı bilgi üret.";
