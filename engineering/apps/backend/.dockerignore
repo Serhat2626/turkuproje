@@ -1,0 +1,29 @@
+# Build artifacts
+target/
+*.jar
+*.war
+*.class
+
+# Test output
+test_output*.txt
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+
+# Environment
+.env
+*.env.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+logs/
+
+# Maven wrapper (image'da zaten var)
+# .mvn/ ve mvnw kopyalanmalı, ignore etme

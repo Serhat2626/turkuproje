@@ -3,8 +3,9 @@
 # ================================================================
 #
 # Pipeline akışı:
-#   dev push  → build → auto deploy to staging
-#   prod push → build → auto deploy to production (gelecek)
+#   push (any)  → test (backend + frontend)
+#   dev push    → test → build → auto deploy to staging
+#   main push   → test → build → manual deploy to production (gelecek)
 #
 # Gerekli GitLab CI/CD Variables (Settings → CI/CD → Variables):
 #   SSH_PRIVATE_KEY        → Sunucu SSH private key (File type, masked)
@@ -25,39 +26,117 @@ services:
 
 variables:
   DOCKER_DRIVER: overlay2
+  MAVEN_OPTS: "-Dmaven.repo.local=$CI_PROJECT_DIR/.m2/repository"
   BACKEND_DIR: engineering/apps/backend
   ADMIN_WEB_DIR: engineering/apps/admin-web
   STACK_FILE: engineering/infrastructure/docker/docker-stack.staging.yml
   STACK_NAME: anadolu-atlasi-staging
 
 stages:
+  - test
   - build
   - deploy
+
+cache:
+  paths:
+    - .m2/repository/
+    - engineering/apps/admin-web/node_modules/
+
+# ================================================================
+# ── Test Stage ──────────────────────────────────────────
+# ================================================================
+
+backend-test:
+  stage: test
+  image: maven:3.9-eclipse-temurin-21
+  services:
+    - postgres:16-alpine
+    - redis:7-alpine
+  variables:
+    POSTGRES_DB: anadolu_atlasi_test
+    POSTGRES_USER: test
+    POSTGRES_PASSWORD: test
+    SPRING_DATASOURCE_URL: jdbc:postgresql://postgres:5432/anadolu_atlasi_test
+    SPRING_DATASOURCE_USERNAME: test
+    SPRING_DATASOURCE_PASSWORD: test
+    SPRING_DATA_REDIS_HOST: redis
+    SPRING_PROFILES_ACTIVE: test
+  cache:
+    key: backend-maven-${CI_COMMIT_REF_SLUG}
+    paths:
+      - .m2/repository/
+  script:
+    - cd $BACKEND_DIR
+    - mvn clean test -B
+  artifacts:
+    reports:
+      junit: $BACKEND_DIR/target/surefire-reports/TEST-*.xml
+    when: always
+
+frontend-test:
+  stage: test
+  image: node:22-alpine
+  cache:
+    key: frontend-npm-${CI_COMMIT_REF_SLUG}
+    paths:
+      - $ADMIN_WEB_DIR/node_modules/
+  script:
+    - cd $ADMIN_WEB_DIR
+    - npm ci
+    - npm run build
+    - npm run test
+  artifacts:
+    paths:
+      - $ADMIN_WEB_DIR/dist/
+    when: always
+
+# ================================================================
+# ── Build Stage ─────────────────────────────────────────
+# ================================================================
 
 # ── Build & Push: Backend ──────────────────────────────
 build-backend:
   stage: build
+  needs:
+    - backend-test
   script:
     - docker build -t $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_REF_NAME ./$BACKEND_DIR/
     - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
     - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_REF_NAME
+    # Tag ile de push et (rollback kolaylığı)
+    - docker tag $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/backend:$CI_COMMIT_SHORT_SHA
   only:
     - dev
+    - main
 
 # ── Build & Push: Admin Web ───────────────────────────
 build-admin-web:
   stage: build
+  needs:
+    - frontend-test
   script:
     - docker build -t $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_REF_NAME ./$ADMIN_WEB_DIR/
     - docker login -u gitlab-ci-token -p "$CI_JOB_TOKEN" "$CI_REGISTRY"
     - docker push $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_REF_NAME
+    # Tag ile de push et (rollback kolaylığı)
+    - docker tag $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_REF_NAME $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_SHORT_SHA
+    - docker push $CI_REGISTRY_IMAGE/admin-web:$CI_COMMIT_SHORT_SHA
   only:
     - dev
+    - main
+
+# ================================================================
+# ── Deploy Stage ────────────────────────────────────────
+# ================================================================
 
 # ── Deploy: Staging (auto on dev push) ────────────────
 deploy-staging:
   stage: deploy
   image: alpine:latest
+  needs:
+    - build-backend
+    - build-admin-web
   before_script:
     - apk add --no-cache openssh-client
     - mkdir -p ~/.ssh
@@ -94,6 +173,32 @@ deploy-staging:
         echo '=== Backend Health ===';
         curl -s http://localhost:8081/actuator/health | head -c 200;
       "
+  environment:
+    name: staging
+    url: http://staging.anadoluatlasi.com
   only:
     - dev
   allow_failure: false
+
+# ── Deploy: Production (manual on main push) ──────────
+deploy-production:
+  stage: deploy
+  image: alpine:latest
+  needs:
+    - build-backend
+    - build-admin-web
+  before_script:
+    - apk add --no-cache openssh-client
+    - mkdir -p ~/.ssh
+    - echo "$SSH_PRIVATE_KEY" | tr -d '\r' > ~/.ssh/id_rsa
+    - chmod 600 ~/.ssh/id_rsa
+    - echo -e "Host *\n\tStrictHostKeyChecking no\n\n" > ~/.ssh/config
+  script:
+    - echo "🚀 Production deployment - configure with your hosting provider"
+    - echo "TODO - Production stack deploy komutları eklenecek"
+  environment:
+    name: production
+    url: http://anadoluatlasi.com
+  only:
+    - main
+  when: manual

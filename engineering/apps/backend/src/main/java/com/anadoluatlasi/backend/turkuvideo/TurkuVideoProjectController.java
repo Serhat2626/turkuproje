@@ -1,15 +1,20 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
 import com.anadoluatlasi.backend.common.api.ApiResponse;
+import com.anadoluatlasi.backend.config.MinioConfig;
 import com.anadoluatlasi.backend.review.AdminActorBoundaryPolicy;
 import com.anadoluatlasi.backend.review.AdminActorResolutionException;
 import com.anadoluatlasi.backend.review.AdminActorResolutionRequest;
 import com.anadoluatlasi.backend.review.AdminActorResolver;
 import com.anadoluatlasi.backend.review.ResolvedAdminActor;
 import com.anadoluatlasi.backend.review.ReviewActorRole;
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -52,6 +57,11 @@ public class TurkuVideoProjectController {
     private final TurkuRenderExecutionService renderExecutionService;
     private final TurkuStoryboardInternalRenderChainHarness storyboardChainHarness;
     private final AdminActorResolver actorResolver;
+    private final MinioClient minioClient;
+    private final MinioConfig minioConfig;
+
+    @Autowired(required = false)
+    private TurkuTtsService ttsService;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
                                         TurkuVideoPlanningService planningService,
@@ -63,7 +73,9 @@ public class TurkuVideoProjectController {
                                         TurkuRenderJobService renderJobService,
                                         TurkuRenderExecutionService renderExecutionService,
                                         TurkuStoryboardInternalRenderChainHarness storyboardChainHarness,
-                                        AdminActorResolver actorResolver) {
+                                        AdminActorResolver actorResolver,
+                                        MinioClient minioClient,
+                                        MinioConfig minioConfig) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
         this.assetPlanningService = assetPlanningService;
@@ -75,6 +87,8 @@ public class TurkuVideoProjectController {
         this.renderExecutionService = renderExecutionService;
         this.storyboardChainHarness = storyboardChainHarness;
         this.actorResolver = actorResolver;
+        this.minioClient = minioClient;
+        this.minioConfig = minioConfig;
     }
 
     // ── POST /admin/turku-video-projects/bootstrap ──
@@ -652,6 +666,53 @@ public class TurkuVideoProjectController {
         var summary = storyboardChainHarness.execute(fixture);
         var response = new TurkuInternalDryRunTriggerResponse(summary);
         return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    // ── TTS Generation ──
+
+    @PostMapping("/{id}/generate-tts")
+    @Operation(summary = "TTS seslendirme üret",
+               description = "Tüm storyboard sahneleri için ses dosyası üretir.")
+    public ResponseEntity<ApiResponse<TurkuTtsService.TurkuTtsResponse>> generateTts(
+            @PathVariable UUID id) {
+        if (ttsService == null) {
+            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                    .body(ApiResponse.error("TTS servisi yapılandırılmamış (ai.provider=openai gerekli)"));
+        }
+        TurkuTtsService.TurkuTtsResponse result = ttsService.generateForProject(id);
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // ── Media Serving ──
+
+    @GetMapping("/{id}/scenes/{sceneNo}/image")
+    @Operation(summary = "Sahne görseli", description = "MinIO'dan sahne görselini döndürür.")
+    public ResponseEntity<byte[]> getSceneImage(
+            @PathVariable UUID id, @PathVariable int sceneNo) {
+        String path = String.format("turku-video/%s/scenes/%d.png", id, sceneNo);
+        try (var stream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioConfig.getBucketName()).object(path).build())) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok().contentType(MediaType.IMAGE_PNG).body(bytes);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    @GetMapping("/{id}/scenes/{sceneNo}/audio")
+    @Operation(summary = "Sahne seslendirmesi", description = "MinIO'dan sahne ses dosyasını döndürür.")
+    public ResponseEntity<byte[]> getSceneAudio(
+            @PathVariable UUID id, @PathVariable int sceneNo) {
+        String path = String.format("turku-video/%s/audio/%d.mp3", id, sceneNo);
+        try (var stream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioConfig.getBucketName()).object(path).build())) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("audio/mpeg"))
+                    .body(bytes);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     // ── Exception Handling ──

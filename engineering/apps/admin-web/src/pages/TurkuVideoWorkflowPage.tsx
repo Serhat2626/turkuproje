@@ -103,6 +103,7 @@ function TurkuVideoWorkflowPage() {
   const [executionSafety, setExecutionSafety] = useState<TurkuRenderExecutionSafetyResponse | null>(null)
   const [content, setContent] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<'story' | 'scenario' | 'storyboard'>('story')
+  const [ttsLoading, setTtsLoading] = useState(false)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -600,6 +601,29 @@ function TurkuVideoWorkflowPage() {
             )}
           </div>
 
+          {/* TTS Button */}
+          {content.storyboard && (
+            <button
+              className="btn btn-primary"
+              disabled={ttsLoading}
+              onClick={async () => {
+                if (!project) return
+                setTtsLoading(true)
+                try {
+                  const res = await turkuApi.generateTts(project.id)
+                  alert(`🎙️ TTS Tamamlandı!\n✅ Başarılı: ${res.data?.successCount || 0} sahne\n❌ Hata: ${res.data?.failureCount || 0} sahne`)
+                } catch (e: any) {
+                  alert('TTS hatası: ' + (e.message || 'Bilinmeyen hata'))
+                } finally {
+                  setTtsLoading(false)
+                }
+              }}
+              style={{ fontSize: '0.85rem', marginBottom: '20px' }}
+            >
+              {ttsLoading ? '⏳ Seslendirme üretiliyor...' : '🎙️ Tüm Sahneleri Seslendir (TTS)'}
+            </button>
+          )}
+
           {/* Story Tab */}
           {activeTab === 'story' && content.story && (
             <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
@@ -651,16 +675,42 @@ function TurkuVideoWorkflowPage() {
                 </span>
               </div>
               {content.storyboard.scenes?.map((scene: any) => (
-                <div key={scene.sceneNo} style={{ marginBottom: '12px', padding: '16px', borderRadius: '10px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.12)' }}>
+                <div key={scene.sceneNo} style={{ marginBottom: '16px', padding: '16px', borderRadius: '10px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.12)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                     <strong style={{ color: '#10b981' }}>Sahne {scene.sceneNo}: {scene.sceneTitle}</strong>
                     <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>{scene.durationSeconds}sn</span>
                   </div>
+
+                  {/* Sahne Görseli */}
+                  {project && (
+                    <div style={{ marginBottom: '10px' }}>
+                      <img
+                        src={turkuApi.getSceneImageUrl(project.id, scene.sceneNo)}
+                        alt={`Sahne ${scene.sceneNo}`}
+                        style={{ maxWidth: '100%', borderRadius: '8px', border: '1px solid rgba(16,185,129,0.2)' }}
+                        onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                      />
+                    </div>
+                  )}
+
                   {scene.narrationSummary && (
                     <div style={{ marginBottom: '6px', fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>
                       🎙️ <em>{scene.narrationSummary}</em>
                     </div>
                   )}
+
+                  {/* Audio Player */}
+                  {project && (
+                    <div style={{ marginBottom: '8px' }}>
+                      <audio
+                        controls
+                        src={turkuApi.getSceneAudioUrl(project.id, scene.sceneNo)}
+                        style={{ width: '100%', height: '36px', borderRadius: '8px' }}
+                        onError={(e) => { (e.target as HTMLAudioElement).style.display = 'none' }}
+                      />
+                    </div>
+                  )}
+
                   {scene.visualDescription && (
                     <div style={{ marginBottom: '6px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
                       🖼️ {scene.visualDescription}

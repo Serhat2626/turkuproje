@@ -1,8 +1,12 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
 import com.anadoluatlasi.backend.ai.config.AiProviderProperties;
+import com.anadoluatlasi.backend.config.MinioConfig;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.minio.GetObjectArgs;
+import io.minio.MinioClient;
+import io.minio.PutObjectArgs;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -16,6 +20,9 @@ import org.springframework.web.client.ResourceAccessException;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientResponseException;
 
+import java.io.ByteArrayInputStream;
+import java.io.InputStream;
+import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -28,6 +35,8 @@ import java.util.UUID;
  * <p>Türkünün hikâyesi, senaryosu ve storyboard'u için özelleştirilmiş
  * Türkçe system prompt'ları kullanarak GPT-4o çağrısı yapar.</p>
  *
+ * <p>DALL-E 3 ile sahne görselleri üretir, MinIO'ya kaydeder.</p>
+ *
  * <p>API key, provider response, raw token sayıları loglanmaz.
  * Şarkı sözleri (lyrics) üretilmez veya saklanmaz.</p>
  */
@@ -38,9 +47,22 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
     private final RestClient restClient;
     private final AiProviderProperties.OpenAi config;
+    private final MinioClient minioClient;
+    private final MinioConfig minioConfig;
 
-    public OpenAiTurkuGenerationProviderGateway(AiProviderProperties properties) {
+    /** Ayrı bir RestClient — DALL-E image generation daha uzun sürer */
+    private final RestClient imageRestClient;
+
+    /** Görsel indirmek için timeout'suz basit bir RestClient */
+    private final RestClient downloadRestClient;
+
+    public OpenAiTurkuGenerationProviderGateway(AiProviderProperties properties,
+                                                 MinioClient minioClient,
+                                                 MinioConfig minioConfig) {
         this.config = properties.getOpenai();
+        this.minioClient = minioClient;
+        this.minioConfig = minioConfig;
+
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(config.getTimeoutSeconds()));
         factory.setReadTimeout(Duration.ofSeconds(config.getTimeoutSeconds()));
@@ -49,6 +71,26 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 .baseUrl(config.getBaseUrl())
                 .defaultHeader("Authorization", "Bearer " + config.getApiKey())
                 .requestFactory(factory)
+                .build();
+
+        // DALL-E 3 image generation — 120 saniye timeout (görsel üretim yavaş olabilir)
+        SimpleClientHttpRequestFactory imageFactory = new SimpleClientHttpRequestFactory();
+        imageFactory.setConnectTimeout(Duration.ofSeconds(30));
+        imageFactory.setReadTimeout(Duration.ofSeconds(120));
+
+        this.imageRestClient = RestClient.builder()
+                .baseUrl(config.getBaseUrl())
+                .defaultHeader("Authorization", "Bearer " + config.getApiKey())
+                .requestFactory(imageFactory)
+                .build();
+
+        // Üretilen görsel URL'sini indirmek için ayrı client (auth gerektirmez)
+        SimpleClientHttpRequestFactory downloadFactory = new SimpleClientHttpRequestFactory();
+        downloadFactory.setConnectTimeout(Duration.ofSeconds(15));
+        downloadFactory.setReadTimeout(Duration.ofSeconds(60));
+
+        this.downloadRestClient = RestClient.builder()
+                .requestFactory(downloadFactory)
                 .build();
     }
 
@@ -111,22 +153,188 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 .build();
     }
 
-    // ── Image Generation (stub — henüz DALL-E entegrasyonu yok) ──
+    // ── Image Generation (DALL-E 3) ─────────────────────────
 
     @Override
     public TurkuImageGenerationResult generateImage(
             TurkuImageGenerationRequest request,
             TurkuGenerationSafetyEnvelope envelope) {
 
-        // Görsel üretim henüz text-only — DALL-E sonraki fazda
-        return TurkuImageGenerationResult.builder()
-                .projectId(request.getProjectId())
-                .sceneNo(request.getSceneNo())
-                .safeInternalRef("internal-ref:" + UUID.randomUUID())
-                .success(true)
-                .traceRef(buildTrace("IMAGE_GENERATION", "openai-stub-image"))
-                .needsHumanReview(true)
+        log.info("DALL-E 3 görsel üretimi başlatıldı: projectId={}, sceneNo={}",
+                request.getProjectId(), request.getSceneNo());
+
+        try {
+            // 1. DALL-E 3 API çağrısı — prompt İngilizce olmalı
+            String imageUrl = callDallE3(request);
+
+            // 2. Üretilen görseli indir
+            byte[] imageBytes = downloadImage(imageUrl);
+
+            // 3. MinIO'ya kaydet
+            String minioPath = uploadToMinio(request.getProjectId(), request.getSceneNo(), imageBytes);
+
+            log.info("DALL-E 3 görsel üretimi tamamlandı: projectId={}, sceneNo={}, minioPath={}, size={}KB",
+                    request.getProjectId(), request.getSceneNo(), minioPath, imageBytes.length / 1024);
+
+            return TurkuImageGenerationResult.builder()
+                    .projectId(request.getProjectId())
+                    .sceneNo(request.getSceneNo())
+                    .safeInternalRef(minioPath)
+                    .success(true)
+                    .traceRef(buildTrace("IMAGE_GENERATION", "openai-dalle3"))
+                    .needsHumanReview(true)
+                    .build();
+
+        } catch (Exception e) {
+            log.error("DALL-E 3 görsel üretim hatası: projectId={}, sceneNo={}, error={}",
+                    request.getProjectId(), request.getSceneNo(), e.getMessage());
+
+            return TurkuImageGenerationResult.builder()
+                    .projectId(request.getProjectId())
+                    .sceneNo(request.getSceneNo())
+                    .safeInternalRef("error-ref:" + UUID.randomUUID())
+                    .success(false)
+                    .safeErrorCode("DALLE3_GENERATION_FAILED")
+                    .traceRef(buildTrace("IMAGE_GENERATION", "openai-dalle3-error"))
+                    .needsHumanReview(true)
+                    .build();
+        }
+    }
+
+    // ── DALL-E 3 API Call ────────────────────────────────────
+
+    private String callDallE3(TurkuImageGenerationRequest request) {
+        // Prompt'u İngilizce olarak hazırla (DALL-E en iyi İngilizce ile çalışır)
+        String prompt = buildDallE3Prompt(request);
+
+        DallERequest requestBody = DallERequest.builder()
+                .model("dall-e-3")
+                .prompt(prompt)
+                .size("1792x1024")
+                .quality("standard")
+                .n(1)
+                .responseFormat("url")
                 .build();
+
+        try {
+            DallEResponse response = imageRestClient.post()
+                    .uri("/images/generations")
+                    .contentType(MediaType.APPLICATION_JSON)
+                    .body(requestBody)
+                    .retrieve()
+                    .body(DallEResponse.class);
+
+            if (response == null || response.getData() == null || response.getData().isEmpty()) {
+                throw new RuntimeException("DALL-E 3 boş yanıt döndü");
+            }
+
+            String url = response.getData().get(0).getUrl();
+            if (url == null || url.isBlank()) {
+                throw new RuntimeException("DALL-E 3 yanıtında URL boş");
+            }
+
+            // Revised prompt'u logla (DALL-E 3 prompt'u yeniden yazabilir)
+            String revisedPrompt = response.getData().get(0).getRevisedPrompt();
+            if (revisedPrompt != null) {
+                log.debug("DALL-E 3 revised prompt: sceneNo={}, revisedPrompt length={}",
+                        request.getSceneNo(), revisedPrompt.length());
+            }
+
+            return url;
+
+        } catch (RestClientResponseException e) {
+            int status = e.getStatusCode().value();
+            String body = e.getResponseBodyAsString();
+            log.error("DALL-E 3 HTTP {} hatası: {}", status, body);
+            throw new RuntimeException("DALL-E 3 HTTP " + status + " hatası");
+        } catch (ResourceAccessException e) {
+            throw new RuntimeException("DALL-E 3 bağlantı/timeout hatası: " + e.getMessage());
+        }
+    }
+
+    /**
+     * Sahne prompt'unu DALL-E 3 için İngilizce'ye dönüştürür.
+     * safePromptSummary Türkçe olabilir — İngilizce stil notları ile zenginleştirilir.
+     */
+    private String buildDallE3Prompt(TurkuImageGenerationRequest request) {
+        StringBuilder sb = new StringBuilder();
+
+        // Temel sahne açıklaması (İngilizce notlar ile sarma)
+        sb.append("A cinematic, photorealistic scene for a documentary video about Turkish folk songs (türkü). ");
+        sb.append("Scene ").append(request.getSceneNo()).append(": ");
+        sb.append(request.getSafePromptSummary());
+
+        // Stil ipucu varsa ekle
+        if (request.getStyleHint() != null && !request.getStyleHint().isBlank()) {
+            sb.append(". Style: ").append(request.getStyleHint());
+        }
+
+        // Negatif notlar — DALL-E 3'te prompt'un parçası olarak kullanılır
+        if (request.getSafeNegativeNotes() != null && !request.getSafeNegativeNotes().isBlank()) {
+            sb.append(". Avoid: ").append(request.getSafeNegativeNotes());
+        }
+
+        // Genel kalite notları
+        sb.append(". High quality, cinematic lighting, Anatolian landscape, warm earthy tones, ");
+        sb.append("documentary style, no text overlays, no watermarks.");
+
+        return sb.toString();
+    }
+
+    // ── Image Download ──────────────────────────────────────
+
+    private byte[] downloadImage(String imageUrl) {
+        try {
+            byte[] bytes = downloadRestClient.get()
+                    .uri(URI.create(imageUrl))
+                    .retrieve()
+                    .body(byte[].class);
+
+            if (bytes == null || bytes.length == 0) {
+                throw new RuntimeException("İndirilen görsel boş");
+            }
+
+            log.debug("Görsel indirildi: size={}KB", bytes.length / 1024);
+            return bytes;
+
+        } catch (Exception e) {
+            throw new RuntimeException("Görsel indirme hatası: " + e.getMessage(), e);
+        }
+    }
+
+    // ── MinIO Upload ────────────────────────────────────────
+
+    private String uploadToMinio(UUID projectId, int sceneNo, byte[] imageBytes) {
+        String objectPath = String.format("turku-video/%s/scenes/%d.png", projectId, sceneNo);
+
+        try {
+            minioClient.putObject(PutObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .object(objectPath)
+                    .stream(new ByteArrayInputStream(imageBytes), imageBytes.length, -1)
+                    .contentType("image/png")
+                    .build());
+
+            log.info("MinIO'ya yüklendi: bucket={}, path={}", minioConfig.getBucketName(), objectPath);
+            return objectPath;
+
+        } catch (Exception e) {
+            throw new RuntimeException("MinIO yükleme hatası: " + e.getMessage(), e);
+        }
+    }
+
+    /**
+     * MinIO'dan görsel okur. Controller tarafından kullanılır.
+     */
+    public byte[] getImageFromMinio(String objectPath) {
+        try (InputStream stream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioConfig.getBucketName())
+                .object(objectPath)
+                .build())) {
+            return stream.readAllBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("MinIO okuma hatası: " + e.getMessage(), e);
+        }
     }
 
     // ── System Prompt Builder ───────────────────────────────
@@ -393,6 +601,41 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             private int completionTokens;
             @JsonProperty("total_tokens")
             private int totalTokens;
+        }
+    }
+
+    // ── DALL-E DTOs ─────────────────────────────────────────
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    static class DallERequest {
+        private String model;
+        private String prompt;
+        private String size;
+        private String quality;
+        private int n;
+        @JsonProperty("response_format")
+        private String responseFormat;
+    }
+
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    static class DallEResponse {
+        private long created;
+        private List<DallEImage> data;
+
+        @Data
+        @NoArgsConstructor
+        @AllArgsConstructor
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        static class DallEImage {
+            private String url;
+            @JsonProperty("revised_prompt")
+            private String revisedPrompt;
         }
     }
 }

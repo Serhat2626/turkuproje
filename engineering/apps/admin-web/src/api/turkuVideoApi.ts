@@ -236,3 +236,21 @@ export function getTurkuVideoProjectContent(
 ): Promise<ApiResponse<any>> {
   return request<any>(`${BASE}/${id}/content`)
 }
+
+// ── TTS generation ──
+
+export function generateTts(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/generate-tts`, { method: 'POST' })
+}
+
+// ── Media URLs ──
+
+export function getSceneImageUrl(id: string, sceneNo: number): string {
+  return `/api/admin/turku-video-projects/${id}/scenes/${sceneNo}/image`
+}
+
+export function getSceneAudioUrl(id: string, sceneNo: number): string {
+  return `/api/admin/turku-video-projects/${id}/scenes/${sceneNo}/audio`
+}
