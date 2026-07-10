@@ -282,7 +282,7 @@ function TurkuVideoWorkflowPage() {
         const p = await turkuApi.getTurkuVideoProject(currentId)
         setProject(p.data)
 
-        if (p.data.workflowStage !== sa.enabledAt) continue
+        if (!p.data || p.data.workflowStage !== sa.enabledAt) continue
 
         setAutoRunProgress(`⏳ 2/3: ${i + 1}/${remainingActions.length} — ${sa.label}...`)
         setActiveAction(sa.label)
