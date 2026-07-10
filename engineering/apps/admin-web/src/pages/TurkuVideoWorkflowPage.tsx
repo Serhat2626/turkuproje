@@ -101,6 +101,8 @@ function TurkuVideoWorkflowPage() {
   const [renderJob, setRenderJob] = useState<TurkuRenderJobResponse | null>(null)
   const [renderExecution, setRenderExecution] = useState<TurkuRenderExecutionResponse | null>(null)
   const [executionSafety, setExecutionSafety] = useState<TurkuRenderExecutionSafetyResponse | null>(null)
+  const [content, setContent] = useState<any>(null)
+  const [activeTab, setActiveTab] = useState<'story' | 'scenario' | 'storyboard'>('story')
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -149,6 +151,13 @@ function TurkuVideoWorkflowPage() {
         setExecutionSafety(execSafetyRes.data)
       } catch {
         // render job not available yet
+      }
+      // Content fetch
+      try {
+        const contentRes = await turkuApi.getTurkuVideoProjectContent(id)
+        setContent(contentRes.data)
+      } catch {
+        // content not available yet
       }
     } catch {
       // Proje backend'de bulunamazsa localStorage temizle
@@ -556,6 +565,117 @@ function TurkuVideoWorkflowPage() {
               Sonraki: <strong>{progress.nextAvailableAction}</strong>
             </p>
           </div>
+        </div>
+      )}
+
+      {/* ── Üretilen İçerik ── */}
+      {content && (content.story || content.scenario || content.storyboard) && (
+        <div className="card" style={{ marginTop: '24px' }}>
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            📖 Üretilen İçerik
+          </h2>
+
+          {/* Tab buttons */}
+          <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+            {content.story && (
+              <button
+                className={`btn ${activeTab === 'story' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('story')}
+                style={{ fontSize: '0.85rem' }}
+              >📜 Hikâye</button>
+            )}
+            {content.scenario && (
+              <button
+                className={`btn ${activeTab === 'scenario' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('scenario')}
+                style={{ fontSize: '0.85rem' }}
+              >🎬 Senaryo</button>
+            )}
+            {content.storyboard && (
+              <button
+                className={`btn ${activeTab === 'storyboard' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => setActiveTab('storyboard')}
+                style={{ fontSize: '0.85rem' }}
+              >🎨 Storyboard</button>
+            )}
+          </div>
+
+          {/* Story Tab */}
+          {activeTab === 'story' && content.story && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ color: '#f59e0b', margin: 0 }}>📜 Hikâye Araştırması</h3>
+                <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '20px', background: 'rgba(245,158,11,0.15)', color: '#f59e0b' }}>
+                  Güvenilirlik: {content.story.sourceConfidence}
+                </span>
+              </div>
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem' }}>
+                {content.story.storySummary}
+              </div>
+              {content.story.emotionalTheme && (
+                <div style={{ marginTop: '16px', padding: '12px', borderRadius: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                  <strong style={{ color: '#ef4444' }}>🎭 Duygusal Tema:</strong>
+                  <span style={{ marginLeft: '8px', color: 'rgba(255,255,255,0.7)' }}>{content.story.emotionalTheme}</span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Scenario Tab */}
+          {activeTab === 'scenario' && content.scenario && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <h3 style={{ color: '#6366f1', marginBottom: '12px' }}>🎬 {content.scenario.title}</h3>
+              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem' }}>
+                {content.scenario.logline}
+              </div>
+              {content.scenario.scenarioBeats && content.scenario.scenarioBeats.length > 0 && (
+                <div style={{ marginTop: '16px' }}>
+                  <h4 style={{ color: '#818cf8', marginBottom: '8px' }}>Beat'ler:</h4>
+                  {content.scenario.scenarioBeats.map((beat: string, i: number) => (
+                    <div key={i} style={{ padding: '8px 12px', marginBottom: '4px', borderRadius: '6px', background: 'rgba(99,102,241,0.08)', border: '1px solid rgba(99,102,241,0.12)', color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
+                      <strong>Beat {i+1}:</strong> {beat}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Storyboard Tab */}
+          {activeTab === 'storyboard' && content.storyboard && (
+            <div style={{ background: 'rgba(255,255,255,0.03)', borderRadius: '12px', padding: '20px', border: '1px solid rgba(255,255,255,0.08)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                <h3 style={{ color: '#10b981', margin: 0 }}>🎨 Storyboard ({content.storyboard.scenes?.length || 0} sahne)</h3>
+                <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)' }}>
+                  Toplam: {Math.floor((content.storyboard.totalDurationSeconds || 0) / 60)} dk
+                </span>
+              </div>
+              {content.storyboard.scenes?.map((scene: any) => (
+                <div key={scene.sceneNo} style={{ marginBottom: '12px', padding: '16px', borderRadius: '10px', background: 'rgba(16,185,129,0.05)', border: '1px solid rgba(16,185,129,0.12)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                    <strong style={{ color: '#10b981' }}>Sahne {scene.sceneNo}: {scene.sceneTitle}</strong>
+                    <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.4)' }}>{scene.durationSeconds}sn</span>
+                  </div>
+                  {scene.narrationSummary && (
+                    <div style={{ marginBottom: '6px', fontSize: '0.9rem', color: 'rgba(255,255,255,0.8)' }}>
+                      🎙️ <em>{scene.narrationSummary}</em>
+                    </div>
+                  )}
+                  {scene.visualDescription && (
+                    <div style={{ marginBottom: '6px', fontSize: '0.85rem', color: 'rgba(255,255,255,0.6)' }}>
+                      🖼️ {scene.visualDescription}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', flexWrap: 'wrap' }}>
+                    {scene.mood && <span>🎭 {scene.mood}</span>}
+                    {scene.cameraDirection && <span>📷 {scene.cameraDirection}</span>}
+                    {scene.transitionHint && <span>↔️ {scene.transitionHint}</span>}
+                    {scene.musicNote && <span>🎵 {scene.musicNote}</span>}
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
 

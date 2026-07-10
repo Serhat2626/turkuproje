@@ -110,6 +110,18 @@ public class TurkuVideoProjectController {
         return ResponseEntity.ok(ApiResponse.success(TurkuVideoProjectResponse.from(project)));
     }
 
+    // ── GET /admin/turku-video-projects/{id}/content ──
+
+    @GetMapping("/{id}/content")
+    @Operation(summary = "Türkü video projesi üretilen içerik",
+               description = "Hikâye, senaryo ve storyboard içeriğini döndürür.")
+    public ResponseEntity<ApiResponse<TurkuVideoContentResponse>> getProjectContent(
+            @PathVariable UUID id) {
+
+        TurkuVideoProject project = bootstrapService.getById(id);
+        return ResponseEntity.ok(ApiResponse.success(TurkuVideoContentResponse.from(project)));
+    }
+
     // ── GET /admin/turku-video-projects/{id}/progress ──
 
     @GetMapping("/{id}/progress")

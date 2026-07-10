@@ -228,3 +228,11 @@ export function getInternalDryRunStatus(
 ): Promise<ApiResponse<TurkuInternalDryRunTriggerResponse>> {
   return request<TurkuInternalDryRunTriggerResponse>(`${BASE}/${id}/internal-dry-run-status`)
 }
+
+// ── Content fetch ──
+
+export function getTurkuVideoProjectContent(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/content`)
+}
