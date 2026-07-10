@@ -1,5 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
  * <p>Prepares render manifest from composition plan and evaluates render readiness.
  * No actual video rendering. No export/publish. Internal readiness only.</p>
  */
+@Service
 public class TurkuRenderManifestService {
 
     private final TurkuVideoProjectRepository repository;

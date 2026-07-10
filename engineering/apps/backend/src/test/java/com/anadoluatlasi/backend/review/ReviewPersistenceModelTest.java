@@ -286,7 +286,7 @@ class ReviewPersistenceModelTest {
     class MigrationSafety {
 
         private static final Path MIGRATION_PATH = Path.of(
-                "src/main/resources/db/migration/V10__fp012_review_workflow_tables.sql");
+                "src/main/resources/db/migration/V13__fp012_review_workflow_tables.sql");
 
         @Test
         @DisplayName("Migration file exists")

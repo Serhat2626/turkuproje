@@ -32,7 +32,7 @@ class FP023FinalClosureRegressionTest {
 
     @BeforeEach
     void setUp() {
-        repository = new TurkuVideoProjectRepository();
+        repository = new InMemoryTurkuVideoProjectRepository();
         stubRunner = new StubTurkuRenderRunnerGateway();
         ffmpegDisabled = new FfmpegTurkuRenderRunnerGateway();
         ffmpegSandbox = new FfmpegTurkuRenderRunnerGateway(true);

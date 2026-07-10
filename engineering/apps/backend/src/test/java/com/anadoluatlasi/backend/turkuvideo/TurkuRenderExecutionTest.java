@@ -29,7 +29,7 @@ class TurkuRenderExecutionTest {
 
     @BeforeEach
     void setUp() {
-        repository = new TurkuVideoProjectRepository();
+        repository = new InMemoryTurkuVideoProjectRepository();
         var gateway = new StubTurkuGenerationProviderGateway();
         var sanitizer = new TurkuProviderSafetySanitizer();
         var policy = new TurkuProviderSafetyPolicy();

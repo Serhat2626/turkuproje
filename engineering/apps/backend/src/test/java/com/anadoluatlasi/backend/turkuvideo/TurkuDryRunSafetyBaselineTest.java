@@ -141,11 +141,11 @@ class TurkuDryRunSafetyBaselineTest {
     // ── F. Controller is Admin-only ──
     @Nested @DisplayName("F. Controller Admin-only")
     class AdminOnly {
-        @Test @DisplayName("controller path is /admin/turku-video-projects")
+        @Test @DisplayName("controller path is /api/admin/turku-video-projects")
         void path() {
             var mapping = TurkuVideoProjectController.class.getAnnotation(RequestMapping.class);
             assertThat(mapping).isNotNull();
-            assertThat(mapping.value()[0]).startsWith("/admin");
+            assertThat(mapping.value()[0]).isEqualTo("/api/admin/turku-video-projects");
         }
         @Test @DisplayName("no public endpoint path")
         void noPublic() {

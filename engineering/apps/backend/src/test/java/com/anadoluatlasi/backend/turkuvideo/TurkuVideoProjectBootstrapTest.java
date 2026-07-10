@@ -32,7 +32,7 @@ class TurkuVideoProjectBootstrapTest {
 
     @BeforeEach
     void setUp() {
-        repository = new TurkuVideoProjectRepository();
+        repository = new InMemoryTurkuVideoProjectRepository();
         service = new TurkuVideoProjectBootstrapService(repository);
         actorResolver = new AdminActorResolver();
     }

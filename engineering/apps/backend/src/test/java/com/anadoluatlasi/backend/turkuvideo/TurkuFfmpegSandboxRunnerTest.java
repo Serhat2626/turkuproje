@@ -268,7 +268,7 @@ class TurkuFfmpegSandboxRunnerTest {
         @Test
         @DisplayName("full E2E render flow still works with stub")
         void fullE2E() {
-            var repository = new TurkuVideoProjectRepository();
+            var repository = new InMemoryTurkuVideoProjectRepository();
             var bootstrapService = new TurkuVideoProjectBootstrapService(repository);
             var planningService = new TurkuVideoPlanningService(repository);
             var assetService = new TurkuVideoAssetPlanningService(repository);

@@ -33,7 +33,7 @@ class TurkuVideoAssetPlanningTest {
 
     @BeforeEach
     void setUp() {
-        repository = new TurkuVideoProjectRepository();
+        repository = new InMemoryTurkuVideoProjectRepository();
         bootstrapService = new TurkuVideoProjectBootstrapService(repository);
         planningService = new TurkuVideoPlanningService(repository);
         assetService = new TurkuVideoAssetPlanningService(repository);

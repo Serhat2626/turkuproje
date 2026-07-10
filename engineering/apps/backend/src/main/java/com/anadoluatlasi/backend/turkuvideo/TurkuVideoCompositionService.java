@@ -1,5 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.springframework.stereotype.Service;
+
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -9,6 +11,7 @@ import java.util.stream.Collectors;
  * <p>Assembles a video composition plan from existing storyboard + scene asset/image batch data.
  * No real video rendering. No lyrics. No export/publish.</p>
  */
+@Service
 public class TurkuVideoCompositionService {
 
     private final TurkuVideoProjectRepository repository;

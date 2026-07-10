@@ -497,9 +497,9 @@ class AdminReviewApiBoundaryRegressionTest {
         }
 
         @Test
-        @DisplayName("V10 migration exists and no V11 migration added")
+        @DisplayName("V13 migration exists and no V14 review hardening migration added")
         void migrationRegression() {
-            assertThat(Path.of("src/main/resources/db/migration/V10__fp012_review_workflow_tables.sql").toFile())
+            assertThat(Path.of("src/main/resources/db/migration/V13__fp012_review_workflow_tables.sql").toFile())
                     .exists();
             assertThat(Path.of("src/main/resources/db/migration/V11__fp012_admin_review_hardening.sql").toFile())
                     .doesNotExist();

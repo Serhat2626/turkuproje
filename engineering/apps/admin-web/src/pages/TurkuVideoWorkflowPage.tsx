@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react'
+import { useState, useCallback, useEffect } from 'react'
 import type {
   TurkuVideoBootstrapRequest,
   TurkuVideoProjectResponse,
@@ -89,6 +89,8 @@ function TurkuVideoWorkflowPage() {
   const [form, setForm] = useState<TurkuVideoBootstrapRequest>({ turkuName: '' })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [activeAction, setActiveAction] = useState<string | null>(null)
+  const [successMessage, setSuccessMessage] = useState<string | null>(null)
 
   // ── Project state ──
   const [project, setProject] = useState<TurkuVideoProjectResponse | null>(null)
@@ -124,6 +126,8 @@ function TurkuVideoWorkflowPage() {
       setProject(projRes.data)
       setProgress(progRes.data)
       setSafety(safetyRes.data)
+      // Proje ID'yi localStorage'a kaydet — sayfa yenilendiğinde geri yüklensin
+      localStorage.setItem('turkuActiveProjectId', id)
       // Composition/readiness — safe to fail
       try {
         const [compRes, readRes] = await Promise.all([
@@ -147,9 +151,18 @@ function TurkuVideoWorkflowPage() {
         // render job not available yet
       }
     } catch {
-      // keep current state
+      // Proje backend'de bulunamazsa localStorage temizle
+      localStorage.removeItem('turkuActiveProjectId')
     }
   }, [])
+
+  // Sayfa açılışında localStorage'dan proje ID'yi geri yükle
+  useEffect(() => {
+    const savedId = localStorage.getItem('turkuActiveProjectId')
+    if (savedId) {
+      refreshProject(savedId)
+    }
+  }, [refreshProject])
 
   const handleBootstrap = async () => {
     if (!form.turkuName.trim()) {
@@ -172,29 +185,35 @@ function TurkuVideoWorkflowPage() {
 
   const handleStageAction = async (action: StageAction) => {
     if (!project) return
-    setLoading(true)
+    setActiveAction(action.label)
     setError(null)
+    setSuccessMessage(null)
     try {
       await action.action(project.id)
       await refreshProject(project.id)
+      setSuccessMessage(`✅ ${action.label} başarıyla tamamlandı!`)
+      setTimeout(() => setSuccessMessage(null), 5000)
     } catch (e: unknown) {
       setError(typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: string }).message) : 'İşlem başarısız')
     } finally {
-      setLoading(false)
+      setActiveAction(null)
     }
   }
 
   const handleGenerateAction = async (label: string, apiCall: (id: string) => Promise<unknown>) => {
     if (!project) return
-    setLoading(true)
+    setActiveAction(label)
     setError(null)
+    setSuccessMessage(null)
     try {
       await apiCall(project.id)
       await refreshProject(project.id)
+      setSuccessMessage(`✅ ${label} başarıyla tamamlandı!`)
+      setTimeout(() => setSuccessMessage(null), 5000)
     } catch (e: unknown) {
       setError(typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: string }).message) : 'İşlem başarısız: ' + label)
     } finally {
-      setLoading(false)
+      setActiveAction(null)
     }
   }
 
@@ -213,6 +232,50 @@ function TurkuVideoWorkflowPage() {
         <div className="alert alert-error" role="alert">
           <span className="alert-icon">⚠️</span>
           <span>{error}</span>
+        </div>
+      )}
+
+      {successMessage && (
+        <div className="alert alert-success" role="status" style={{
+          background: 'rgba(16, 185, 129, 0.15)',
+          border: '1px solid rgba(16, 185, 129, 0.3)',
+          borderRadius: '12px',
+          padding: '12px 20px',
+          marginBottom: '16px',
+          color: '#10b981',
+          fontWeight: 600,
+          fontSize: '0.95rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          animation: 'fadeIn 0.3s ease',
+        }}>
+          <span>{successMessage}</span>
+        </div>
+      )}
+
+      {activeAction && (
+        <div style={{
+          background: 'rgba(99, 102, 241, 0.12)',
+          border: '1px solid rgba(99, 102, 241, 0.3)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '16px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '12px',
+          animation: 'fadeIn 0.3s ease',
+        }}>
+          <div style={{
+            width: '24px', height: '24px',
+            border: '3px solid rgba(99, 102, 241, 0.3)',
+            borderTopColor: '#6366f1',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }} />
+          <span style={{ color: '#a5b4fc', fontWeight: 600, fontSize: '0.95rem' }}>
+            ⏳ {activeAction} çalışıyor...
+          </span>
         </div>
       )}
 
@@ -508,12 +571,23 @@ function TurkuVideoWorkflowPage() {
               {stageActions.map((sa) => (
                 <button
                   key={sa.label}
-                  className="btn btn-secondary"
-                  disabled={loading || project.workflowStage !== sa.enabledAt}
+                  className={`btn ${project.workflowStage === sa.enabledAt ? 'btn-primary' : 'btn-secondary'}`}
+                  disabled={!!activeAction || project.workflowStage !== sa.enabledAt}
                   onClick={() => handleStageAction(sa)}
                   data-testid={`btn-${sa.enabledAt}`}
+                  style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
                 >
-                  {sa.label}
+                  {activeAction === sa.label && (
+                    <span style={{
+                      width: '16px', height: '16px',
+                      border: '2px solid rgba(255,255,255,0.3)',
+                      borderTopColor: '#fff',
+                      borderRadius: '50%',
+                      animation: 'spin 0.8s linear infinite',
+                      display: 'inline-block',
+                    }} />
+                  )}
+                  {activeAction === sa.label ? `${sa.label}...` : sa.label}
                 </button>
               ))}
             </div>
@@ -544,43 +618,98 @@ function TurkuVideoWorkflowPage() {
             <div className="action-buttons">
               <button
                 className="btn btn-primary"
-                disabled={loading || !safety.canGenerateStory}
+                disabled={!!activeAction || !safety.canGenerateStory}
                 onClick={() => handleGenerateAction('Hikâye Üret', turkuApi.generateTurkuStory)}
                 data-testid="btn-generate-story"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
               >
-                📝 Hikâye Üret
+                {activeAction === 'Hikâye Üret' && (
+                  <span style={{
+                    width: '16px', height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                )}
+                {activeAction === 'Hikâye Üret' ? '📝 Hikâye Üretiliyor...' : '📝 Hikâye Üret'}
               </button>
               <button
                 className="btn btn-primary"
-                disabled={loading || !safety.canGenerateScenario}
+                disabled={!!activeAction || !safety.canGenerateScenario}
                 onClick={() => handleGenerateAction('Senaryo Üret', turkuApi.generateTurkuScenario)}
                 data-testid="btn-generate-scenario"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
               >
-                🎬 Senaryo Üret
+                {activeAction === 'Senaryo Üret' && (
+                  <span style={{
+                    width: '16px', height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                )}
+                {activeAction === 'Senaryo Üret' ? '🎬 Senaryo Üretiliyor...' : '🎬 Senaryo Üret'}
               </button>
               <button
                 className="btn btn-primary"
-                disabled={loading || !safety.canGenerateStoryboard}
+                disabled={!!activeAction || !safety.canGenerateStoryboard}
                 onClick={() => handleGenerateAction('Storyboard Üret', turkuApi.generateTurkuStoryboard)}
                 data-testid="btn-generate-storyboard"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
               >
-                🎨 Storyboard Üret
+                {activeAction === 'Storyboard Üret' && (
+                  <span style={{
+                    width: '16px', height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                )}
+                {activeAction === 'Storyboard Üret' ? '🎨 Storyboard Üretiliyor...' : '🎨 Storyboard Üret'}
               </button>
               <button
                 className="btn btn-accent"
-                disabled={loading || !safety.canGeneratePlanningBundle}
+                disabled={!!activeAction || !safety.canGeneratePlanningBundle}
                 onClick={() => handleGenerateAction('Planlama Paketi Üret', turkuApi.generateTurkuPlanningBundle)}
                 data-testid="btn-generate-planning-bundle"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
               >
-                📦 Planlama Paketi Üret
+                {activeAction === 'Planlama Paketi Üret' && (
+                  <span style={{
+                    width: '16px', height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                )}
+                {activeAction === 'Planlama Paketi Üret' ? '📦 Paket Üretiliyor...' : '📦 Planlama Paketi Üret'}
               </button>
               <button
                 className="btn btn-primary"
-                disabled={loading || !safety.canRunImageBatch}
+                disabled={!!activeAction || !safety.canRunImageBatch}
                 onClick={() => handleGenerateAction('Görsel Batch Çalıştır', turkuApi.runTurkuImageBatch)}
                 data-testid="btn-run-image-batch"
+                style={{ display: 'flex', alignItems: 'center', gap: '8px', justifyContent: 'center' }}
               >
-                🖼️ Görsel Batch Çalıştır
+                {activeAction === 'Görsel Batch Çalıştır' && (
+                  <span style={{
+                    width: '16px', height: '16px',
+                    border: '2px solid rgba(255,255,255,0.3)',
+                    borderTopColor: '#fff',
+                    borderRadius: '50%',
+                    animation: 'spin 0.8s linear infinite',
+                    display: 'inline-block',
+                  }} />
+                )}
+                {activeAction === 'Görsel Batch Çalıştır' ? '🖼️ Batch Çalışıyor...' : '🖼️ Görsel Batch Çalıştır'}
               </button>
             </div>
           </div>
@@ -1426,7 +1555,7 @@ function TurkuVideoWorkflowPage() {
         <div className="form-actions">
           <button
             className="btn btn-ghost"
-            onClick={() => { setProject(null); setProgress(null); setSafety(null); setCompositionPreview(null); setReadiness(null); setRenderJob(null); setRenderExecution(null); setExecutionSafety(null); setForm({ turkuName: '' }); setError(null) }}
+            onClick={() => { setProject(null); setProgress(null); setSafety(null); setCompositionPreview(null); setReadiness(null); setRenderJob(null); setRenderExecution(null); setExecutionSafety(null); setForm({ turkuName: '' }); setError(null); setActiveAction(null); setSuccessMessage(null) }}
             data-testid="btn-new-project"
           >
             ➕ Yeni Proje Başlat

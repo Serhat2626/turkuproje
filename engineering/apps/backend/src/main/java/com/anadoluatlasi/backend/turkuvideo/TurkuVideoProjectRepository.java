@@ -1,35 +1,32 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
-import java.util.Map;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * FP-019 Task 02: In-memory repository for Türkü video projects.
+ * FP-019: Türkü video project repository interface.
  *
- * <p>No database migration required. Will be replaced with JPA repository
- * when schema changes are scoped in a later feature.</p>
+ * <p>TurkuVideoProject henüz JPA Entity değil — in-memory domain object olarak kullanılır.
+ * Runtime ve test'lerde InMemoryTurkuVideoProjectRepository implement eder.</p>
  */
-public class TurkuVideoProjectRepository {
+public interface TurkuVideoProjectRepository {
 
-    private final Map<UUID, TurkuVideoProject> store = new ConcurrentHashMap<>();
+    TurkuVideoProject save(TurkuVideoProject project);
 
-    public TurkuVideoProject save(TurkuVideoProject project) {
-        store.put(project.getId(), project);
-        return project;
-    }
+    Optional<TurkuVideoProject> findById(UUID id);
 
-    public Optional<TurkuVideoProject> findById(UUID id) {
-        return Optional.ofNullable(store.get(id));
-    }
+    List<TurkuVideoProject> findAll();
 
-    public int count() {
-        return store.size();
-    }
+    long count();
 
-    /** Test support only */
-    public void clear() {
-        store.clear();
-    }
+    void deleteAll();
+
+    List<TurkuVideoProject> findByWorkflowStage(TurkuVideoWorkflowStage workflowStage);
+
+    List<TurkuVideoProject> findByNeedsHumanReviewTrue();
+
+    List<TurkuVideoProject> findByTurkuNameContainingIgnoreCase(String turkuName);
+
+    List<TurkuVideoProject> findBySourceConfidence(TurkuSourceConfidence sourceConfidence);
 }

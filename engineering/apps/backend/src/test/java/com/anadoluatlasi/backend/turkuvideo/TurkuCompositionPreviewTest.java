@@ -26,7 +26,7 @@ class TurkuCompositionPreviewTest {
 
     @BeforeEach
     void setUp() {
-        var repository = new TurkuVideoProjectRepository();
+        var repository = new InMemoryTurkuVideoProjectRepository();
         var gateway = new StubTurkuGenerationProviderGateway();
         var sanitizer = new TurkuProviderSafetySanitizer();
         var policy = new TurkuProviderSafetyPolicy();

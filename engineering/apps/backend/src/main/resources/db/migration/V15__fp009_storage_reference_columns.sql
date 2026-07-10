@@ -16,12 +16,12 @@
 
 -- Private storage provider alias (e.g. "s3", "minio", "mock")
 ALTER TABLE fp007_image_media_assets
-    ADD COLUMN storage_provider VARCHAR(50);
+    ADD COLUMN IF NOT EXISTS storage_provider VARCHAR(50);
 
 -- Private storage bucket/container name (internal-only)
 ALTER TABLE fp007_image_media_assets
-    ADD COLUMN storage_bucket VARCHAR(255);
+    ADD COLUMN IF NOT EXISTS storage_bucket VARCHAR(255);
 
 -- Private storage object key/path (internal-only — NEVER admin/user DTO)
 ALTER TABLE fp007_image_media_assets
-    ADD COLUMN storage_object_key TEXT;
+    ADD COLUMN IF NOT EXISTS storage_object_key TEXT;

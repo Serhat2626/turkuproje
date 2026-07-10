@@ -1,4 +1,5 @@
 import { NavLink } from 'react-router-dom'
+import { useAuth } from '../../contexts/AuthContext'
 
 interface NavItem {
   to: string
@@ -18,6 +19,8 @@ const navItems: NavItem[] = [
 ]
 
 function Sidebar() {
+  const { user, logout } = useAuth()
+
   return (
     <aside className="sidebar">
       {/* ── Brand ────────────────────────── */}
@@ -60,10 +63,19 @@ function Sidebar() {
         )}
       </nav>
 
-      {/* ── Footer ──────────────────────── */}
+      {/* ── User & Logout ────────────────── */}
       <div className="sidebar-footer">
-        <span className="sidebar-version">v0.0.2</span>
-        <span className="sidebar-status-dot" title="Sistem Aktif"></span>
+        <div className="sidebar-user-info">
+          <span className="sidebar-user-name">{user?.displayName || user?.username || '—'}</span>
+          <span className="sidebar-user-role">{user?.role || ''}</span>
+        </div>
+        <button
+          className="sidebar-logout-btn"
+          onClick={logout}
+          title="Çıkış Yap"
+        >
+          🚪
+        </button>
       </div>
     </aside>
   )

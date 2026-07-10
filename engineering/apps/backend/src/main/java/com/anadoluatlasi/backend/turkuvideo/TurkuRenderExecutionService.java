@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -11,11 +14,19 @@ import java.util.UUID;
  * <p>Executes render jobs through a gateway (stub by default).
  * No real video rendering. No binary file. No export/publish.</p>
  */
+@Service
 public class TurkuRenderExecutionService {
 
     private final TurkuVideoProjectRepository repository;
     private final TurkuRenderRunnerGateway renderRunnerGateway;
 
+    @Autowired
+    public TurkuRenderExecutionService(TurkuVideoProjectRepository repository) {
+        this.repository = repository;
+        this.renderRunnerGateway = new StubTurkuRenderRunnerGateway();
+    }
+
+    /** Test constructor — allows explicit gateway injection. */
     public TurkuRenderExecutionService(TurkuVideoProjectRepository repository,
                                         TurkuRenderRunnerGateway renderRunnerGateway) {
         this.repository = repository;

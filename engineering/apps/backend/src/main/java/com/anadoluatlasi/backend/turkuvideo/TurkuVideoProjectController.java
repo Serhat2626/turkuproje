@@ -37,7 +37,7 @@ import java.util.UUID;
  * No publish/export/public delivery. No AI generation. No unsafe fields.</p>
  */
 @RestController
-@RequestMapping("/admin/turku-video-projects")
+@RequestMapping("/api/admin/turku-video-projects")
 @Tag(name = "Türkü Video Projects", description = "Türkü video proje yönetimi (dahili/admin)")
 public class TurkuVideoProjectController {
 

@@ -1,5 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.springframework.stereotype.Service;
+
 import java.util.*;
 
 /**
@@ -8,6 +10,7 @@ import java.util.*;
  * FP-035 lifecycle → FP-042 review → admin visibility.
  * No ProcessBuilder. No real FFmpeg. CI-safe.
  */
+@Service
 public class TurkuStoryboardInternalRenderChainHarness {
 
     private final TurkuStoryboardRenderPlanAdapterService adapterService;

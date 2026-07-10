@@ -1,0 +1,37 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:anadolu_atlasi_test}
+    username: ${POSTGRES_USER:anadolu}
+    password: ${POSTGRES_PASSWORD:anadolu_dev}
+  jpa:
+    show-sql: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: false
+  flyway:
+    enabled: true
+    clean-disabled: false
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+
+# Test ortamında AI provider daima mock
+ai:
+  provider: mock
+
+imagegen:
+  provider:
+    mode: mock
+
+# Test JWT config
+jwt:
+  secret: test-secret-key-for-unit-tests-minimum-256-bits-2026-anadolu-atlasi-test
+  expiration-ms: 86400000
+
+logging:
+  level:
+    com.anadoluatlasi.backend: WARN
+    org.hibernate.SQL: WARN

@@ -6,13 +6,14 @@ spring:
   jpa:
     show-sql: true
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
   data:
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
   flyway:
-    enabled: false
+    enabled: true
+    clean-disabled: false
 
 # MinIO konfigürasyonu
 minio:

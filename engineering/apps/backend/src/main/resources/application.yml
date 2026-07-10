@@ -52,3 +52,11 @@ imagegen:
     model-name: dall-e-3
     image-size: 1024x1024
     openai-api-key: ${IMAGEGEN_PROVIDER_OPENAI_API_KEY:}
+
+# ── JWT Authentication ────────────────────────────────
+# Secret: en az 256-bit (32 byte) olmalıdır.
+# Production'da JWT_SECRET env variable ile verilmelidir.
+# Bu dosyaya gerçek secret YAZILMAZ.
+jwt:
+  secret: ${JWT_SECRET:anadolu-atlasi-dev-secret-key-minimum-256-bits-2026-change-in-production}
+  expiration-ms: 86400000  # 24 saat

@@ -1,9 +1,12 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.springframework.stereotype.Service;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class TurkuRenderJobService {
 
     private final TurkuVideoProjectRepository repository;
