@@ -85,24 +85,29 @@ public class TurkuVideoAssemblyService {
                     // Görsel + Ses → Video segment
                     Path imageFile = downloadFromMinio(imagePath, tempDir.resolve("scene_" + sceneNo + ".png"));
                     Path audioFile = downloadFromMinio(audioPath, tempDir.resolve("scene_" + sceneNo + ".mp3"));
+                    log.info("Sahne {}: GÖRSEL+SES mevcut — imageSize={}KB, audioSize={}KB",
+                            sceneNo, Files.size(imageFile) / 1024, Files.size(audioFile) / 1024);
                     segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
                     createVideoSegment(imageFile, audioFile, segmentFile);
                 } else if (hasAudio) {
                     // Sadece ses → siyah ekran + ses
                     Path audioFile = downloadFromMinio(audioPath, tempDir.resolve("scene_" + sceneNo + ".mp3"));
+                    log.info("Sahne {}: SADECE SES — audioSize={}KB (siyah ekran ile)", sceneNo, Files.size(audioFile) / 1024);
                     segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
                     createAudioOnlySegment(audioFile, segmentFile);
                 } else {
                     // Sadece görsel → 10 saniye sabit görsel
                     Path imageFile = downloadFromMinio(imagePath, tempDir.resolve("scene_" + sceneNo + ".png"));
+                    log.info("Sahne {}: SADECE GÖRSEL — imageSize={}KB, duration={}s",
+                            sceneNo, Files.size(imageFile) / 1024, scene.getEstimatedDurationSeconds());
                     segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
                     createImageOnlySegment(imageFile, segmentFile, scene.getEstimatedDurationSeconds());
                 }
 
                 if (Files.exists(segmentFile) && Files.size(segmentFile) > 0) {
                     segmentFiles.add(segmentFile);
-                    log.info("Segment oluşturuldu: sahne={}, size={}KB",
-                            sceneNo, Files.size(segmentFile) / 1024);
+                    log.info("Segment oluşturuldu: sahne={}, size={}KB, hasImage={}, hasAudio={}",
+                            sceneNo, Files.size(segmentFile) / 1024, hasImage, hasAudio);
                 }
             }
 

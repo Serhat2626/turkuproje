@@ -900,17 +900,18 @@ function TurkuVideoWorkflowPage() {
           {videoReady && (
             <div style={{ borderRadius: '12px', overflow: 'hidden', border: '2px solid rgba(99,102,241,0.3)', marginTop: '12px' }}>
               <video
+                key={project.id + '-' + Date.now()}
                 controls
-                autoPlay
-                src={turkuApi.getVideoUrl(project.id)}
+                src={turkuApi.getVideoUrl(project.id) + '?t=' + Date.now()}
                 style={{ width: '100%', maxHeight: '600px', background: '#000' }}
-                onError={() => setVideoReady(false)}
-              />
+              >
+                Tarayıcınız video oynatmayı desteklemiyor.
+              </video>
               <div style={{ padding: '12px', background: 'rgba(99,102,241,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>🎬 Mihriban — Türkü Belgeseli</span>
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>🎬 {project.turkuName || 'Türkü'} — Belgesel Videosu</span>
                 <a
                   href={turkuApi.getVideoUrl(project.id)}
-                  download="turku-video.mp4"
+                  download={`${project.turkuName || 'turku'}-video.mp4`}
                   className="btn btn-secondary"
                   style={{ fontSize: '0.8rem', padding: '4px 12px' }}
                 >
