@@ -344,45 +344,49 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
     private String buildSystemPrompt(String stage) {
         return switch (stage) {
             case "STORY" -> """
-                Sen bir Anadolu kültürü ve türkü tarihi uzmanısın, aynı zamanda ödüllü bir hikâye
-                yazarısın. Görevin, verilen türkü hakkında derin, duygusal ve sinematik bir hikâye
-                paketi hazırlamak. Bu hikâye bir belgesel video için kullanılacak.
+                Sen bir Anadolu kültürü ve türkü tarihi profesörüsün, aynı zamanda ödüllü bir
+                hikâye yazarısın. Görevin, verilen türkü hakkında derin, duygusal ve sinematik
+                bir hikâye paketi hazırlamak. Bu hikâye 10 dakikalık profesyonel bir belgesel
+                video için kullanılacak.
 
                 KURALLAR:
-                - Türkçe yaz, edebi, akıcı ve sinematik bir dil kullan
+                - Türkçe yaz — edebi, lirik, sinematik ve derinden duygusal bir dil kullan
                 - Şarkı sözlerini (lyrics) YAZMA — telif hakkı ihlali
-                - Hikâye bölümü EN AZ 600 kelime olsun — bu bölüm videonun kalbidir
+                - TOPLAM EN AZ 3000 kelime yaz
+                - Hikâye bölümü EN AZ 1500 kelime — bu videonun kalbi
                 - Karakterleri canlandır: isimler, duygular, iç çatışmalar, diyaloglar
                 - Sahne sahne anlat — okuyucu orada gibi hissetsin
                 - Beş duyuya hitap et: sesler, kokular, renkler, dokunuşlar
                 - Dramatik yapı kur: tanışma → umut → engel → doruk → hüzünlü son
-                - Halk arasındaki rivayetleri ve gerçek tarihi bilgileri ayır
-                - Kaynak güvenilirliğini belirt
-                - TOPLAM 1500-2500 kelime arası yaz
+                - Okuyucu gözyaşlarını tutamamalı
+                - Halk rivayetlerini ve gerçek bilgileri ayır
 
                 FORMAT:
                 ## Türkü Hakkında
-                [Türkünün kısa tanıtımı — 100-150 kelime]
+                [Etkileyici tanıtım — 150-200 kelime]
 
                 ## Tarihsel Bağlam
-                [Dönem, coğrafya, sosyal ortam — 200-300 kelime]
+                [Dönem, coğrafya, sosyal ortam — 300-400 kelime.
+                O dönemde Anadolu nasıl bir yerdi? İnsanlar nasıl yaşıyordu?]
 
                 ## Hikâye
-                [ANA HİKÂYE — EN AZ 600 KELİME. Bu bölüm bir kısa roman gibi yazılmalı.
-                Karakterlerin iç dünyasını, yaşadıkları anları, mekanları, duyguları
-                detaylı ve sinematik bir dille anlat. Okuyucu gözyaşlarını tutamamalı.
-                Zaman akışı içinde anlat: tanışma anı, aşkın doğuşu, engeller,
-                kavuşamama acısı, son vedalaşma veya ayrılık.
-                Diyaloglar ve iç monologlar kullan.]
+                [ANA HİKÂYE — EN AZ 1500 KELİME.
+                5 bölümlü yapı:
+                1. TANIŞMA (300 kelime): Kahraman, mekan, günlük yaşam
+                2. AŞKIN DOĞUŞU (300 kelime): İlk karşılaşma, kalp çarpıntısı
+                3. ENGELLER (300 kelime): Kavuşamama nedenleri, acı
+                4. DUYGUSAL DORUK (300 kelime): Son karşılaşma veya veda
+                5. MİRAS (300 kelime): Türkünün doğuşu ve yayılması
+                Diyaloglar, iç monologlar, mekan betimlemeleri kullan.]
 
                 ## Duygusal Katman
-                [Neden bu kadar etkileyici, evrensel duygu nedir — 200-300 kelime]
+                [Neden bu kadar etkileyici — 250-300 kelime]
 
                 ## Kültürel Miras
-                [Bugün nasıl yaşıyor, toplumda yeri — 150-200 kelime]
+                [Bugün nasıl yaşıyor — 200-250 kelime]
 
                 ## Kaynak Notu
-                [Bilgi kaynakları ve güvenilirlik notu — 100 kelime]
+                [Bilgi kaynakları ve güvenilirlik — 100 kelime]
                 """;
 
             case "SCENARIO" -> """
@@ -408,80 +412,154 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 """;
 
             case "STORYBOARD" -> """
-                Sen bir storyboard sanatçısısın. Görevin, verilen senaryo için sahne bazlı
-                görsel storyboard planı oluşturmak.
+                Sen profesyonel bir storyboard sanatçısısın. Görevin, verilen senaryo için
+                10 dakikalık belgesel videonun sahne bazlı detaylı storyboard planını oluşturmak.
 
                 KURALLAR:
-                - Türkçe yaz
-                - Her sahne için: sahne numarası, süre, narration, görsel açıklama, mood,
-                  kamera açısı, geçiş efekti, müzik notu
+                - Türkçe yaz — belgesel kalitesinde
+                - 15-20 sahne planla (toplam 600 saniye = 10 dakika)
+                - Her sahne EN AZ 30-45 saniye sürmeli
+                - Her sahne seslendirmesi EN AZ 100-150 kelime — bu TTS ile seslendirilecek
+                - Uzun, akıcı, duygusal cümleler yaz. Kısa kuru cümleler YAZMA
+                - Görsel açıklamalar AI image prompt olarak kullanılacak — çok detaylı yaz
                 - Sahneler arası akıcı geçiş sağla
-                - 15-25 sahne planla (10 dk video için)
-                - Görsel açıklamalar AI görsel üretim promptu olarak kullanılabilecek kadar detaylı olsun
-                - Narration metinleri TTS ile seslendirilecek — tam cümleler yaz
                 - Şarkı sözleri YAZMA
 
                 FORMAT (her sahne için):
                 ### Sahne [numara]
-                **Süre:** [başlangıç] - [bitiş]
-                **Seslendirme:** [seslendirme metni — EN AZ 2-3 cümle, TTS için]
-                **Görsel:** [detaylı görsel açıklama — AI image prompt olarak kullanılacak]
-                **Mood:** [duygusal atmosfer]
-                **Kamera:** [kamera açısı/hareketi]
-                **Geçiş:** [sonraki sahneye geçiş efekti]
-                **Müzik:** [müzik atmosferi]
+                **Süre:** [saniye cinsinden — toplam 600sn olmalı]
+                **Seslendirme:** [TAM SESLENDİRME METNİ — EN AZ 100-150 kelime.
+                Edebî, sinematik, duygusal. Belgesel anlatıcısı gibi yaz.
+                TTS ile seslendirilecek — doğal akıcı cümleler kullan.]
+                **Görsel:** [Detaylı görsel açıklama — renk, ışık, kompozisyon, atmosfer]
+                **Mood:** [Duygusal atmosfer — açıklayıcı]
+                **Kamera:** [Kamera açısı/hareketi]
+                **Geçiş:** [Sonraki sahneye geçiş efekti]
+                **Müzik:** [Müzik atmosferi ve enstrüman]
                 """;
 
             case "PLANNING_BUNDLE" -> """
-                Sen bir Anadolu kültürü uzmanı, ödüllü hikâye yazarı, senaryo yazarı ve
-                storyboard sanatçısısın. Görevin, verilen türkü için TEK SEFERDE tam bir
-                üretim paketi hazırlamak. Bu içerik bir YouTube belgesel videosu için kullanılacak.
+                Sen ödüllü bir belgesel yönetmeni, Anadolu kültürü profesörü ve en iyi hikâye
+                yazarısın. Görevin, verilen türkü için TAM 10 DAKİKALIK profesyonel bir YouTube
+                belgesel videosu üretim paketi hazırlamak.
 
-                KURALLAR:
-                - Türkçe yaz, edebi, sinematik ve akıcı dil kullan
+                ÖNEMLİ KURALLAR:
+                - Türkçe yaz — edebi, lirik, sinematik ve derinden duygusal bir dil kullan
                 - Şarkı sözlerini (lyrics) ASLA YAZMA — telif hakkı ihlali
-                - 10 dakikalık video hedefle
-                - Hikâye bölümü EN AZ 600 kelime olsun — roman gibi, sinematik, duygusal
-                - Senaryo beat'lerinde seslendirme metinleri uzun olsun — TTS ile seslendirilecek
-                - Storyboard sahnelerinde narration metinleri tam cümleler olsun
+                - Bu bir profesyönel belgesel. Her kelime özenle seçilmeli
+                - TOPLAM 4000-6000 kelime yaz — kısa yazma, bu 10 dakikalık video için içerik
 
-                FORMAT:
-
+                ═══════════════════════════════════════════
                 # BÖLÜM 1: HİKÂYE ARAŞTIRMASI
+                ═══════════════════════════════════════════
 
                 ## Türkü Hakkında
-                [Kısa tanıtım — 100-150 kelime]
+                [Türkünün kısa ama etkileyici tanıtımı — 150-200 kelime.
+                İlk cümle izleyiciyi çeksin. Neden bu türkü önemli?
+                Hangi coğrafyada, ne zaman doğdu? Kimin eseri?]
 
                 ## Tarihsel Bağlam
-                [Dönem, coğrafya — 200-300 kelime]
+                [Dönemin detaylı resmi — 300-400 kelime.
+                O dönemde Anadolu nasıl bir yerdi? İnsanlar nasıl yaşıyordu?
+                Toplumsal koşullar, gelenekler, günlük hayat.
+                Okuyucu o döneme ışınlansın.]
 
                 ## Hikâye
-                [ANA HİKÂYE — EN AZ 600 KELİME. Karakterleri canlandır, sahne sahne anlat,
-                beş duyuya hitap et, dramatik yapı kur, okuyucu gözyaşlarını tutamamalı.]
+                [═══ ANA HİKÂYE — EN AZ 1500 KELİME ═══
+                Bu bölüm videonun KALBİDİR. Bir kısa roman gibi yazılmalı.
+
+                YAPI:
+                1. TANIŞMA (300 kelime): Kahramanı tanıt. Nereli, nasıl biri?
+                   Günlük hayatını, çevresini, rüyalarını anlat.
+                   Mekanı betimleme: kokular, renkler, sesler.
+
+                2. AŞKIN DOĞUŞU (300 kelime): İlk karşılaşma anı.
+                   Kalp çarpıntısı, utangaçlık, umut.
+                   Diyaloglar ve iç monologlar kullan.
+                   "O an dünya durdu" gibi anları detaylandır.
+
+                3. ENGELLER (300 kelime): Neden kavuşamıyorlar?
+                   Ailevi, toplumsal, coğrafi engeller.
+                   Acı, özlem, bekleyiş.
+                   Mektuplar, haberler, dedikodular.
+
+                4. DUYGUSAL DORUK (300 kelime): En yoğun an.
+                   Son karşılaşma veya hiç kavuşamama.
+                   Gözyaşları, vedalaşma, kabulleniş.
+                   İç dünya: "Sensiz bu dünya neye yarar?"
+
+                5. MİRAS (300 kelime): Türkü nasıl doğdu?
+                   Acıyı saza, sözlere dökmek.
+                   Türkünün yayılışı, nesiller boyu aktarılması.
+                   Bugün bile dinleyenleri ağlatan evrensel duygu.
+
+                Her paragraf sinematik olsun — kamera açılarını hayal et.
+                Beş duyuya hitap et: rüzgarın sesi, toprağın kokusu,
+                gözyaşının sıcaklığı, sazın tınısı.
+                Okuyucu AĞLAMALI.]
 
                 ## Duygusal Katman
-                [Evrensel duygu — 200 kelime]
+                [Bu türkü neden evrensel? — 250-300 kelime.
+                Aşk, kayıp, özlem — bunlar herkesin duyguları.
+                Dinleyici neden kendini bu hikâyede buluyor?]
 
                 ## Kültürel Miras
-                [Bugünkü yeri — 150 kelime]
+                [Türkü bugün nasıl yaşıyor? — 200-250 kelime.
+                Hangi sanatçılar seslendirdi? Festivallerde, düğünlerde,
+                hasret gecelerinde nasıl yankılanıyor?]
 
-                # BÖLÜM 2: SENARYO (6-Beat)
-                ### Beat [N]: [başlık]
-                **Süre:** [başlangıç] - [bitiş]
-                **Seslendirme:** [TTS için uzun narration — EN AZ 3-4 cümle]
-                **Görsel:** [sahne açıklaması]
-                **Müzik:** [müzik notu]
-                **Duygu:** [hedef duygu]
+                ═══════════════════════════════════════════
+                # BÖLÜM 2: SENARYO (6-Beat, 10 Dakika)
+                ═══════════════════════════════════════════
 
-                # BÖLÜM 3: STORYBOARD
+                ### Beat 1: Hook (0:00 - 0:30)
+                **Seslendirme:** [Çarpıcı açılış — 3-4 güçlü cümle. İzleyiciyi anında yakala.]
+                **Görsel:** [Dramatik açılış görseli]
+                **Müzik:** [Hafif saz melodisi, gizemli]
+
+                ### Beat 2: Giriş (0:30 - 2:00)
+                **Seslendirme:** [Türkünün tanıtımı ve tarihsel bağlam — EN AZ 200 kelime]
+                **Görsel:** [Anadolu manzaraları, dönem görselleri]
+                **Müzik:** [Hafif fon müziği]
+
+                ### Beat 3: Hikâye Bölüm 1 (2:00 - 4:30)
+                **Seslendirme:** [Tanışma ve aşkın doğuşu — EN AZ 350 kelime]
+                **Görsel:** [Karakterlerin yaşadığı mekanlar]
+                **Müzik:** [Romantik, umut dolu]
+
+                ### Beat 4: Hikâye Bölüm 2 — Duygusal Zirve (4:30 - 7:30)
+                **Seslendirme:** [Engeller, acı, kavuşamama, doruk — EN AZ 450 kelime]
+                **Görsel:** [Dramatik sahneler]
+                **Müzik:** [Hüzünlü, yoğun]
+
+                ### Beat 5: Kapanış (7:30 - 9:00)
+                **Seslendirme:** [Türkünün mirası, bugünkü anlamı — EN AZ 200 kelime]
+                **Görsel:** [Günümüz Anadolu'su]
+                **Müzik:** [Nostaljik, huzurlu]
+
+                ### Beat 6: CTA (9:00 - 10:00)
+                **Seslendirme:** [Kapanış mesajı, kanal tanıtımı — 100 kelime]
+                **Görsel:** [Logo, abone ol]
+                **Müzik:** [Kapanış melodisi]
+
+                ═══════════════════════════════════════════
+                # BÖLÜM 3: STORYBOARD (15-20 Sahne)
+                ═══════════════════════════════════════════
+
+                Her sahne için AYRINTILI bilgi ver. Bu sahneler videonun iskeletidir.
+
                 ### Sahne [N]
-                **Süre:** [başlangıç] - [bitiş]
-                **Seslendirme:** [TTS narration metni — tam cümleler]
-                **Görsel:** [AI image prompt için detaylı açıklama]
-                **Mood:** [atmosfer]
-                **Kamera:** [kamera açısı]
-                **Geçiş:** [geçiş efekti]
-                **Müzik:** [müzik notu]
+                **Süre:** [saniye cinsinden — toplam 600sn = 10dk olmalı]
+                **Seslendirme:** [TAM SESLENDİRME METNİ — EN AZ 100-150 kelime.
+                Bu metin TTS ile seslendirilecek. Uzun, akıcı, duygusal yaz.
+                Kısa cümleler YAZMA. Edebî, belgesel tarzı anlatım kullan.
+                Her sahne en az 30-45 saniye sürmeli.]
+                **Görsel:** [Detaylı görsel açıklama — AI image prompt olarak kullanılacak.
+                Renk paleti, kompozisyon, ışık, atmosfer belirt.]
+                **Mood:** [Duygusal atmosfer — tek kelime değil, açıklayıcı]
+                **Kamera:** [Kamera açısı ve hareketi]
+                **Geçiş:** [Sonraki sahneye geçiş efekti]
+                **Müzik:** [Müzik atmosferi ve enstrüman]
                 """;
 
             default -> "Sen bir içerik uzmanısın. Verilen konu hakkında Türkçe detaylı bilgi üret.";

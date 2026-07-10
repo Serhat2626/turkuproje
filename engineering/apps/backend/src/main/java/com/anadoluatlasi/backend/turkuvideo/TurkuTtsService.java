@@ -26,8 +26,9 @@ import java.util.UUID;
  * OpenAI TTS (Text-to-Speech) servisi.
  * Storyboard sahnelerinin narration metinlerini ses dosyasına çevirir.
  *
- * <p>Voice: 'onyx' — derin, hikâyeci Türkçe anlatım için uygun.
- * Model: 'tts-1' — hızlı ve uygun maliyetli (~$0.015/1K karakter).</p>
+ * <p>Voice: 'nova' — sıcak, doğal, belgesel anlatımı için ideal.
+ * Model: 'tts-1-hd' — yüksek kaliteli ses (~$0.030/1K karakter).
+ * Speed: 0.9 — hafif yavaş, belgesel tarzı.</p>
  */
 @Slf4j
 @Service
@@ -120,9 +121,10 @@ public class TurkuTtsService {
      */
     private byte[] callTtsApi(String text) {
         Map<String, Object> body = Map.of(
-                "model", "tts-1",
+                "model", "tts-1-hd",
                 "input", text,
-                "voice", "onyx",
+                "voice", "nova",
+                "speed", 0.9,
                 "response_format", "mp3"
         );
 
