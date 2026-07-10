@@ -834,9 +834,45 @@ function TurkuVideoWorkflowPage() {
             🎬 Video
           </h2>
 
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
+            {/* TAM PIPELINE BUTONU */}
             <button
               className="btn btn-primary"
+              disabled={videoAssembling}
+              onClick={async () => {
+                setVideoAssembling(true)
+                setVideoReady(false)
+                setAutoRunProgress('⏳ Tam video pipeline başlatılıyor...')
+                try {
+                  const res = await turkuApi.generateFullVideo(project.id)
+                  if (res.data?.success) {
+                    setVideoReady(true)
+                    const steps = [
+                      `📜 İçerik: ${res.data.step1_content}`,
+                      `🖼️ Görseller: ${res.data.step2_images}`,
+                      `🎙️ Ses: ${res.data.step3_tts}`,
+                      `🎬 Video: ${res.data.step4_video}`,
+                    ].join('\n')
+                    alert(`🎬 Video hazır!\n\n${steps}`)
+                    await refreshProject(project.id)
+                  } else {
+                    alert('Pipeline hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
+                  }
+                } catch (e: any) {
+                  alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
+                } finally {
+                  setVideoAssembling(false)
+                  setAutoRunProgress('')
+                }
+              }}
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6)', border: 'none', fontSize: '1rem', padding: '10px 24px' }}
+            >
+              {videoAssembling ? '⏳ Video üretiliyor (GPT-4o → DALL-E → TTS → FFmpeg)...' : '🚀 Tam Video Üret'}
+            </button>
+
+            {/* Sadece FFmpeg butonu */}
+            <button
+              className="btn btn-secondary"
               disabled={videoAssembling}
               onClick={async () => {
                 setVideoAssembling(true)
@@ -845,7 +881,6 @@ function TurkuVideoWorkflowPage() {
                   const res = await turkuApi.assembleVideo(project.id)
                   if (res.data?.success) {
                     setVideoReady(true)
-                    alert(`🎬 Video hazır!\n📊 ${res.data.segmentCount} segment birleştirildi\n💾 ${Math.round((res.data.videoSizeBytes || 0) / 1024 / 1024)} MB`)
                   } else {
                     alert('Video birleştirme hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
                   }
@@ -855,27 +890,39 @@ function TurkuVideoWorkflowPage() {
                   setVideoAssembling(false)
                 }
               }}
-              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none', fontSize: '0.9rem' }}
+              style={{ fontSize: '0.85rem' }}
             >
-              {videoAssembling ? '⏳ FFmpeg birleştiriyor...' : '🎬 Video Oluştur (FFmpeg)'}
+              🎬 Sadece FFmpeg Birleştir
             </button>
           </div>
 
           {/* Video Player */}
           {videoReady && (
-            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(99,102,241,0.2)' }}>
+            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '2px solid rgba(99,102,241,0.3)', marginTop: '12px' }}>
               <video
                 controls
+                autoPlay
                 src={turkuApi.getVideoUrl(project.id)}
-                style={{ width: '100%', maxHeight: '500px', background: '#000' }}
+                style={{ width: '100%', maxHeight: '600px', background: '#000' }}
                 onError={() => setVideoReady(false)}
               />
+              <div style={{ padding: '12px', background: 'rgba(99,102,241,0.08)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>🎬 Mihriban — Türkü Belgeseli</span>
+                <a
+                  href={turkuApi.getVideoUrl(project.id)}
+                  download="turku-video.mp4"
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '4px 12px' }}
+                >
+                  ⬇️ İndir
+                </a>
+              </div>
             </div>
           )}
 
           {!videoReady && !videoAssembling && (
             <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
-              Video oluşturmak için önce DALL-E ile görselleri ve TTS ile seslendirmeleri üretmelisiniz.
+              🚀 "Tam Video Üret" butonu tek tıkla tüm pipeline'ı çalıştırır: OpenAI hikâye → DALL-E görseller → TTS ses → FFmpeg video
             </p>
           )}
         </div>

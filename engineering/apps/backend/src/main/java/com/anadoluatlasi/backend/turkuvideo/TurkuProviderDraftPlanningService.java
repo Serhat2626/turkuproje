@@ -35,6 +35,10 @@ public class TurkuProviderDraftPlanningService {
         this.safetyPolicy = safetyPolicy;
     }
 
+    public TurkuGenerationProviderGateway getGateway() {
+        return gateway;
+    }
+
     // ── Generate Story ──────────────────────────────────────
 
     public TurkuProviderPlanningGenerationResponse generateStory(

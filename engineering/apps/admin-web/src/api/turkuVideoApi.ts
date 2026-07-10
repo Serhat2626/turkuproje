@@ -266,3 +266,17 @@ export function assembleVideo(
 export function getVideoUrl(id: string): string {
   return `/api/admin/turku-video-projects/${id}/video`
 }
+
+// ── Full Pipeline ──
+
+export function generateFullVideo(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/generate-full-video`, { method: 'POST' })
+}
+
+export function generateAllImages(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/generate-images`, { method: 'POST' })
+}

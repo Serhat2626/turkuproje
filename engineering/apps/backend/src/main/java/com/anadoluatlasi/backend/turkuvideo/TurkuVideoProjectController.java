@@ -25,6 +25,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -685,6 +687,133 @@ public class TurkuVideoProjectController {
         }
         TurkuTtsService.TurkuTtsResponse result = ttsService.generateForProject(id);
         return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // ── DALL-E Batch Image Generation ──
+
+    @PostMapping("/{id}/generate-images")
+    @Operation(summary = "Tüm sahneler için DALL-E görsel üret",
+               description = "Storyboard'daki her sahne için DALL-E 3 ile görsel üretir ve MinIO'ya kaydeder.")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateAllImages(@PathVariable UUID id) {
+        TurkuVideoProject project = bootstrapService.getById(id);
+        TurkuStoryboardPlan storyboard = project.getStoryboardPlan();
+        if (storyboard == null || storyboard.getScenes() == null) {
+            return ResponseEntity.badRequest()
+                    .body(ApiResponse.error("Storyboard hazır değil"));
+        }
+
+        int success = 0, fail = 0;
+        List<String> errors = new java.util.ArrayList<>();
+
+        for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+            try {
+                TurkuImageGenerationRequest imgReq = TurkuImageGenerationRequest.builder()
+                        .projectId(id)
+                        .sceneNo(scene.getSceneNo())
+                        .safePromptSummary(scene.getVisualDescription())
+                        .styleHint("cinematic watercolor, Anatolian documentary")
+                        .safeNegativeNotes("text, watermark, logo, modern elements")
+                        .aspectRatioHint("16:9")
+                        .build();
+
+                if (providerDraftService.getGateway() instanceof OpenAiTurkuGenerationProviderGateway openAiGateway) {
+                    openAiGateway.generateImage(imgReq,
+                            TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
+                    success++;
+                } else {
+                    errors.add("Sahne " + scene.getSceneNo() + ": OpenAI gateway aktif değil");
+                    fail++;
+                }
+            } catch (Exception e) {
+                fail++;
+                errors.add("Sahne " + scene.getSceneNo() + ": " + e.getMessage());
+            }
+        }
+
+        Map<String, Object> result = Map.of(
+                "successCount", success,
+                "failureCount", fail,
+                "totalScenes", storyboard.getScenes().size(),
+                "errors", errors
+        );
+        return ResponseEntity.ok(ApiResponse.success(result));
+    }
+
+    // ── Full Pipeline: Content → Images → TTS → Video ──
+
+    @PostMapping("/{id}/generate-full-video")
+    @Operation(summary = "Tam video pipeline",
+               description = "Tek tıkla: OpenAI hikâye+senaryo+storyboard → DALL-E görseller → TTS ses → FFmpeg video")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateFullVideo(@PathVariable UUID id) {
+        Map<String, Object> results = new java.util.LinkedHashMap<>();
+
+        try {
+            TurkuVideoProject project = bootstrapService.getById(id);
+
+            // ADIM 1: İçerik üretimi (eğer henüz yapılmadıysa)
+            if ("DRAFT_CREATED".equals(project.getWorkflowStage().name())) {
+                results.put("step1_content", "Üretiliyor...");
+                providerDraftService.generatePlanningBundle(id, new TurkuProviderGenerationRequest());
+                project = bootstrapService.getById(id); // Refresh
+                results.put("step1_content", "✅ Tamamlandı");
+            } else {
+                results.put("step1_content", "⏭️ Zaten mevcut");
+            }
+
+            // ADIM 2: DALL-E görseller
+            TurkuStoryboardPlan storyboard = project.getStoryboardPlan();
+            if (storyboard != null && storyboard.getScenes() != null) {
+                int imgSuccess = 0, imgFail = 0;
+                for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                    try {
+                        TurkuImageGenerationRequest imgReq = TurkuImageGenerationRequest.builder()
+                                .projectId(id)
+                                .sceneNo(scene.getSceneNo())
+                                .safePromptSummary(scene.getVisualDescription())
+                                .styleHint("cinematic watercolor, Anatolian documentary")
+                                .safeNegativeNotes("text, watermark, logo, modern elements")
+                                .aspectRatioHint("16:9")
+                                .build();
+
+                        if (providerDraftService.getGateway() instanceof OpenAiTurkuGenerationProviderGateway openAiGateway) {
+                            openAiGateway.generateImage(imgReq,
+                            TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
+                            imgSuccess++;
+                        }
+                    } catch (Exception e) {
+                        imgFail++;
+                    }
+                }
+                results.put("step2_images", "✅ " + imgSuccess + " görsel, ❌ " + imgFail + " hata");
+            }
+
+            // ADIM 3: TTS seslendirme
+            if (ttsService != null) {
+                TurkuTtsService.TurkuTtsResponse ttsResult = ttsService.generateForProject(id);
+                results.put("step3_tts", "✅ " + ttsResult.getSuccessCount() + " ses, ❌ " + ttsResult.getFailureCount() + " hata");
+            } else {
+                results.put("step3_tts", "⏭️ TTS servisi yok");
+            }
+
+            // ADIM 4: FFmpeg video birleştirme
+            TurkuVideoAssemblyService.VideoAssemblyResult videoResult = videoAssemblyService.assembleVideo(id);
+            if (videoResult.isSuccess()) {
+                results.put("step4_video", "✅ " + videoResult.getSegmentCount() + " segment, " +
+                        (videoResult.getVideoSizeBytes() / 1024 / 1024) + " MB");
+                results.put("videoUrl", "/api/admin/turku-video-projects/" + id + "/video");
+            } else {
+                results.put("step4_video", "❌ " + videoResult.getError());
+            }
+
+            results.put("success", true);
+            return ResponseEntity.ok(ApiResponse.success(results));
+
+        } catch (Exception e) {
+            results.put("success", false);
+            results.put("error", e.getMessage());
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.success(results));
+        }
     }
 
     // ── Media Serving ──
