@@ -23,9 +23,20 @@ public class AiProviderProperties {
     private String provider = "mock";
 
     /**
+     * TTS (Text-to-Speech) provider: {@code openai} veya {@code elevenlabs}.
+     * Varsayılan: {@code openai}
+     */
+    private String ttsProvider = "openai";
+
+    /**
      * OpenAI provider'a özel ayarlar.
      */
     private OpenAi openai = new OpenAi();
+
+    /**
+     * ElevenLabs TTS provider ayarları.
+     */
+    private ElevenLabs elevenlabs = new ElevenLabs();
 
     /**
      * OpenAI provider ayarları.
@@ -50,5 +61,33 @@ public class AiProviderProperties {
 
         /** Yaratıcılık parametresi (0.0–2.0) */
         private double temperature = 0.4;
+    }
+
+    /**
+     * ElevenLabs TTS provider ayarları.
+     */
+    @Data
+    public static class ElevenLabs {
+
+        /** ElevenLabs API key */
+        private String apiKey;
+
+        /** Voice ID — Türkçe için uygun ses */
+        private String voiceId = "EXAVITQu4vr4xnSDxMaL";  // "Sarah" - multilingual, sıcak
+
+        /** Model ID */
+        private String modelId = "eleven_multilingual_v2";
+
+        /** Stability (0.0-1.0) — düşük=daha ifadeli, yüksek=daha kararlı */
+        private double stability = 0.5;
+
+        /** Similarity boost (0.0-1.0) */
+        private double similarityBoost = 0.75;
+
+        /** Style (0.0-1.0) — anlatım stili yoğunluğu */
+        private double style = 0.4;
+
+        /** ElevenLabs API base URL */
+        private String baseUrl = "https://api.elevenlabs.io/v1";
     }
 }

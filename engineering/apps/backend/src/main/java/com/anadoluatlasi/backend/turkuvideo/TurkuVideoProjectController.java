@@ -65,6 +65,9 @@ public class TurkuVideoProjectController {
     @Autowired(required = false)
     private TurkuTtsService ttsService;
 
+    @Autowired(required = false)
+    private ElevenLabsTtsService elevenLabsTtsService;
+
     private final TurkuVideoAssemblyService videoAssemblyService;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -743,28 +746,42 @@ public class TurkuVideoProjectController {
 
     @PostMapping("/{id}/generate-full-video")
     @Operation(summary = "Tam video pipeline",
-               description = "Tek tıkla: OpenAI hikâye+senaryo+storyboard → DALL-E görseller → TTS ses → FFmpeg video")
+               description = "Tek tıkla: OpenAI hikâye+senaryo+storyboard → DALL-E görseller → TTS ses → FFmpeg video. Zaten hazır olan adımlar atlanır.")
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateFullVideo(@PathVariable UUID id) {
         Map<String, Object> results = new java.util.LinkedHashMap<>();
 
         try {
             TurkuVideoProject project = bootstrapService.getById(id);
 
-            // ADIM 1: İçerik üretimi (eğer henüz yapılmadıysa)
+            // ADIM 1: İçerik üretimi (hikâye + senaryo + storyboard)
             if ("DRAFT_CREATED".equals(project.getWorkflowStage().name())) {
                 results.put("step1_content", "Üretiliyor...");
                 providerDraftService.generatePlanningBundle(id, new TurkuProviderGenerationRequest());
                 project = bootstrapService.getById(id); // Refresh
                 results.put("step1_content", "✅ Tamamlandı");
             } else {
-                results.put("step1_content", "⏭️ Zaten mevcut");
+                results.put("step1_content", "⏭️ Zaten mevcut (atlandı)");
             }
 
-            // ADIM 2: DALL-E görseller
+            // ADIM 2: DALL-E görseller (MinIO'da zaten varsa atla)
             TurkuStoryboardPlan storyboard = project.getStoryboardPlan();
             if (storyboard != null && storyboard.getScenes() != null) {
-                int imgSuccess = 0, imgFail = 0;
+                int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
                 for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                    String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
+                    // MinIO'da zaten varsa atla
+                    boolean exists = false;
+                    try {
+                        minioClient.statObject(io.minio.StatObjectArgs.builder()
+                                .bucket(minioConfig.getBucketName()).object(imagePath).build());
+                        exists = true;
+                    } catch (Exception ignored) {}
+
+                    if (exists) {
+                        imgSkipped++;
+                        continue;
+                    }
+
                     try {
                         TurkuImageGenerationRequest imgReq = TurkuImageGenerationRequest.builder()
                                 .projectId(id)
@@ -784,18 +801,44 @@ public class TurkuVideoProjectController {
                         imgFail++;
                     }
                 }
-                results.put("step2_images", "✅ " + imgSuccess + " görsel, ❌ " + imgFail + " hata");
+                results.put("step2_images", "✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");
             }
 
-            // ADIM 3: TTS seslendirme
-            if (ttsService != null) {
-                TurkuTtsService.TurkuTtsResponse ttsResult = ttsService.generateForProject(id);
-                results.put("step3_tts", "✅ " + ttsResult.getSuccessCount() + " ses, ❌ " + ttsResult.getFailureCount() + " hata");
+            // ADIM 3: TTS seslendirme (MinIO'da zaten varsa atla)
+            boolean hasTtsProvider = (elevenLabsTtsService != null || ttsService != null);
+            String ttsLabel = elevenLabsTtsService != null ? "ElevenLabs" : "OpenAI";
+            if (hasTtsProvider) {
+                if (storyboard != null && storyboard.getScenes() != null) {
+                    boolean allAudioExists = true;
+                    for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                        String audioPath = String.format("turku-video/%s/audio/%d.mp3", id, scene.getSceneNo());
+                        try {
+                            minioClient.statObject(io.minio.StatObjectArgs.builder()
+                                    .bucket(minioConfig.getBucketName()).object(audioPath).build());
+                        } catch (Exception e) {
+                            allAudioExists = false;
+                            break;
+                        }
+                    }
+
+                    if (allAudioExists) {
+                        results.put("step3_tts", "⏭️ Tüm ses dosyaları mevcut (atlandı)");
+                    } else {
+                        // ElevenLabs varsa onu kullan, yoksa OpenAI
+                        TurkuTtsService.TurkuTtsResponse ttsResult;
+                        if (elevenLabsTtsService != null) {
+                            ttsResult = elevenLabsTtsService.generateForProject(id);
+                        } else {
+                            ttsResult = ttsService.generateForProject(id);
+                        }
+                        results.put("step3_tts", "✅ " + ttsLabel + ": " + ttsResult.getSuccessCount() + " ses, ❌ " + ttsResult.getFailureCount() + " hata");
+                    }
+                }
             } else {
-                results.put("step3_tts", "⏭️ TTS servisi yok");
+                results.put("step3_tts", "⏭️ TTS servisi yok (ai.tts-provider ayarlayın)");
             }
 
-            // ADIM 4: FFmpeg video birleştirme
+            // ADIM 4: FFmpeg video birleştirme (her zaman yeniden yapılır — müzik vs. değişmiş olabilir)
             TurkuVideoAssemblyService.VideoAssemblyResult videoResult = videoAssemblyService.assembleVideo(id);
             if (videoResult.isSuccess()) {
                 results.put("step4_video", "✅ " + videoResult.getSegmentCount() + " segment, " +
