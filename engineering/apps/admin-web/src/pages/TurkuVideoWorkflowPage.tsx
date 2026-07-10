@@ -106,6 +106,8 @@ function TurkuVideoWorkflowPage() {
   const [ttsLoading, setTtsLoading] = useState(false)
   const [autoRunning, setAutoRunning] = useState(false)
   const [autoRunProgress, setAutoRunProgress] = useState('')
+  const [videoAssembling, setVideoAssembling] = useState(false)
+  const [videoReady, setVideoReady] = useState(false)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -245,7 +247,7 @@ function TurkuVideoWorkflowPage() {
       const currentStage = projRes.data?.workflowStage
 
       if (currentStage === 'DRAFT_CREATED') {
-        setAutoRunProgress('⏳ 1/3: OpenAI ile Hikâye + Senaryo + Storyboard üretiliyor...')
+        setAutoRunProgress('⏳ 1/4: OpenAI ile Hikâye + Senaryo + Storyboard üretiliyor...')
         setActiveAction('Planlama Paketi Üret (OpenAI)')
         try {
           await turkuApi.generateTurkuPlanningBundle(currentId)
@@ -272,7 +274,7 @@ function TurkuVideoWorkflowPage() {
 
         if (p.data.workflowStage !== sa.enabledAt) continue
 
-        setAutoRunProgress(`⏳ 2/3: ${i + 1}/${remainingActions.length} — ${sa.label}...`)
+        setAutoRunProgress(`⏳ 2/4: ${i + 1}/${remainingActions.length} — ${sa.label}...`)
         setActiveAction(sa.label)
 
         try {
@@ -289,12 +291,25 @@ function TurkuVideoWorkflowPage() {
       }
 
       // ── ADIM 3: TTS Seslendirme ──
-      setAutoRunProgress('⏳ 3/3: TTS Seslendirme üretiliyor...')
+      setAutoRunProgress('⏳ 3/4: TTS Seslendirme üretiliyor...')
       setActiveAction('TTS Seslendirme')
       try {
         await turkuApi.generateTts(currentId)
       } catch {
         // TTS hatası kritik değil, devam et
+      }
+      setActiveAction(null)
+
+      // ── ADIM 4: Video Birleştirme (FFmpeg) ──
+      setAutoRunProgress('⏳ 4/4: FFmpeg ile video oluşturuluyor...')
+      setActiveAction('Video Birleştirme')
+      try {
+        const videoRes = await turkuApi.assembleVideo(currentId)
+        if (videoRes.data?.success) {
+          setVideoReady(true)
+        }
+      } catch {
+        // Video hatası kritik değil
       }
       setActiveAction(null)
 
@@ -808,6 +823,60 @@ function TurkuVideoWorkflowPage() {
                 </div>
               ))}
             </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Video Üretimi ── */}
+      {project && (
+        <div className="card" style={{ marginTop: '24px' }}>
+          <h2 style={{ fontSize: '1.4rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+            🎬 Video
+          </h2>
+
+          <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px' }}>
+            <button
+              className="btn btn-primary"
+              disabled={videoAssembling}
+              onClick={async () => {
+                setVideoAssembling(true)
+                setVideoReady(false)
+                try {
+                  const res = await turkuApi.assembleVideo(project.id)
+                  if (res.data?.success) {
+                    setVideoReady(true)
+                    alert(`🎬 Video hazır!\n📊 ${res.data.segmentCount} segment birleştirildi\n💾 ${Math.round((res.data.videoSizeBytes || 0) / 1024 / 1024)} MB`)
+                  } else {
+                    alert('Video birleştirme hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
+                  }
+                } catch (e: any) {
+                  alert('Video birleştirme hatası: ' + (e.message || 'Bilinmeyen hata'))
+                } finally {
+                  setVideoAssembling(false)
+                }
+              }}
+              style={{ background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', border: 'none', fontSize: '0.9rem' }}
+            >
+              {videoAssembling ? '⏳ FFmpeg birleştiriyor...' : '🎬 Video Oluştur (FFmpeg)'}
+            </button>
+          </div>
+
+          {/* Video Player */}
+          {videoReady && (
+            <div style={{ borderRadius: '12px', overflow: 'hidden', border: '1px solid rgba(99,102,241,0.2)' }}>
+              <video
+                controls
+                src={turkuApi.getVideoUrl(project.id)}
+                style={{ width: '100%', maxHeight: '500px', background: '#000' }}
+                onError={() => setVideoReady(false)}
+              />
+            </div>
+          )}
+
+          {!videoReady && !videoAssembling && (
+            <p style={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.85rem' }}>
+              Video oluşturmak için önce DALL-E ile görselleri ve TTS ile seslendirmeleri üretmelisiniz.
+            </p>
           )}
         </div>
       )}

@@ -63,6 +63,8 @@ public class TurkuVideoProjectController {
     @Autowired(required = false)
     private TurkuTtsService ttsService;
 
+    private final TurkuVideoAssemblyService videoAssemblyService;
+
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
                                         TurkuVideoPlanningService planningService,
                                         TurkuVideoAssetPlanningService assetPlanningService,
@@ -75,7 +77,8 @@ public class TurkuVideoProjectController {
                                         TurkuStoryboardInternalRenderChainHarness storyboardChainHarness,
                                         AdminActorResolver actorResolver,
                                         MinioClient minioClient,
-                                        MinioConfig minioConfig) {
+                                        MinioConfig minioConfig,
+                                        TurkuVideoAssemblyService videoAssemblyService) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
         this.assetPlanningService = assetPlanningService;
@@ -89,6 +92,7 @@ public class TurkuVideoProjectController {
         this.actorResolver = actorResolver;
         this.minioClient = minioClient;
         this.minioConfig = minioConfig;
+        this.videoAssemblyService = videoAssemblyService;
     }
 
     // ── POST /admin/turku-video-projects/bootstrap ──
@@ -709,6 +713,38 @@ public class TurkuVideoProjectController {
             byte[] bytes = stream.readAllBytes();
             return ResponseEntity.ok()
                     .contentType(MediaType.parseMediaType("audio/mpeg"))
+                    .body(bytes);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    // ── Video Assembly ──
+
+    @PostMapping("/{id}/assemble-video")
+    @Operation(summary = "Video birleştir",
+               description = "Sahne görselleri ve TTS seslerini FFmpeg ile birleştirerek video üretir.")
+    public ResponseEntity<ApiResponse<TurkuVideoAssemblyService.VideoAssemblyResult>> assembleVideo(
+            @PathVariable UUID id) {
+        TurkuVideoAssemblyService.VideoAssemblyResult result = videoAssemblyService.assembleVideo(id);
+        if (result.isSuccess()) {
+            return ResponseEntity.ok(ApiResponse.success(result));
+        } else {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error(result.getError()));
+        }
+    }
+
+    @GetMapping("/{id}/video")
+    @Operation(summary = "Video izle", description = "MinIO'dan üretilen videoyu stream eder.")
+    public ResponseEntity<byte[]> getVideo(@PathVariable UUID id) {
+        String path = String.format("turku-video/%s/video/final.mp4", id);
+        try (var stream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioConfig.getBucketName()).object(path).build())) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .contentType(MediaType.parseMediaType("video/mp4"))
+                    .header("Content-Disposition", "inline; filename=turku-video.mp4")
                     .body(bytes);
         } catch (Exception e) {
             return ResponseEntity.notFound().build();

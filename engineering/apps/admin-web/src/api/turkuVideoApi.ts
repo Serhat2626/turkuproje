@@ -254,3 +254,15 @@ export function getSceneImageUrl(id: string, sceneNo: number): string {
 export function getSceneAudioUrl(id: string, sceneNo: number): string {
   return `/api/admin/turku-video-projects/${id}/scenes/${sceneNo}/audio`
 }
+
+// ── Video Assembly ──
+
+export function assembleVideo(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/assemble-video`, { method: 'POST' })
+}
+
+export function getVideoUrl(id: string): string {
+  return `/api/admin/turku-video-projects/${id}/video`
+}
