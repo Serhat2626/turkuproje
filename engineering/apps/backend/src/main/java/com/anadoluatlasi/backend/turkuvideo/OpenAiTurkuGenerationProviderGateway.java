@@ -3,6 +3,7 @@ package com.anadoluatlasi.backend.turkuvideo;
 import com.anadoluatlasi.backend.ai.config.AiProviderProperties;
 import com.anadoluatlasi.backend.config.MinioConfig;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
@@ -213,7 +214,6 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 .size("1792x1024")
                 .quality("standard")
                 .n(1)
-                .responseFormat("url")
                 .build();
 
         try {
@@ -648,14 +648,13 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
     @Builder
     @NoArgsConstructor
     @AllArgsConstructor
+    @JsonInclude(JsonInclude.Include.NON_NULL)
     static class DallERequest {
         private String model;
         private String prompt;
         private String size;
         private String quality;
         private int n;
-        @JsonProperty("response_format")
-        private String responseFormat;
     }
 
     @Data

@@ -86,7 +86,15 @@ const PROVIDER_MODE_BADGE_CLASS: Record<TurkuProviderMode, string> = {
 
 function TurkuVideoWorkflowPage() {
   // ── Bootstrap form state ──
-  const [form, setForm] = useState<TurkuVideoBootstrapRequest>({ turkuName: '' })
+  const [form, setForm] = useState<TurkuVideoBootstrapRequest>({
+    turkuName: 'Mihriban',
+    region: 'Erzurum',
+    mood: 'hüzünlü, hasret, kavuşamama, platonik aşk',
+    targetDurationMinutes: 10,
+    sourceNotes: 'Âşık Sümmani\'nin Mihriban\'a duyduğu karşılıksız aşkın hikâyesi. 19. yüzyıl Erzurum. Âşıklık geleneği, atışma sahnesi, kavuşamama acısı ve türkünün yüzyıllardır yaşayan mirası.',
+    narrationStyle: 'hikâyeci, duygusal belgesel',
+    visualStyle: 'sinematik suluboya',
+  })
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeAction, setActiveAction] = useState<string | null>(null)
