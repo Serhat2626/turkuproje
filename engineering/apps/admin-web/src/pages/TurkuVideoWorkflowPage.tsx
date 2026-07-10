@@ -247,7 +247,7 @@ function TurkuVideoWorkflowPage() {
       const currentStage = projRes.data?.workflowStage
 
       if (currentStage === 'DRAFT_CREATED') {
-        setAutoRunProgress('⏳ 1/4: OpenAI ile Hikâye + Senaryo + Storyboard üretiliyor...')
+        setAutoRunProgress('⏳ 1/3: OpenAI ile Hikâye + Senaryo + Storyboard üretiliyor...')
         setActiveAction('Planlama Paketi Üret (OpenAI)')
         try {
           await turkuApi.generateTurkuPlanningBundle(currentId)
@@ -274,7 +274,7 @@ function TurkuVideoWorkflowPage() {
 
         if (p.data.workflowStage !== sa.enabledAt) continue
 
-        setAutoRunProgress(`⏳ 2/4: ${i + 1}/${remainingActions.length} — ${sa.label}...`)
+        setAutoRunProgress(`⏳ 2/3: ${i + 1}/${remainingActions.length} — ${sa.label}...`)
         setActiveAction(sa.label)
 
         try {
@@ -290,32 +290,22 @@ function TurkuVideoWorkflowPage() {
         setActiveAction(null)
       }
 
-      // ── ADIM 3: TTS Seslendirme ──
-      setAutoRunProgress('⏳ 3/4: TTS Seslendirme üretiliyor...')
-      setActiveAction('TTS Seslendirme')
+      // ── ADIM 3: DALL-E Görseller + TTS Ses + FFmpeg Video ──
+      setAutoRunProgress('⏳ 3/3: DALL-E görseller + TTS ses + FFmpeg video üretiliyor... (3-5 dk)')
+      setActiveAction('Tam Video Pipeline')
       try {
-        await turkuApi.generateTts(currentId)
-      } catch {
-        // TTS hatası kritik değil, devam et
-      }
-      setActiveAction(null)
-
-      // ── ADIM 4: Video Birleştirme (FFmpeg) ──
-      setAutoRunProgress('⏳ 4/4: FFmpeg ile video oluşturuluyor...')
-      setActiveAction('Video Birleştirme')
-      try {
-        const videoRes = await turkuApi.assembleVideo(currentId)
-        if (videoRes.data?.success) {
+        const fullRes = await turkuApi.generateFullVideo(currentId)
+        if (fullRes.data?.success) {
           setVideoReady(true)
         }
       } catch {
-        // Video hatası kritik değil
+        // Pipeline hatası — kısmi sonuçlar olabilir
       }
       setActiveAction(null)
 
       // Son durumu güncelle
       await refreshProject(currentId)
-      setSuccessMessage('🎉 Tüm aşamalar başarıyla tamamlandı! Hikâye, Senaryo ve Storyboard tab\'larından içeriği okuyabilirsin.')
+      setSuccessMessage('🎉 Tam video pipeline tamamlandı! Hikâye, Senaryo, Storyboard içeriklerini okuyabilir ve videoyu izleyebilirsin.')
     } catch (e: any) {
       setError('Otomatik çalıştırma hatası: ' + (e.message || 'Bilinmeyen hata'))
     } finally {
