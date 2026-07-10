@@ -1,5 +1,6 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
 import java.time.Instant;
@@ -13,6 +14,7 @@ import java.util.UUID;
  * No external API calls. No raw provider payloads. No secrets.</p>
  */
 @Component
+@ConditionalOnProperty(name = "ai.provider", havingValue = "mock", matchIfMissing = true)
 public class StubTurkuGenerationProviderGateway implements TurkuGenerationProviderGateway {
 
     @Override

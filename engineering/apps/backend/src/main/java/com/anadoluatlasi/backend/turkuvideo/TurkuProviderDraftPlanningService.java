@@ -64,8 +64,7 @@ public class TurkuProviderDraftPlanningService {
                 .generationStage("STORY")
                 .context(buildNarrativeContext(project))
                 .promptTemplateId("turku-story-v1")
-                .safeParams(request != null && request.getSafeParams() != null
-                        ? request.getSafeParams() : Map.of())
+                .safeParams(buildProjectSafeParams(project, request))
                 .build();
 
         // Generate through gateway
@@ -113,8 +112,7 @@ public class TurkuProviderDraftPlanningService {
                 .generationStage("SCENARIO")
                 .context(buildNarrativeContext(project))
                 .promptTemplateId("turku-scenario-v1")
-                .safeParams(request != null && request.getSafeParams() != null
-                        ? request.getSafeParams() : Map.of())
+                .safeParams(buildProjectSafeParams(project, request))
                 .build();
 
         TurkuAiGenerationResult result = gateway.generateAi(aiRequest, envelope);
@@ -159,8 +157,7 @@ public class TurkuProviderDraftPlanningService {
                 .generationStage("STORYBOARD")
                 .context(buildNarrativeContext(project))
                 .promptTemplateId("turku-storyboard-v1")
-                .safeParams(request != null && request.getSafeParams() != null
-                        ? request.getSafeParams() : Map.of())
+                .safeParams(buildProjectSafeParams(project, request))
                 .build();
 
         TurkuAiGenerationResult result = gateway.generateAi(aiRequest, envelope);
@@ -242,6 +239,28 @@ public class TurkuProviderDraftPlanningService {
     private TurkuVideoProject getProject(UUID id) {
         return repository.findById(id)
                 .orElseThrow(TurkuVideoProjectException::projectNotFound);
+    }
+
+    /**
+     * Proje meta bilgilerini safeParams'a ekler — OpenAI gateway promptlarda kullanır.
+     */
+    private Map<String, String> buildProjectSafeParams(
+            TurkuVideoProject project, TurkuProviderGenerationRequest request) {
+        var params = new java.util.HashMap<String, String>();
+        // Proje bilgileri
+        if (project.getTurkuName() != null) params.put("turkuName", project.getTurkuName());
+        if (project.getRegion() != null) params.put("region", project.getRegion());
+        if (project.getMood() != null) params.put("mood", project.getMood());
+        if (project.getSourceNotes() != null) params.put("sourceNotes", project.getSourceNotes());
+        if (project.getNarrationStyle() != null) params.put("narrationStyle", project.getNarrationStyle());
+        if (project.getVisualStyle() != null) params.put("visualStyle", project.getVisualStyle());
+        if (project.getTargetDurationMinutes() != null)
+            params.put("targetDurationMinutes", String.valueOf(project.getTargetDurationMinutes()));
+        // Request'ten gelen ek parametreler (override)
+        if (request != null && request.getSafeParams() != null) {
+            params.putAll(request.getSafeParams());
+        }
+        return params;
     }
 
     private void validateStage(TurkuVideoProject project, TurkuVideoWorkflowStage expected) {
