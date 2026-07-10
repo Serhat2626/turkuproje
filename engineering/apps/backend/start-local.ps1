@@ -11,6 +11,8 @@ if (Test-Path $envFile) {
             $parts = $line.Split("=", 2)
             $key = $parts[0].Trim()
             $value = $parts[1].Trim()
+            # Tırnakları temizle ("value" veya 'value')
+            $value = $value -replace '^["'']|["'']$', ''
             [System.Environment]::SetEnvironmentVariable($key, $value, "Process")
             Write-Host "  Loaded: $key = $($value.Substring(0, [Math]::Min(8, $value.Length)))..." -ForegroundColor DarkGray
         }

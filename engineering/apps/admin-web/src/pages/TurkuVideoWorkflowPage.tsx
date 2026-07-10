@@ -104,6 +104,8 @@ function TurkuVideoWorkflowPage() {
   const [content, setContent] = useState<any>(null)
   const [activeTab, setActiveTab] = useState<'story' | 'scenario' | 'storyboard'>('story')
   const [ttsLoading, setTtsLoading] = useState(false)
+  const [autoRunning, setAutoRunning] = useState(false)
+  const [autoRunProgress, setAutoRunProgress] = useState('')
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -223,6 +225,87 @@ function TurkuVideoWorkflowPage() {
     } catch (e: unknown) {
       setError(typeof e === 'object' && e !== null && 'message' in e ? String((e as { message: string }).message) : 'İşlem başarısız: ' + label)
     } finally {
+      setActiveAction(null)
+    }
+  }
+
+  // ── Tümünü Otomatik Çalıştır ──
+  // Akış: 1) OpenAI Planlama Paketi → 2) Kalan hazırlık adımları → 3) TTS Seslendirme
+  const handleRunAll = async () => {
+    if (!project) return
+    setAutoRunning(true)
+    setError(null)
+    setSuccessMessage(null)
+
+    const currentId = project.id
+
+    try {
+      // ── ADIM 1: OpenAI ile Planlama Paketi (Hikâye + Senaryo + Storyboard) ──
+      const projRes = await turkuApi.getTurkuVideoProject(currentId)
+      const currentStage = projRes.data?.workflowStage
+
+      if (currentStage === 'DRAFT_CREATED') {
+        setAutoRunProgress('⏳ 1/3: OpenAI ile Hikâye + Senaryo + Storyboard üretiliyor...')
+        setActiveAction('Planlama Paketi Üret (OpenAI)')
+        try {
+          await turkuApi.generateTurkuPlanningBundle(currentId)
+          await refreshProject(currentId)
+        } catch (e: any) {
+          setError(`Planlama Paketi hatası: ${e.message || 'Bilinmeyen hata'}`)
+          setAutoRunning(false)
+          setAutoRunProgress('')
+          setActiveAction(null)
+          return
+        }
+        setActiveAction(null)
+      }
+
+      // ── ADIM 2: Kalan hazırlık adımları (Varlık Planı → Render) ──
+      // Storyboard sonrası adımlar: index 3-9
+      const remainingActions = stageActions.slice(3) // Varlık Planı'ndan itibaren
+      for (let i = 0; i < remainingActions.length; i++) {
+        const sa = remainingActions[i]
+
+        // Güncel durumu kontrol et
+        const p = await turkuApi.getTurkuVideoProject(currentId)
+        setProject(p.data)
+
+        if (p.data.workflowStage !== sa.enabledAt) continue
+
+        setAutoRunProgress(`⏳ 2/3: ${i + 1}/${remainingActions.length} — ${sa.label}...`)
+        setActiveAction(sa.label)
+
+        try {
+          await sa.action(currentId)
+          await refreshProject(currentId)
+        } catch (e: any) {
+          setError(`${sa.label} hatası: ${e.message || 'Bilinmeyen hata'}`)
+          setAutoRunning(false)
+          setAutoRunProgress('')
+          setActiveAction(null)
+          return
+        }
+        setActiveAction(null)
+      }
+
+      // ── ADIM 3: TTS Seslendirme ──
+      setAutoRunProgress('⏳ 3/3: TTS Seslendirme üretiliyor...')
+      setActiveAction('TTS Seslendirme')
+      try {
+        await turkuApi.generateTts(currentId)
+      } catch {
+        // TTS hatası kritik değil, devam et
+      }
+      setActiveAction(null)
+
+      // Son durumu güncelle
+      await refreshProject(currentId)
+      setSuccessMessage('🎉 Tüm aşamalar başarıyla tamamlandı! Hikâye, Senaryo ve Storyboard tab\'larından içeriği okuyabilirsin.')
+    } catch (e: any) {
+      setError('Otomatik çalıştırma hatası: ' + (e.message || 'Bilinmeyen hata'))
+    } finally {
+      setAutoRunning(false)
+      setAutoRunProgress('')
       setActiveAction(null)
     }
   }
@@ -734,7 +817,17 @@ function TurkuVideoWorkflowPage() {
         <div className="card" data-testid="stage-actions">
           <div className="card-header">
             <h2 className="card-title">⚡ Hazırlık Aksiyonları</h2>
-            <span className="badge badge-info">Dahili Üretim</span>
+            <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <span className="badge badge-info">Dahili Üretim</span>
+              <button
+                className="btn btn-primary"
+                disabled={!!activeAction || autoRunning}
+                onClick={handleRunAll}
+                style={{ fontSize: '0.8rem', padding: '6px 16px', background: 'linear-gradient(135deg, #f59e0b, #ef4444)', border: 'none' }}
+              >
+                {autoRunning ? `${autoRunProgress}` : '🚀 Tümünü Otomatik Çalıştır'}
+              </button>
+            </div>
           </div>
           <div className="card-body">
             <div className="action-buttons">
