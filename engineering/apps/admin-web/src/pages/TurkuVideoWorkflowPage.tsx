@@ -14,6 +14,88 @@ import type {
 } from '../types'
 import * as turkuApi from '../api/turkuVideoApi'
 
+// ── Müzik Upload Alt Bileşeni ──
+function MusicUploadSection({ projectId }: { projectId: string }) {
+  const [fonStatus, setFonStatus] = useState<'idle'|'uploading'|'done'|'error'>('idle')
+  const [fonName, setFonName] = useState('')
+  const [fonSize, setFonSize] = useState('')
+  const [turkuStatus, setTurkuStatus] = useState<'idle'|'uploading'|'done'|'error'>('idle')
+  const [turkuName, setTurkuName] = useState('')
+  const [turkuSize, setTurkuSize] = useState('')
+
+  useEffect(() => {
+    turkuApi.getMusicStatus(projectId).then(res => {
+      if (res.data?.fonUploaded) { setFonStatus('done'); setFonName('(önceden yüklendi)') }
+      if (res.data?.turkuUploaded) { setTurkuStatus('done'); setTurkuName('(önceden yüklendi)') }
+    }).catch(() => {})
+  }, [projectId])
+
+  const handleUpload = async (type: 'fon' | 'turku', file: File) => {
+    const setStatus = type === 'fon' ? setFonStatus : setTurkuStatus
+    const setName = type === 'fon' ? setFonName : setTurkuName
+    const setSize = type === 'fon' ? setFonSize : setTurkuSize
+
+    setName(file.name)
+    setSize((file.size / (1024 * 1024)).toFixed(1) + ' MB')
+    setStatus('uploading')
+    try {
+      const res = await turkuApi.uploadMusic(projectId, type, file)
+      setStatus(res.data ? 'done' : 'error')
+    } catch {
+      setStatus('error')
+    }
+  }
+
+  const renderSlot = (
+    type: 'fon' | 'turku',
+    icon: string, label: string, subtitle: string,
+    status: 'idle'|'uploading'|'done'|'error',
+    name: string, size: string,
+    gradient: string
+  ) => (
+    <div style={{
+      padding: '16px', borderRadius: '12px',
+      border: `1px solid ${status === 'done' ? 'rgba(34,197,94,0.4)' : status === 'error' ? 'rgba(239,68,68,0.4)' : 'rgba(255,255,255,0.1)'}`,
+      background: status === 'done' ? 'rgba(34,197,94,0.05)' : status === 'error' ? 'rgba(239,68,68,0.05)' : 'rgba(255,255,255,0.03)'
+    }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px', flexWrap: 'wrap' }}>
+        <span>{icon}</span>
+        <strong>{label}</strong>
+        <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>({subtitle})</span>
+        {status === 'done' && <span style={{ fontSize: '0.8rem', color: '#22c55e', fontWeight: 700 }}>✅ Yüklendi</span>}
+        {status === 'uploading' && <span style={{ fontSize: '0.8rem', color: '#f59e0b' }}>⏳ Yükleniyor...</span>}
+        {status === 'error' && <span style={{ fontSize: '0.8rem', color: '#ef4444' }}>❌ Hata</span>}
+      </div>
+      {name && <div style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.5)', marginBottom: '8px' }}>📄 {name} {size && `(${size})`}</div>}
+      <input type="file" accept="audio/*" id={`${type}-music-upload`} style={{ display: 'none' }}
+        onChange={(e) => { const f = e.target.files?.[0]; if (f) handleUpload(type, f) }} />
+      <label htmlFor={`${type}-music-upload`} style={{
+        display: 'inline-block', padding: '8px 16px', borderRadius: '8px',
+        background: status === 'uploading' ? '#666' : gradient, color: 'white',
+        cursor: status === 'uploading' ? 'wait' : 'pointer', fontSize: '0.85rem', fontWeight: 600,
+        pointerEvents: status === 'uploading' ? 'none' : 'auto'
+      }}>
+        {status === 'done' ? '🔄 Değiştir' : '📁 Dosya Seç'}
+      </label>
+    </div>
+  )
+
+  return (
+    <div className="card" style={{ marginTop: '24px' }}>
+      <h2 style={{ fontSize: '1.4rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+        🎵 Müzik Yönetimi
+      </h2>
+      <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: '16px' }}>
+        Video üretiminden ÖNCE müzik dosyalarını yükleyin. Fon müziği narration altında %12 sesle çalar, türkü kaydı videonun sonuna eklenir.
+      </p>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+        {renderSlot('fon', '🎸', 'Fon Müziği', 'enstrümantal', fonStatus, fonName, fonSize, 'linear-gradient(135deg, #6366f1, #8b5cf6)')}
+        {renderSlot('turku', '🎤', 'Türkü Kaydı', 'sözlü, telifsiz', turkuStatus, turkuName, turkuSize, 'linear-gradient(135deg, #f59e0b, #ef4444)')}
+      </div>
+    </div>
+  )
+}
+
 /**
  * FP-019 Task 05: Türkü Video Workflow admin page.
  *
@@ -837,100 +919,7 @@ function TurkuVideoWorkflowPage() {
 
       {/* ── Müzik Yükleme ── */}
       {project && (
-        <div className="card" style={{ marginTop: '24px' }}>
-          <h2 style={{ fontSize: '1.4rem', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-            🎵 Müzik Yönetimi
-          </h2>
-          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.85rem', marginBottom: '16px' }}>
-            Video üretiminden ÖNCE müzik dosyalarını yükleyin. Fon müziği narration altında %12 sesle çalar, türkü kaydı videonun sonuna eklenir.
-          </p>
-
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-            {/* Fon Müziği */}
-            <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <span>🎸</span>
-                <strong>Fon Müziği</strong>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>(enstrümantal)</span>
-              </div>
-              <input
-                type="file"
-                accept="audio/*"
-                id="fon-music-upload"
-                style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file || !project) return
-                  try {
-                    setActiveAction('Fon müziği yükleniyor...')
-                    const res = await import('../api/turkuVideoApi').then(m => m.uploadMusic(project.id, 'fon', file))
-                    if (res.data) {
-                      setSuccessMessage('✅ Fon müziği yüklendi!')
-                    } else {
-                      setError('Fon müziği yükleme hatası')
-                    }
-                  } catch (err: any) {
-                    setError(err.message)
-                  } finally {
-                    setActiveAction(null)
-                  }
-                }}
-              />
-              <label
-                htmlFor="fon-music-upload"
-                style={{
-                  display: 'inline-block', padding: '8px 16px', borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #6366f1, #8b5cf6)', color: 'white',
-                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600
-                }}
-              >
-                📁 Dosya Seç
-              </label>
-            </div>
-
-            {/* Türkü Kaydı */}
-            <div style={{ padding: '16px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.1)', background: 'rgba(255,255,255,0.03)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
-                <span>🎤</span>
-                <strong>Türkü Kaydı</strong>
-                <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>(sözlü, telifsiz)</span>
-              </div>
-              <input
-                type="file"
-                accept="audio/*"
-                id="turku-music-upload"
-                style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0]
-                  if (!file || !project) return
-                  try {
-                    setActiveAction('Türkü kaydı yükleniyor...')
-                    const res = await import('../api/turkuVideoApi').then(m => m.uploadMusic(project.id, 'turku', file))
-                    if (res.data) {
-                      setSuccessMessage('✅ Türkü kaydı yüklendi!')
-                    } else {
-                      setError('Türkü kaydı yükleme hatası')
-                    }
-                  } catch (err: any) {
-                    setError(err.message)
-                  } finally {
-                    setActiveAction(null)
-                  }
-                }}
-              />
-              <label
-                htmlFor="turku-music-upload"
-                style={{
-                  display: 'inline-block', padding: '8px 16px', borderRadius: '8px',
-                  background: 'linear-gradient(135deg, #f59e0b, #ef4444)', color: 'white',
-                  cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600
-                }}
-              >
-                📁 Dosya Seç
-              </label>
-            </div>
-          </div>
-        </div>
+        <MusicUploadSection projectId={project.id} />
       )}
 
       {/* ── Video Üretimi ── */}

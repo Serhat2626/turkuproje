@@ -3,6 +3,10 @@ spring:
     name: anadolu-atlasi-backend
   profiles:
     active: local
+  servlet:
+    multipart:
+      max-file-size: 100MB
+      max-request-size: 100MB
   jpa:
     open-in-view: false
     hibernate:
