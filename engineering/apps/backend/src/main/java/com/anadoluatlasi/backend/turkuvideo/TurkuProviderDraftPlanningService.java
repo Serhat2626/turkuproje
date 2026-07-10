@@ -365,14 +365,15 @@ public class TurkuProviderDraftPlanningService {
 
     private TurkuStoryPackage buildStubStoryPackage(TurkuVideoProject project,
                                                      TurkuAiGenerationResult result) {
+        String fullText = result.getSafeOutputSummary();
         return TurkuStoryPackage.builder()
                 .turkuName(project.getTurkuName())
                 .regionContext(project.getRegion() != null ? project.getRegion() : "Anadolu")
-                .originSummary("Sağlayıcı tarafından üretilen özet (inceleme gerekli)")
+                .originSummary(fullText) // Gerçek GPT-4o çıktısı
                 .emotionalTheme(project.getMood() != null ? project.getMood() : "Geleneksel Anadolu duygusu")
                 .culturalSignificance("Kültürel bağlam — insan incelemesi gerektirir")
                 .narrativeAngle("Sağlayıcı perspektifi")
-                .storySummary(result.getSafeOutputSummary())
+                .storySummary(fullText) // Tam hikâye metni
                 .sourceConfidence(result.getOutputConfidence())
                 .needsHumanReview(true)
                 .copyrightReviewRequired(true)
@@ -382,38 +383,146 @@ public class TurkuProviderDraftPlanningService {
 
     private TurkuScenarioPlan buildStubScenarioPlan(TurkuVideoProject project,
                                                      TurkuAiGenerationResult result) {
+        String fullText = result.getSafeOutputSummary();
+
+        // Beat'leri GPT-4o çıktısından parse et
+        List<String> beats = parseBeatsFromText(fullText);
+
         return TurkuScenarioPlan.builder()
                 .title(project.getTurkuName() + " — Senaryo")
-                .logline(result.getSafeOutputSummary())
+                .logline(fullText)
                 .narrationTone(project.getMood() != null ? project.getMood() : "Hüzünlü")
                 .targetDurationHintSeconds(project.getTargetDurationMinutes() != null
                         ? project.getTargetDurationMinutes() * 60 : 480)
-                .sceneCountHint(6)
-                .scenarioBeats(List.of(
-                        "Hook (inceleme gerekli)",
-                        "Giriş (inceleme gerekli)",
-                        "Ana hikâye (inceleme gerekli)",
-                        "Duygusal zirve (inceleme gerekli)",
-                        "Kapanış (inceleme gerekli)",
-                        "CTA (inceleme gerekli)"))
+                .sceneCountHint(beats.size())
+                .scenarioBeats(beats)
                 .reviewFlags(result.getReviewFlags())
                 .build();
     }
 
     private TurkuStoryboardPlan buildStubStoryboardPlan(TurkuVideoProject project,
                                                          TurkuAiGenerationResult result) {
-        List<TurkuStoryboardScene> scenes = List.of(
-                new TurkuStoryboardScene(
-                        1, "Sahne 1 (inceleme gerekli)",
-                        "Sağlayıcı görsel 1",
-                        "Sağlayıcı anlatım 1",
-                        project.getMood() != null ? project.getMood() : "Hüzünlü",
-                        30, "Geniş açı", "Fade in",
-                        "Arka plan (telif incelemesi gerekli)")
-        );
+        String fullText = result.getSafeOutputSummary();
 
-        return new TurkuStoryboardPlan(scenes, 30,
-                result.getReviewFlags());
+        // GPT-4o çıktısını sahnelere parse et
+        List<TurkuStoryboardScene> scenes = parseScenesFromText(fullText, project);
+
+        int totalDuration = scenes.stream()
+                .mapToInt(TurkuStoryboardScene::getEstimatedDurationSeconds)
+                .sum();
+
+        return new TurkuStoryboardPlan(scenes, totalDuration, result.getReviewFlags());
+    }
+
+    // ── GPT-4o çıktısı parse yardımcıları ──
+
+    /**
+     * GPT-4o çıktısından beat'leri çıkarır.
+     * "### Beat N" veya "## Beat N" formatında bölümleri arar.
+     */
+    private List<String> parseBeatsFromText(String text) {
+        if (text == null || text.isBlank()) {
+            return List.of("Veri yok");
+        }
+        List<String> beats = new java.util.ArrayList<>();
+        String[] sections = text.split("(?m)^#{2,3}\\s+Beat\\s+\\d+");
+        for (int i = 1; i < sections.length; i++) { // i=0 öncesi boş
+            String section = sections[i].trim();
+            // İlk satırı beat başlığı olarak al
+            String firstLine = section.split("\\n")[0].trim();
+            if (firstLine.startsWith(":")) firstLine = firstLine.substring(1).trim();
+            beats.add(!firstLine.isBlank() ? firstLine : "Beat " + i);
+        }
+        return beats.isEmpty() ? List.of("Tek bölüm") : beats;
+    }
+
+    /**
+     * GPT-4o storyboard çıktısını sahne nesnelerine dönüştürür.
+     * "### Beat N" veya "### Sahne N" bölümlerini arar ve
+     * **Seslendirme:**, **Görsel:**, **Müzik:**, **Duygu:** gibi alanları parse eder.
+     */
+    private List<TurkuStoryboardScene> parseScenesFromText(String text, TurkuVideoProject project) {
+        if (text == null || text.isBlank()) {
+            return List.of(new TurkuStoryboardScene(
+                    1, "Sahne 1", "Genel görünüm", "Anlatım metni yok",
+                    project.getMood() != null ? project.getMood() : "Hüzünlü",
+                    30, "Geniş açı", "Fade in", "Arka plan müziği"));
+        }
+
+        List<TurkuStoryboardScene> scenes = new java.util.ArrayList<>();
+
+        // "### Beat N" veya "### Sahne N" ile böl
+        String[] sections = text.split("(?m)^#{2,3}\\s+(?:Beat|Sahne)\\s+\\d+");
+        if (sections.length <= 1) {
+            // Alternatif: satır başındaki "Beat N:" veya numaralı bölümler
+            sections = text.split("(?m)^\\*{0,2}\\s*Beat\\s+\\d+");
+        }
+
+        for (int i = 1; i < sections.length && i <= 10; i++) {
+            String section = sections[i];
+
+            String title = extractField(section, "^[:\\s]*([^\\n]+)");
+            String narration = extractField(section, "\\*{0,2}Seslendirme:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String visual = extractField(section, "\\*{0,2}Görsel:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String music = extractField(section, "\\*{0,2}Müzik:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String mood = extractField(section, "\\*{0,2}Duygu:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String duration = extractField(section, "\\*{0,2}Süre:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+
+            // Süreyi saniyeye çevir (ör: "0:00 - 0:30" → 30)
+            int durationSec = parseDurationToSeconds(duration, 30);
+
+            // Narration: tırnakları temizle
+            if (narration != null) {
+                narration = narration.replaceAll("^\"|\"$", "").trim();
+            }
+
+            scenes.add(new TurkuStoryboardScene(
+                    i,
+                    title != null ? title.replaceAll("^[:\\s]+", "").trim() : "Sahne " + i,
+                    visual != null ? visual : "Genel Anadolu manzarası",
+                    narration != null ? narration : "Anlatım metni",
+                    mood != null ? mood : (project.getMood() != null ? project.getMood() : "Hüzünlü"),
+                    durationSec,
+                    "Orta plan",
+                    i == 1 ? "Fade in" : "Çapraz geçiş",
+                    music != null ? music : "Bağlama ve keman"
+            ));
+        }
+
+        if (scenes.isEmpty()) {
+            // Parse başarısız — tüm metni tek sahne olarak kaydet
+            scenes.add(new TurkuStoryboardScene(
+                    1, "Tam İçerik",
+                    "Belgesel görünümü",
+                    text.length() > 500 ? text.substring(0, 500) : text,
+                    project.getMood() != null ? project.getMood() : "Hüzünlü",
+                    60, "Geniş açı", "Fade in", "Arka plan müziği"));
+        }
+
+        return scenes;
+    }
+
+    private String extractField(String section, String regex) {
+        var matcher = java.util.regex.Pattern.compile(regex, java.util.regex.Pattern.MULTILINE)
+                .matcher(section);
+        return matcher.find() ? matcher.group(1).trim() : null;
+    }
+
+    private int parseDurationToSeconds(String durationStr, int defaultSec) {
+        if (durationStr == null || durationStr.isBlank()) return defaultSec;
+        try {
+            // "0:30 - 2:00" formatı → süreyi hesapla
+            var matcher = java.util.regex.Pattern.compile("(\\d+):(\\d+)\\s*[-–]\\s*(\\d+):(\\d+)")
+                    .matcher(durationStr);
+            if (matcher.find()) {
+                int startSec = Integer.parseInt(matcher.group(1)) * 60 + Integer.parseInt(matcher.group(2));
+                int endSec = Integer.parseInt(matcher.group(3)) * 60 + Integer.parseInt(matcher.group(4));
+                return Math.max(endSec - startSec, 10);
+            }
+        } catch (Exception e) {
+            // ignore parse errors
+        }
+        return defaultSec;
     }
 
     private void addMissing(List<String> target, List<String> source) {
