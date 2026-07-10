@@ -60,6 +60,8 @@ public class SecurityConfig {
                         .requestMatchers("/swagger-ui/**", "/swagger-ui.html").permitAll()
                         .requestMatchers("/v3/api-docs/**").permitAll()
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
+                        // Video stream — HTML <video> tag JWT header gönderemez
+                        .requestMatchers("/api/admin/turku-video-projects/*/video").permitAll()
                         // Admin endpoint'ler — kimlik doğrulama gerekli
                         .requestMatchers("/api/admin/**").authenticated()
                         // Diğer tüm endpoint'ler — kimlik doğrulama gerekli

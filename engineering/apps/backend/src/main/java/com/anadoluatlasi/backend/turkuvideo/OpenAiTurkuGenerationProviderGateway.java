@@ -161,20 +161,17 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             TurkuImageGenerationRequest request,
             TurkuGenerationSafetyEnvelope envelope) {
 
-        log.info("DALL-E 3 görsel üretimi başlatıldı: projectId={}, sceneNo={}",
+        log.info("gpt-image-1 görsel üretimi başlatıldı: projectId={}, sceneNo={}",
                 request.getProjectId(), request.getSceneNo());
 
         try {
-            // 1. DALL-E 3 API çağrısı — prompt İngilizce olmalı
-            String imageUrl = callDallE3(request);
+            // 1. gpt-image-1 API çağrısı — b64_json olarak döner
+            byte[] imageBytes = callImageGeneration(request);
 
-            // 2. Üretilen görseli indir
-            byte[] imageBytes = downloadImage(imageUrl);
-
-            // 3. MinIO'ya kaydet
+            // 2. MinIO'ya kaydet
             String minioPath = uploadToMinio(request.getProjectId(), request.getSceneNo(), imageBytes);
 
-            log.info("DALL-E 3 görsel üretimi tamamlandı: projectId={}, sceneNo={}, minioPath={}, size={}KB",
+            log.info("gpt-image-1 görsel üretimi tamamlandı: projectId={}, sceneNo={}, minioPath={}, size={}KB",
                     request.getProjectId(), request.getSceneNo(), minioPath, imageBytes.length / 1024);
 
             return TurkuImageGenerationResult.builder()
@@ -187,7 +184,7 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                     .build();
 
         } catch (Exception e) {
-            log.error("DALL-E 3 görsel üretim hatası: projectId={}, sceneNo={}, error={}",
+            log.error("gpt-image-1 görsel üretim hatası: projectId={}, sceneNo={}, error={}",
                     request.getProjectId(), request.getSceneNo(), e.getMessage());
 
             return TurkuImageGenerationResult.builder()
@@ -195,8 +192,8 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                     .sceneNo(request.getSceneNo())
                     .safeInternalRef("error-ref:" + UUID.randomUUID())
                     .success(false)
-                    .safeErrorCode("DALLE3_GENERATION_FAILED")
-                    .traceRef(buildTrace("IMAGE_GENERATION", "openai-dalle3-error"))
+                    .safeErrorCode("IMAGE_GENERATION_FAILED")
+                    .traceRef(buildTrace("IMAGE_GENERATION", "openai-gpt-image-1-error"))
                     .needsHumanReview(true)
                     .build();
         }
@@ -204,19 +201,21 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
     // ── DALL-E 3 API Call ────────────────────────────────────
 
-    private String callDallE3(TurkuImageGenerationRequest request) {
-        // Prompt'u İngilizce olarak hazırla (DALL-E en iyi İngilizce ile çalışır)
+    private byte[] callImageGeneration(TurkuImageGenerationRequest request) {
+        // Prompt'u İngilizce olarak hazırla
         String prompt = buildDallE3Prompt(request);
 
         DallERequest requestBody = DallERequest.builder()
-                .model("dall-e-3")
+                .model("gpt-image-1")
                 .prompt(prompt)
-                .size("1792x1024")
-                .quality("standard")
+                .size("1536x1024")
+                .quality("medium")
                 .n(1)
                 .build();
 
         try {
+            log.info("gpt-image-1 çağrılıyor: sceneNo={}, promptLen={}", request.getSceneNo(), prompt.length());
+
             DallEResponse response = imageRestClient.post()
                     .uri("/images/generations")
                     .contentType(MediaType.APPLICATION_JSON)
@@ -225,30 +224,33 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                     .body(DallEResponse.class);
 
             if (response == null || response.getData() == null || response.getData().isEmpty()) {
-                throw new RuntimeException("DALL-E 3 boş yanıt döndü");
+                throw new RuntimeException("gpt-image-1 boş yanıt döndü");
             }
 
-            String url = response.getData().get(0).getUrl();
-            if (url == null || url.isBlank()) {
-                throw new RuntimeException("DALL-E 3 yanıtında URL boş");
+            DallEResponse.DallEImage imageData = response.getData().get(0);
+
+            // gpt-image-1 b64_json döndürür
+            if (imageData.getB64Json() != null && !imageData.getB64Json().isBlank()) {
+                log.info("gpt-image-1 b64 yanıt: sceneNo={}, b64Len={}",
+                        request.getSceneNo(), imageData.getB64Json().length());
+                return java.util.Base64.getDecoder().decode(imageData.getB64Json());
             }
 
-            // Revised prompt'u logla (DALL-E 3 prompt'u yeniden yazabilir)
-            String revisedPrompt = response.getData().get(0).getRevisedPrompt();
-            if (revisedPrompt != null) {
-                log.debug("DALL-E 3 revised prompt: sceneNo={}, revisedPrompt length={}",
-                        request.getSceneNo(), revisedPrompt.length());
+            // Fallback: URL döndüyse indir
+            if (imageData.getUrl() != null && !imageData.getUrl().isBlank()) {
+                log.info("gpt-image-1 URL yanıt: sceneNo={}", request.getSceneNo());
+                return downloadImage(imageData.getUrl());
             }
 
-            return url;
+            throw new RuntimeException("gpt-image-1 yanıtında ne b64 ne URL var");
 
         } catch (RestClientResponseException e) {
             int status = e.getStatusCode().value();
             String body = e.getResponseBodyAsString();
-            log.error("DALL-E 3 HTTP {} hatası: {}", status, body);
-            throw new RuntimeException("DALL-E 3 HTTP " + status + " hatası");
+            log.error("gpt-image-1 HTTP {} hatası: {}", status, body);
+            throw new RuntimeException("gpt-image-1 HTTP " + status + " hatası");
         } catch (ResourceAccessException e) {
-            throw new RuntimeException("DALL-E 3 bağlantı/timeout hatası: " + e.getMessage());
+            throw new RuntimeException("gpt-image-1 bağlantı/timeout hatası: " + e.getMessage());
         }
     }
 
@@ -671,6 +673,8 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
         @JsonIgnoreProperties(ignoreUnknown = true)
         static class DallEImage {
             private String url;
+            @JsonProperty("b64_json")
+            private String b64Json;
             @JsonProperty("revised_prompt")
             private String revisedPrompt;
         }
