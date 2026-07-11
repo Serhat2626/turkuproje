@@ -68,6 +68,9 @@ public class TurkuVideoProjectController {
     @Autowired(required = false)
     private ElevenLabsTtsService elevenLabsTtsService;
 
+    @Autowired(required = false)
+    private FalImageGenerationService falImageService;
+
     private final TurkuVideoAssemblyService videoAssemblyService;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -765,6 +768,7 @@ public class TurkuVideoProjectController {
 
             // ADIM 2: DALL-E görseller (MinIO'da zaten varsa atla)
             TurkuStoryboardPlan storyboard = project.getStoryboardPlan();
+            String imageProvider = falImageService != null ? "Fal.ai Flux Pro" : "OpenAI gpt-image-1";
             if (storyboard != null && storyboard.getScenes() != null) {
                 int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
                 for (TurkuStoryboardScene scene : storyboard.getScenes()) {
@@ -792,7 +796,13 @@ public class TurkuVideoProjectController {
                                 .aspectRatioHint("16:9")
                                 .build();
 
-                        if (providerDraftService.getGateway() instanceof OpenAiTurkuGenerationProviderGateway openAiGateway) {
+                        // Fal.ai varsa onu kullan (Flux Pro), yoksa OpenAI (gpt-image-1)
+                        if (falImageService != null) {
+                            TurkuImageGenerationResult result = falImageService.generateImage(imgReq,
+                                    TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
+                            if (result.isSuccess()) imgSuccess++;
+                            else imgFail++;
+                        } else if (providerDraftService.getGateway() instanceof OpenAiTurkuGenerationProviderGateway openAiGateway) {
                             openAiGateway.generateImage(imgReq,
                             TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
                             imgSuccess++;
@@ -801,7 +811,7 @@ public class TurkuVideoProjectController {
                         imgFail++;
                     }
                 }
-                results.put("step2_images", "✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");
+                results.put("step2_images", imageProvider + ": ✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");
             }
 
             // ADIM 3: TTS seslendirme (MinIO'da zaten varsa atla)

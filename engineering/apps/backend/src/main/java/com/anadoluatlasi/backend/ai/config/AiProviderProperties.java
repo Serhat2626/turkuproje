@@ -29,6 +29,12 @@ public class AiProviderProperties {
     private String ttsProvider = "openai";
 
     /**
+     * Görsel üretim provider: {@code openai} veya {@code fal}.
+     * Varsayılan: {@code openai} (gpt-image-1)
+     */
+    private String imageProvider = "openai";
+
+    /**
      * OpenAI provider'a özel ayarlar.
      */
     private OpenAi openai = new OpenAi();
@@ -37,6 +43,11 @@ public class AiProviderProperties {
      * ElevenLabs TTS provider ayarları.
      */
     private ElevenLabs elevenlabs = new ElevenLabs();
+
+    /**
+     * Fal.ai görsel üretim provider ayarları.
+     */
+    private Fal fal = new Fal();
 
     /**
      * OpenAI provider ayarları.
@@ -89,5 +100,31 @@ public class AiProviderProperties {
 
         /** ElevenLabs API base URL */
         private String baseUrl = "https://api.elevenlabs.io/v1";
+    }
+
+    /**
+     * Fal.ai görsel üretim provider ayarları.
+     * Flux Pro v1.1 — son derece yüksek kaliteli görseller.
+     */
+    @Data
+    public static class Fal {
+
+        /** Fal.ai API key */
+        private String apiKey;
+
+        /** Model endpoint */
+        private String model = "fal-ai/flux-pro/v1.1";
+
+        /** Fal.ai API base URL */
+        private String baseUrl = "https://fal.run";
+
+        /** Görsel boyutu */
+        private String imageSize = "landscape_16_9";
+
+        /** Inference steps (kalite vs hız dengesi) */
+        private int numInferenceSteps = 28;
+
+        /** Guidance scale */
+        private double guidanceScale = 3.5;
     }
 }
