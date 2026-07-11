@@ -991,12 +991,28 @@ public class TurkuVideoProjectController {
     public ResponseEntity<ApiResponse<Map<String, Object>>> getMusicStatus(@PathVariable UUID id) {
         Map<String, Object> status = new java.util.HashMap<>();
 
-        // Fon müziği kontrolü
-        status.put("fonUploaded", checkMinioExists(
-                String.format("turku-video/%s/music/fon.mp3", id)));
+        // Desteklenen uzantılar
+        String[] extensions = {"mp3", "wav", "ogg", "m4a", "flac", "aac"};
+
+        // Fon müziği kontrolü — herhangi bir uzantıyla yüklenmiş mi?
+        boolean fonFound = false;
+        for (String ext : extensions) {
+            if (checkMinioExists(String.format("turku-video/%s/music/fon.%s", id, ext))) {
+                fonFound = true;
+                break;
+            }
+        }
+        status.put("fonUploaded", fonFound);
+
         // Türkü kaydı kontrolü
-        status.put("turkuUploaded", checkMinioExists(
-                String.format("turku-video/%s/music/turku.mp3", id)));
+        boolean turkuFound = false;
+        for (String ext : extensions) {
+            if (checkMinioExists(String.format("turku-video/%s/music/turku.%s", id, ext))) {
+                turkuFound = true;
+                break;
+            }
+        }
+        status.put("turkuUploaded", turkuFound);
 
         return ResponseEntity.ok(ApiResponse.success(status));
     }

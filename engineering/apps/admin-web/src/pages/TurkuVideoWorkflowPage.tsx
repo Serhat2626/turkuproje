@@ -40,8 +40,10 @@ function MusicUploadSection({ projectId }: { projectId: string }) {
     setStatus('uploading')
     try {
       const res = await turkuApi.uploadMusic(projectId, type, file)
+      console.log('Upload response:', JSON.stringify(res))
       setStatus(res.data ? 'done' : 'error')
-    } catch {
+    } catch (err: any) {
+      console.error('Upload error:', err)
       setStatus('error')
     }
   }

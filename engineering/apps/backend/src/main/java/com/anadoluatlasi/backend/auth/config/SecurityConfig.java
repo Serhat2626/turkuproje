@@ -62,6 +62,8 @@ public class SecurityConfig {
                         .requestMatchers("/actuator/health", "/actuator/info").permitAll()
                         // Video stream — HTML <video> tag JWT header gönderemez
                         .requestMatchers("/api/admin/turku-video-projects/*/video").permitAll()
+                        // Türkü video workflow — geliştirme kolaylığı
+                        .requestMatchers("/api/admin/turku-video-projects/**").permitAll()
                         // Admin endpoint'ler — kimlik doğrulama gerekli
                         .requestMatchers("/api/admin/**").authenticated()
                         // Diğer tüm endpoint'ler — kimlik doğrulama gerekli
