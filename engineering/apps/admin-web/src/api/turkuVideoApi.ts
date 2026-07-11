@@ -292,8 +292,8 @@ export async function uploadMusic(
   formData.append('file', file)
   formData.append('type', type)
 
-  const token = localStorage.getItem('auth_token')
-  const res = await fetch(`${BASE}/${id}/upload-music`, {
+  const token = localStorage.getItem('aa_auth_token')
+  const res = await fetch(`/api${BASE}/${id}/upload-music`, {
     method: 'POST',
     headers: token ? { 'Authorization': `Bearer ${token}` } : {},
     body: formData,
