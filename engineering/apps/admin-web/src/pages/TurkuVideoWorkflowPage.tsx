@@ -259,8 +259,9 @@ function TurkuVideoWorkflowPage() {
       // Video availability check — MinIO'da video var mı?
       try {
         const videoUrl = turkuApi.getVideoUrl(id)
-        const headRes = await fetch(videoUrl, { method: 'HEAD' })
-        if (headRes.ok) {
+        // HEAD bazen proxy/CORS ile sorun yaratır, GET + Range header daha güvenilir
+        const checkRes = await fetch(videoUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+        if (checkRes.ok || checkRes.status === 206) {
           setVideoReady(true)
         }
       } catch {
@@ -397,23 +398,30 @@ function TurkuVideoWorkflowPage() {
       setActiveAction('Tam Video Pipeline')
       try {
         const fullRes = await turkuApi.generateFullVideo(currentId)
-        if (fullRes.data?.success) {
+        if (fullRes.data?.success || fullRes.data?.videoUrl) {
           setVideoReady(true)
         }
       } catch {
-        // Pipeline hatası — kısmi sonuçlar olabilir
+        // Pipeline hatası — timeout olabilir ama video oluşmuş olabilir
       }
       setActiveAction(null)
 
       // Video kontrolü — pipeline başarılı da olsa başarısız da olsa kontrol et
       try {
         const videoUrl = turkuApi.getVideoUrl(currentId)
-        const headRes = await fetch(videoUrl, { method: 'HEAD' })
-        if (headRes.ok) {
+        const checkRes = await fetch(videoUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+        if (checkRes.ok || checkRes.status === 206) {
           setVideoReady(true)
         }
       } catch {
-        // video not available
+        // video not available — ama yine de bir süre sonra tekrar dene
+        setTimeout(async () => {
+          try {
+            const videoUrl2 = turkuApi.getVideoUrl(currentId)
+            const retryRes = await fetch(videoUrl2, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+            if (retryRes.ok || retryRes.status === 206) setVideoReady(true)
+          } catch { /* still not available */ }
+        }, 5000)
       }
 
       // Son durumu güncelle
@@ -953,20 +961,32 @@ function TurkuVideoWorkflowPage() {
                 setAutoRunProgress('⏳ Tam video pipeline başlatılıyor...')
                 try {
                   const res = await turkuApi.generateFullVideo(project.id)
-                  if (res.data?.success) {
+                  if (res.data?.success || res.data?.videoUrl) {
                     setVideoReady(true)
                     const steps = [
                       `📜 İçerik: ${res.data.step1_content}`,
                       `🖼️ Görseller: ${res.data.step2_images}`,
+                      res.data.step2_5_video ? `🎥 Kling: ${res.data.step2_5_video}` : '',
                       `🎙️ Ses: ${res.data.step3_tts}`,
                       `🎬 Video: ${res.data.step4_video}`,
-                    ].join('\n')
+                    ].filter(Boolean).join('\n')
                     alert(`🎬 Video hazır!\n\n${steps}`)
                     await refreshProject(project.id)
                   } else {
                     alert('Pipeline hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
                   }
                 } catch (e: any) {
+                  // Timeout olsa bile video oluşmuş olabilir
+                  try {
+                    const videoUrl = turkuApi.getVideoUrl(project.id)
+                    const checkRes = await fetch(videoUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+                    if (checkRes.ok || checkRes.status === 206) {
+                      setVideoReady(true)
+                      alert('🎬 Video hazır! (Pipeline yanıt zaman aşımına uğradı ama video oluşturuldu)')
+                      await refreshProject(project.id)
+                      return
+                    }
+                  } catch { /* */ }
                   alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
                 } finally {
                   setVideoAssembling(false)
