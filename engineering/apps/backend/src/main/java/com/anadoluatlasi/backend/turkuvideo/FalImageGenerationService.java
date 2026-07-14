@@ -201,59 +201,51 @@ public class FalImageGenerationService {
     private String buildFluxPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
 
-        // 1. SABİT STİL — tüm sahnelerde tutarlı sinematik dil
-        sb.append("Photorealistic cinematic film still, shot on 35mm film, Anatolian historical drama. ");
-        sb.append("Natural lighting, rich earth tones, warm golden hour palette. ");
-        sb.append("Ottoman/Anatolian village setting, period-accurate costumes and architecture. ");
+        // 1. KARAKTER TANIMI — EN BAŞA (prompt'un başı en ağırlıklı)
+        if (request.getCharacterDescription() != null && !request.getCharacterDescription().isBlank()) {
+            sb.append(request.getCharacterDescription()).append(" ");
+        }
 
-        // 2. SAHNE POZİSYONU — hikâyenin neresinde?
-        sb.append(String.format("Scene %d of %d in a visual story sequence. ",
+        // 2. SABİT STİL — sinematik dil (Ottoman kelimesinden kaçın → yaşlı adam tetikliyor)
+        sb.append("Photorealistic cinematic film still, 35mm film look, historical Anatolian drama. ");
+        sb.append("Natural lighting, rich earth tones, warm color palette. ");
+        sb.append("Rural Anatolian village setting, 19th century period-accurate. ");
+
+        // 3. HİKÂYENİN BU ANI — ne oluyor bu sahnede?
+        if (request.getNarrationText() != null && !request.getNarrationText().isBlank()) {
+            String narration = request.getNarrationText();
+            if (narration.length() > 250) narration = narration.substring(0, 250);
+            sb.append("DEPICTING THIS STORY MOMENT: ").append(narration).append(". ");
+        }
+
+        // 4. SAHNE BAŞLIĞI
+        if (request.getSceneTitle() != null && !request.getSceneTitle().isBlank()) {
+            sb.append("Scene: ").append(request.getSceneTitle()).append(". ");
+        }
+
+        // 5. SAHNE POZİSYONU
+        sb.append(String.format("(Scene %d of %d) ",
                 request.getSceneNo(), request.getTotalScenes() > 0 ? request.getTotalScenes() : 25));
 
-        // 3. KARAKTER TANIMI — tutarlı karakter görünümü (EN ÖNEMLİ)
-        if (request.getCharacterDescription() != null && !request.getCharacterDescription().isBlank()) {
-            sb.append(request.getCharacterDescription()).append(". ");
-        }
+        // 6. BU SAHNENİN GÖRSEL DETAYI — storyboard'daki visual description
+        sb.append("VISUAL: ").append(request.getSafePromptSummary()).append(". ");
 
-        // 4. HİKÂYENİN BU ANI — narration text'ten hangi olay/an olduğunu bildir
-        if (request.getNarrationText() != null && !request.getNarrationText().isBlank()) {
-            // Narration'dan kısa özet çıkar (prompt çok uzamasın)
-            String narration = request.getNarrationText();
-            if (narration.length() > 300) narration = narration.substring(0, 300);
-            sb.append("THIS MOMENT IN THE STORY: ").append(narration).append(". ");
-        }
-
-        // 5. SAHNE BAŞLIĞI
-        if (request.getSceneTitle() != null && !request.getSceneTitle().isBlank()) {
-            sb.append("Scene title: ").append(request.getSceneTitle()).append(". ");
-        }
-
-        // 6. ÖNCEKİ SAHNE — görsel akış sürekliliği
+        // 7. ÖNCEKİ SAHNE — görsel süreklilik
         if (request.getPreviousSceneVisual() != null && !request.getPreviousSceneVisual().isBlank()) {
             String prevVisual = request.getPreviousSceneVisual();
-            if (prevVisual.length() > 150) prevVisual = prevVisual.substring(0, 150);
-            sb.append("Previous scene showed: ").append(prevVisual).append(". This scene continues the visual narrative. ");
+            if (prevVisual.length() > 120) prevVisual = prevVisual.substring(0, 120);
+            sb.append("Continues from: ").append(prevVisual).append(". ");
         }
 
-        // 7. BU SAHNENİN GÖRSEL DETAYI — storyboard'daki visual description
-        sb.append("VISUAL COMPOSITION: ").append(request.getSafePromptSummary()).append(". ");
-
-        // 8. MOOD/ATMOSFER
+        // 8. MOOD
         if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
-            sb.append("Mood and atmosphere: ").append(request.getSceneMood()).append(". ");
+            sb.append("Mood: ").append(request.getSceneMood()).append(". ");
         }
 
-        // 9. HİKÂYE BAĞLAMI — genel hikâye
-        if (request.getStoryContext() != null && !request.getStoryContext().isBlank()) {
-            String ctx = request.getStoryContext();
-            if (ctx.length() > 200) ctx = ctx.substring(0, 200);
-            sb.append("Overall story: ").append(ctx).append(". ");
-        }
-
-        // 10. KALİTE ve YASAK notları
-        sb.append("Ultra high detail, cinematic composition, emotional depth, ");
-        sb.append("professional film photography, consistent characters throughout. ");
-        sb.append("No text, no watermarks, no logos, no modern elements, no animation style.");
+        // 9. KALİTE + GÜÇLÜ YASAKLAR
+        sb.append("Ultra detailed, cinematic composition, emotional depth, film photography. ");
+        sb.append("ABSOLUTELY NO: old people, elderly, gray hair, white beard, long beard, turban, sarık, ");
+        sb.append("Arabic clothing, medieval armor, weapons, text, watermark, logo, modern elements, anime, cartoon.");
 
         return sb.toString();
     }

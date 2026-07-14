@@ -1170,60 +1170,59 @@ public class TurkuVideoProjectController {
     private String buildCharacterDescription(TurkuVideoProject project) {
         StringBuilder chars = new StringBuilder();
 
-        // Türkü adından ana karakteri çıkar
         String turkuName = project.getTurkuName() != null ? project.getTurkuName() : "";
 
-        // Hikâyeden karakter ve mekan bilgisi çıkar
         String storyText = "";
         if (project.getStoryPackage() != null && project.getStoryPackage().getStorySummary() != null) {
             storyText = project.getStoryPackage().getStorySummary();
         }
 
-        // Senaryo'dan ek bilgi
-        String scenarioText = "";
-        if (project.getScenarioPlan() != null) {
-            TurkuScenarioPlan sc = project.getScenarioPlan();
-            if (sc.getLogline() != null) scenarioText = sc.getLogline();
-            if (sc.getNarrationTone() != null) scenarioText += " Tone: " + sc.getNarrationTone();
-        }
-
-        // Bölge bilgisi
         String region = "";
         if (project.getStoryPackage() != null && project.getStoryPackage().getRegionContext() != null) {
             region = project.getStoryPackage().getRegionContext();
         }
 
-        // Sabit karakter tanımı oluştur — AI her sahnede tutarlı çizsin
-        chars.append("IMPORTANT - SAME CHARACTERS IN EVERY SCENE: ");
+        chars.append("CRITICAL CHARACTER SHEET — USE EXACT SAME APPEARANCE IN EVERY SCENE. ");
+        chars.append("DO NOT change age, face, hair, clothes between scenes. ");
 
-        // Hikâye metninden tanıdık karakter kalıplarını ara
         if (storyText.toLowerCase().contains("sümmani") || turkuName.toLowerCase().contains("mihriban")) {
-            chars.append("Main character SÜMMANI: A young Anatolian folk poet (aşık), mid-20s, dark curly hair, ")
-                 .append("trimmed beard, deep thoughtful brown eyes, wearing traditional Ottoman-era village clothes ")
-                 .append("(shalvar, yelek, kuşak), always carrying his SAZ (bağlama instrument). ")
-                 .append("Strong but melancholic expression. ")
-                 .append("MIHRIBAN: A beautiful young woman, early 20s, long dark hair flowing over shoulders, ")
-                 .append("almond-shaped dark eyes, wearing colorful traditional Anatolian village dress (entari), ")
-                 .append("headscarf occasionally. Graceful, gentle expression. ");
+            chars.append("HERO — SÜMMANI: YOUNG man, age 22-25, NOT old, NOT elderly, NOT gray hair. ")
+                 .append("Clean-shaven or very light short stubble (NO long beard, NO white beard). ")
+                 .append("Dark brown wavy hair, medium length. Warm brown eyes, handsome angular face. ")
+                 .append("Lean athletic build. Expressive, soulful gaze. ")
+                 .append("CLOTHING: Simple 19th-century Anatolian village clothes — ")
+                 .append("white cotton gömlek (shirt), dark wool yelek (vest), şalvar trousers, ")
+                 .append("leather kuşak (belt), leather çarık shoes. ")
+                 .append("NO turban, NO sarık. Simple dark wool takke (cap) occasionally. ")
+                 .append("Always carries his SAZ (bağlama, long-neck lute). ")
+                 .append("HEROINE — MIHRIBAN: YOUNG woman, age 18-20, strikingly beautiful. ")
+                 .append("Long flowing black hair, often partly covered with a light yemeni (headscarf). ")
+                 .append("Large almond-shaped dark brown eyes, delicate oval face, full lips. ")
+                 .append("Slender graceful figure. Shy, gentle expression. ")
+                 .append("CLOTHING: Colorful traditional Erzurum village dress — ")
+                 .append("long entari (dress) in rich colors (burgundy, emerald, deep blue), ")
+                 .append("embroidered şalvar underneath, ornate işlemeli yelek (embroidered vest), ")
+                 .append("silver jewelry (bilezik bracelets, küpe earrings). ")
+                 .append("FORBIDDEN: old people, gray/white hair, long beards, Arabic/Middle-Eastern clothing, ")
+                 .append("turban/sarık, armor, weapons, modern clothing. ")
+                 .append("This is a YOUNG LOVE story between two people in their early 20s. ");
         } else {
-            // Genel Anadolu hikâyesi karakter şablonu
-            chars.append("Main male character: Anatolian man, 30s, dark hair, beard, brown eyes, ")
-                 .append("traditional Ottoman village clothing (shalvar, yelek). ")
-                 .append("Main female character: Anatolian woman, 20s, long dark hair, ")
-                 .append("traditional village dress. ");
+            chars.append("Main male character: YOUNG Anatolian man, age 25-30, dark hair, ")
+                 .append("short beard or clean-shaven, brown eyes, handsome. ")
+                 .append("Simple 19th century village clothes: white gömlek, dark yelek, şalvar. ")
+                 .append("NO turban, NO gray hair, NOT elderly. ")
+                 .append("Main female character: YOUNG Anatolian woman, age 20-25, ")
+                 .append("long dark hair, beautiful, traditional colorful village dress (entari). ");
         }
 
-        // Mekan ve dönem sabitliği
+        chars.append("ERA: 19th century Ottoman-era Anatolia (NOT medieval, NOT modern). ");
         if (!region.isBlank()) {
-            chars.append("Setting: ").append(region).append(", 19th century Ottoman Anatolia. ");
+            chars.append("LOCATION: ").append(region).append(" region. ");
+            if (region.toLowerCase().contains("erzurum")) {
+                chars.append("Cold mountainous eastern Anatolia, stone houses, snowy peaks. ");
+            }
         } else {
-            chars.append("Setting: 19th century Anatolian mountain village. ");
-        }
-
-        // Senaryo tonu
-        if (!scenarioText.isBlank()) {
-            chars.append("Narrative context: ").append(
-                    scenarioText.length() > 200 ? scenarioText.substring(0, 200) : scenarioText);
+            chars.append("LOCATION: Anatolian mountain village, stone houses, rural landscape. ");
         }
 
         return chars.toString();
