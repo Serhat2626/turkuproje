@@ -68,37 +68,53 @@ public class TurkuVideoAssemblyService {
 
             for (TurkuStoryboardScene scene : storyboard.getScenes()) {
                 int sceneNo = scene.getSceneNo();
+                String videoClipPath = String.format("turku-video/%s/scenes/%d_video.mp4", projectId, sceneNo);
                 String imagePath = String.format("turku-video/%s/scenes/%d.png", projectId, sceneNo);
                 String audioPath = String.format("turku-video/%s/audio/%d.mp3", projectId, sceneNo);
 
-                // MinIO'dan dosyaları kontrol et ve indir
+                // MinIO'dan dosyaları kontrol et
+                boolean hasVideoClip = existsInMinio(videoClipPath);
                 boolean hasImage = existsInMinio(imagePath);
                 boolean hasAudio = existsInMinio(audioPath);
 
-                if (!hasImage && !hasAudio) {
-                    log.warn("Sahne {} için ne görsel ne ses var, atlanıyor", sceneNo);
+                if (!hasImage && !hasAudio && !hasVideoClip) {
+                    log.warn("Sahne {} için ne görsel ne ses ne video var, atlanıyor", sceneNo);
                     continue;
                 }
 
                 Path segmentFile;
-                if (hasImage && hasAudio) {
-                    // Görsel + Ses → Video segment
+                if (hasVideoClip && hasAudio) {
+                    // Kling video klip + Ses → Video segment (EN İYİ sonuç)
+                    Path videoClipFile = downloadFromMinio(videoClipPath, tempDir.resolve("clip_" + sceneNo + ".mp4"));
+                    Path audioFile = downloadFromMinio(audioPath, tempDir.resolve("scene_" + sceneNo + ".mp3"));
+                    log.info("Sahne {}: KLING VIDEO+SES — clipSize={}KB, audioSize={}KB",
+                            sceneNo, Files.size(videoClipFile) / 1024, Files.size(audioFile) / 1024);
+                    segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
+                    mergeVideoClipWithAudio(videoClipFile, audioFile, segmentFile);
+                } else if (hasVideoClip) {
+                    // Sadece Kling video klip (sessiz — loop edilecek)
+                    Path videoClipFile = downloadFromMinio(videoClipPath, tempDir.resolve("clip_" + sceneNo + ".mp4"));
+                    log.info("Sahne {}: KLING VIDEO (sessiz) — clipSize={}KB", sceneNo, Files.size(videoClipFile) / 1024);
+                    segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
+                    Files.copy(videoClipFile, segmentFile);
+                } else if (hasImage && hasAudio) {
+                    // Görsel + Ses → Video segment (Ken Burns fallback)
                     Path imageFile = downloadFromMinio(imagePath, tempDir.resolve("scene_" + sceneNo + ".png"));
                     Path audioFile = downloadFromMinio(audioPath, tempDir.resolve("scene_" + sceneNo + ".mp3"));
-                    log.info("Sahne {}: GÖRSEL+SES mevcut — imageSize={}KB, audioSize={}KB",
+                    log.info("Sahne {}: GÖRSEL+SES (Ken Burns) — imageSize={}KB, audioSize={}KB",
                             sceneNo, Files.size(imageFile) / 1024, Files.size(audioFile) / 1024);
                     segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
                     createVideoSegment(imageFile, audioFile, segmentFile);
                 } else if (hasAudio) {
-                    // Sadece ses → siyah ekran + ses
+                    // Sadece ses → koyu arka plan + ses
                     Path audioFile = downloadFromMinio(audioPath, tempDir.resolve("scene_" + sceneNo + ".mp3"));
-                    log.info("Sahne {}: SADECE SES — audioSize={}KB (siyah ekran ile)", sceneNo, Files.size(audioFile) / 1024);
+                    log.info("Sahne {}: SADECE SES — audioSize={}KB", sceneNo, Files.size(audioFile) / 1024);
                     segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
                     createAudioOnlySegment(audioFile, segmentFile);
                 } else {
-                    // Sadece görsel → 10 saniye sabit görsel
+                    // Sadece görsel → Ken Burns
                     Path imageFile = downloadFromMinio(imagePath, tempDir.resolve("scene_" + sceneNo + ".png"));
-                    log.info("Sahne {}: SADECE GÖRSEL — imageSize={}KB, duration={}s",
+                    log.info("Sahne {}: SADECE GÖRSEL (Ken Burns) — imageSize={}KB, duration={}s",
                             sceneNo, Files.size(imageFile) / 1024, scene.getEstimatedDurationSeconds());
                     segmentFile = tempDir.resolve("segment_" + sceneNo + ".mp4");
                     createImageOnlySegment(imageFile, segmentFile, scene.getEstimatedDurationSeconds());
@@ -179,6 +195,85 @@ public class TurkuVideoAssemblyService {
                     log.warn("Temp dizin temizlenemedi: {}", tempDir);
                 }
             }
+        }
+    }
+
+    // ── FFmpeg: Kling Video Klip + Ses → Birleşik Segment ──
+
+    /**
+     * Kling AI tarafından üretilen hareketli video klibi TTS ses ile birleştirir.
+     * Video süresi ses süresine göre ayarlanır (loop veya trim).
+     */
+    private void mergeVideoClipWithAudio(Path videoClip, Path audioFile, Path outputFile) throws Exception {
+        // Ses süresini öğren
+        double audioDuration = getMediaDuration(audioFile);
+        double videoDuration = getMediaDuration(videoClip);
+
+        List<String> cmd;
+        if (videoDuration >= audioDuration) {
+            // Video yeterince uzun — sadece trim + ses ekle
+            cmd = List.of(
+                    "ffmpeg", "-y",
+                    "-i", videoClip.toString(),
+                    "-i", audioFile.toString(),
+                    "-t", String.valueOf(audioDuration),
+                    "-map", "0:v",
+                    "-map", "1:a",
+                    "-c:v", "libx264",
+                    "-preset", "medium",
+                    "-crf", "23",
+                    "-c:a", "aac", "-b:a", "192k",
+                    "-pix_fmt", "yuv420p",
+                    "-movflags", "+faststart",
+                    outputFile.toString()
+            );
+        } else {
+            // Video kısa — loop et + ses ekle
+            int loopCount = (int) Math.ceil(audioDuration / videoDuration);
+            cmd = List.of(
+                    "ffmpeg", "-y",
+                    "-stream_loop", String.valueOf(loopCount),
+                    "-i", videoClip.toString(),
+                    "-i", audioFile.toString(),
+                    "-t", String.valueOf(audioDuration),
+                    "-map", "0:v",
+                    "-map", "1:a",
+                    "-c:v", "libx264",
+                    "-preset", "medium",
+                    "-crf", "23",
+                    "-c:a", "aac", "-b:a", "192k",
+                    "-pix_fmt", "yuv420p",
+                    "-movflags", "+faststart",
+                    "-shortest",
+                    outputFile.toString()
+            );
+        }
+
+        log.info("Kling video+ses birleştirme: audioDuration={}s, videoDuration={}s, looping={}",
+                audioDuration, videoDuration, videoDuration < audioDuration);
+        runFFmpeg(cmd, "kling-merge");
+    }
+
+    /**
+     * Medya dosyasının süresini saniye olarak döndürür (ffprobe ile).
+     */
+    private double getMediaDuration(Path file) throws Exception {
+        ProcessBuilder pb = new ProcessBuilder(
+                "ffprobe",
+                "-v", "error",
+                "-show_entries", "format=duration",
+                "-of", "default=noprint_wrappers=1:nokey=1",
+                file.toString()
+        );
+        pb.redirectErrorStream(true);
+        Process process = pb.start();
+        String output = new String(process.getInputStream().readAllBytes()).trim();
+        process.waitFor(15, java.util.concurrent.TimeUnit.SECONDS);
+        try {
+            return Double.parseDouble(output);
+        } catch (NumberFormatException e) {
+            log.warn("ffprobe duration okunamadı: {}, default 5s", output);
+            return 5.0;
         }
     }
 

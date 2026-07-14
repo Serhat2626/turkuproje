@@ -46,6 +46,11 @@ ai:
     image-size: landscape_16_9
     num-inference-steps: 28
     guidance-scale: 3.5
+  video-provider: ${AI_VIDEO_PROVIDER:kling}  # 'none' veya 'kling'
+  kling:
+    model: fal-ai/kling-video/v2/master/image-to-video
+    duration: "5"
+    motion-prompt-suffix: "Gentle, subtle natural movement. Cinematic camera. Photorealistic."
 
 logging:
   level:

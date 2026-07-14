@@ -35,6 +35,12 @@ public class AiProviderProperties {
     private String imageProvider = "openai";
 
     /**
+     * Video üretim provider: {@code none} veya {@code kling}.
+     * Varsayılan: {@code none} — aktif değil
+     */
+    private String videoProvider = "none";
+
+    /**
      * OpenAI provider'a özel ayarlar.
      */
     private OpenAi openai = new OpenAi();
@@ -46,8 +52,15 @@ public class AiProviderProperties {
 
     /**
      * Fal.ai görsel üretim provider ayarları.
+     * Flux Pro v1.1 — son derece yüksek kaliteli görseller.
      */
     private Fal fal = new Fal();
+
+    /**
+     * Kling AI Image-to-Video provider ayarları.
+     * Fal.ai üzerinden erişilir — aynı API key kullanılır.
+     */
+    private Kling kling = new Kling();
 
     /**
      * OpenAI provider ayarları.
@@ -126,5 +139,22 @@ public class AiProviderProperties {
 
         /** Guidance scale */
         private double guidanceScale = 3.5;
+    }
+
+    /**
+     * Kling AI Image-to-Video provider ayarları.
+     * Fal.ai üzerinden erişilir — aynı FAL_API_KEY kullanılır.
+     */
+    @Data
+    public static class Kling {
+
+        /** Kling model endpoint — standard veya pro */
+        private String model = "fal-ai/kling-video/v2/master/image-to-video";
+
+        /** Video süresi: "5" veya "10" saniye */
+        private String duration = "5";
+
+        /** Hareket prompt'u için ek context */
+        private String motionPromptSuffix = "Gentle, subtle natural movement. Cinematic camera. Photorealistic.";
     }
 }

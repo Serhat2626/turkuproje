@@ -71,6 +71,9 @@ public class TurkuVideoProjectController {
     @Autowired(required = false)
     private FalImageGenerationService falImageService;
 
+    @Autowired(required = false)
+    private FalVideoGenerationService falVideoService;
+
     private final TurkuVideoAssemblyService videoAssemblyService;
 
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
@@ -853,6 +856,57 @@ public class TurkuVideoProjectController {
                     }
                 }
                 results.put("step2_images", imageProvider + ": ✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");
+            }
+
+            // ADIM 2.5: Image-to-Video (Kling AI ile hareketlendirme)
+            if (falVideoService != null && storyboard != null && storyboard.getScenes() != null) {
+                int vidSuccess = 0, vidFail = 0, vidSkipped = 0;
+                for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                    // Video klip zaten varsa atla
+                    String videoPath = String.format("turku-video/%s/scenes/%d_video.mp4", id, scene.getSceneNo());
+                    try {
+                        minioClient.statObject(io.minio.StatObjectArgs.builder()
+                                .bucket(minioConfig.getBucketName()).object(videoPath).build());
+                        vidSkipped++;
+                        continue;
+                    } catch (Exception ignored) {}
+
+                    // Görsel URL'sini oluştur (MinIO'dan)
+                    String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
+                    try {
+                        // MinIO görsel var mı kontrol
+                        minioClient.statObject(io.minio.StatObjectArgs.builder()
+                                .bucket(minioConfig.getBucketName()).object(imagePath).build());
+
+                        // Geçici presigned URL oluştur (Kling erişebilsin)
+                        String imageUrl = minioClient.getPresignedObjectUrl(
+                                io.minio.GetPresignedObjectUrlArgs.builder()
+                                        .bucket(minioConfig.getBucketName())
+                                        .object(imagePath)
+                                        .method(io.minio.http.Method.GET)
+                                        .expiry(15, java.util.concurrent.TimeUnit.MINUTES)
+                                        .build());
+
+                        // Hareket prompt'u: sahne mood + görsel açıklama
+                        String motionPrompt = "Subtle cinematic motion in scene: " +
+                                scene.getVisualDescription().substring(0, Math.min(150, scene.getVisualDescription().length()));
+                        if (scene.getMood() != null) {
+                            motionPrompt += ". Mood: " + scene.getMood();
+                        }
+
+                        FalVideoGenerationService.VideoGenerationResult vidResult =
+                                falVideoService.generateVideo(id, scene.getSceneNo(), imageUrl, motionPrompt);
+
+                        if (vidResult.isSuccess()) vidSuccess++;
+                        else vidFail++;
+                    } catch (Exception e) {
+                        vidFail++;
+                        // Hata sayacında zaten izleniyor
+                    }
+                }
+                results.put("step2_5_video", "Kling AI: ✅ " + vidSuccess + " video, ⏭️ " + vidSkipped + " mevcut, ❌ " + vidFail + " hata");
+            } else if (falVideoService == null) {
+                results.put("step2_5_video", "⏭️ Video hareketlendirme kapalı (ai.video-provider=kling yapın)");
             }
 
             // ADIM 3: TTS seslendirme (MinIO'da zaten varsa atla)
