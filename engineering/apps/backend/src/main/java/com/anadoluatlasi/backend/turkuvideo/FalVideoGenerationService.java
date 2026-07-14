@@ -119,10 +119,12 @@ public class FalVideoGenerationService {
             }
 
             String requestId = queueResponse.getRequestId();
-            log.info("Kling queue'ya eklendi — requestId={}", requestId);
+            String statusUrl = queueResponse.getStatusUrl();
+            String responseUrl = queueResponse.getResponseUrl();
+            log.info("Kling queue'ya eklendi ✅ requestId={}, statusUrl={}", requestId, statusUrl);
 
-            // 2. Polling — tamamlanana kadar bekle (max 5 dakika)
-            String videoUrl = pollForResult(requestId);
+            // 2. Polling — Fal.ai'nin döndürdüğü status_url'i kullan (max 5 dakika)
+            String videoUrl = pollForResult(statusUrl, responseUrl);
             if (videoUrl == null) {
                 return VideoGenerationResult.failure("Kling video üretimi zaman aşımı");
             }
@@ -152,16 +154,33 @@ public class FalVideoGenerationService {
     }
 
     /**
-     * Queue polling — video hazır olana kadar bekle.
+     * Queue polling — Fal.ai'nin döndürdüğü status_url ile video hazır olana kadar bekle.
+     *
+     * NOT: Fal.ai submit'ten dönen status_url, model path'inden FARKLI olabilir.
+     * Örnek: Submit → /fal-ai/kling-video/v2/master/image-to-video
+     *        Status → /fal-ai/kling-video/requests/{id}/status (v2/master kısaltılmış)
      */
-    private String pollForResult(String requestId) throws InterruptedException {
+    private String pollForResult(String statusUrl, String responseUrl) throws InterruptedException {
         int maxAttempts = 60;  // 60 * 5sn = 5 dakika max
+
+        // statusUrl tam URL: https://queue.fal.run/fal-ai/kling-video/requests/{id}/status
+        // RestClient baseUrl olarak queue.fal.run kullanıyor, URI kısmını çıkaralım
+        String statusPath = statusUrl != null ? statusUrl.replace("https://queue.fal.run", "") : null;
+        String responsePath = responseUrl != null ? responseUrl.replace("https://queue.fal.run", "") : null;
+
+        if (statusPath == null || statusPath.isBlank()) {
+            log.error("Kling status URL boş — polling yapılamaz");
+            return null;
+        }
+
+        log.info("Kling polling başlıyor — statusPath={}", statusPath);
+
         for (int i = 0; i < maxAttempts; i++) {
             Thread.sleep(5000);  // 5 saniye bekle
 
             try {
                 KlingStatusResponse status = falClient.get()
-                        .uri("/" + model + "/requests/" + requestId + "/status")
+                        .uri(statusPath)
                         .retrieve()
                         .body(KlingStatusResponse.class);
 
@@ -171,10 +190,11 @@ public class FalVideoGenerationService {
                 log.debug("Kling polling — attempt={}, status={}", i + 1, statusStr);
 
                 if ("COMPLETED".equalsIgnoreCase(statusStr)) {
-                    // Sonucu al
+                    // Sonucu response_url'den al
+                    String resultPath = responsePath != null ? responsePath : statusPath.replace("/status", "");
                     @SuppressWarnings("unchecked")
                     Map<String, Object> result = falClient.get()
-                            .uri("/" + model + "/requests/" + requestId)
+                            .uri(resultPath)
                             .retrieve()
                             .body(Map.class);
 
@@ -242,6 +262,14 @@ public class FalVideoGenerationService {
 
         @JsonProperty("status")
         private String status;
+
+        /** Fal.ai'nin döndürdüğü polling URL — model path kısaltılmış olabilir */
+        @JsonProperty("status_url")
+        private String statusUrl;
+
+        /** Fal.ai'nin döndürdüğü sonuç URL */
+        @JsonProperty("response_url")
+        private String responseUrl;
     }
 
     @Data

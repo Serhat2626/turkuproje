@@ -200,6 +200,7 @@ function TurkuVideoWorkflowPage() {
   const [autoRunProgress, setAutoRunProgress] = useState('')
   const [videoAssembling, setVideoAssembling] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
+  const [pipelineSteps, setPipelineSteps] = useState<Record<string, string> | null>(null)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -396,13 +397,28 @@ function TurkuVideoWorkflowPage() {
       // ── ADIM 3: Görseller + TTS Ses + FFmpeg Video ──
       setAutoRunProgress('⏳ 3/3: Görseller + TTS ses + FFmpeg video üretiliyor... (bu adım uzun sürebilir)')
       setActiveAction('Tam Video Pipeline')
+      setPipelineSteps(null)
+      let pipelineResult: any = null
       try {
         const fullRes = await turkuApi.generateFullVideo(currentId)
-        if (fullRes.data?.success || fullRes.data?.videoUrl) {
+        pipelineResult = fullRes.data
+
+        // Adım sonuçlarını çıkar ve göster
+        if (pipelineResult) {
+          const steps: Record<string, string> = {}
+          if (pipelineResult.step1_content) steps['📝 İçerik (Hikâye+Senaryo+Storyboard)'] = pipelineResult.step1_content
+          if (pipelineResult.step2_images) steps['🎨 Görseller'] = pipelineResult.step2_images
+          if (pipelineResult.step2_5_video) steps['🎬 Video Klip (Kling AI)'] = pipelineResult.step2_5_video
+          if (pipelineResult.step3_tts) steps['🎙️ Seslendirme (TTS)'] = pipelineResult.step3_tts
+          if (pipelineResult.step4_video) steps['🎞️ FFmpeg Video Birleştirme'] = pipelineResult.step4_video
+          setPipelineSteps(steps)
+        }
+
+        if (pipelineResult?.success && pipelineResult?.videoUrl) {
           setVideoReady(true)
         }
-      } catch {
-        // Pipeline hatası — timeout olabilir ama video oluşmuş olabilir
+      } catch (e: any) {
+        setPipelineSteps({ '❌ Pipeline Hatası': e.message || 'Bilinmeyen hata — timeout olabilir' })
       }
       setActiveAction(null)
 
@@ -414,19 +430,22 @@ function TurkuVideoWorkflowPage() {
           setVideoReady(true)
         }
       } catch {
-        // video not available — ama yine de bir süre sonra tekrar dene
-        setTimeout(async () => {
-          try {
-            const videoUrl2 = turkuApi.getVideoUrl(currentId)
-            const retryRes = await fetch(videoUrl2, { method: 'GET', headers: { Range: 'bytes=0-0' } })
-            if (retryRes.ok || retryRes.status === 206) setVideoReady(true)
-          } catch { /* still not available */ }
-        }, 5000)
+        // video not available
       }
 
       // Son durumu güncelle
       await refreshProject(currentId)
-      setSuccessMessage('🎉 Tam video pipeline tamamlandı! Hikâye, Senaryo, Storyboard içeriklerini okuyabilir ve videoyu izleyebilirsin.')
+
+      // Doğru başarı/hata mesajı
+      if (pipelineResult?.success && pipelineResult?.videoUrl) {
+        setSuccessMessage('🎉 Tam video pipeline başarıyla tamamlandı! Videoyu izleyebilirsin.')
+      } else if (pipelineResult?.hasErrors) {
+        setError('⚠️ Pipeline bazı adımlarda hata aldı. Aşağıdaki adım detaylarını incele.')
+      } else if (!pipelineResult?.success) {
+        setError('❌ Video oluşturulamadı. Adım detaylarını incele.')
+      } else {
+        setSuccessMessage('✅ Pipeline tamamlandı.')
+      }
     } catch (e: any) {
       setError('Otomatik çalıştırma hatası: ' + (e.message || 'Bilinmeyen hata'))
     } finally {
@@ -470,6 +489,79 @@ function TurkuVideoWorkflowPage() {
           animation: 'fadeIn 0.3s ease',
         }}>
           <span>{successMessage}</span>
+        </div>
+      )}
+
+      {/* Pipeline Adım Detayları */}
+      {pipelineSteps && Object.keys(pipelineSteps).length > 0 && (
+        <div style={{
+          background: 'rgba(30, 41, 59, 0.7)',
+          border: '1px solid rgba(99, 102, 241, 0.25)',
+          borderRadius: '12px',
+          padding: '16px 20px',
+          marginBottom: '16px',
+          animation: 'fadeIn 0.3s ease',
+        }}>
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: '12px',
+          }}>
+            <h4 style={{ margin: 0, color: '#c4b5fd', fontSize: '0.95rem' }}>
+              📋 Pipeline Adım Detayları
+            </h4>
+            <button
+              onClick={() => setPipelineSteps(null)}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#94a3b8',
+                cursor: 'pointer',
+                fontSize: '0.8rem',
+              }}
+            >
+              ✕ Kapat
+            </button>
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {Object.entries(pipelineSteps).map(([step, result]) => {
+              const hasError = result.includes('❌')
+              const isSkipped = result.includes('⏭️')
+              const isSuccess = result.includes('✅')
+              return (
+                <div key={step} style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  padding: '8px 12px',
+                  background: hasError
+                    ? 'rgba(239, 68, 68, 0.1)'
+                    : isSuccess
+                      ? 'rgba(16, 185, 129, 0.1)'
+                      : 'rgba(99, 102, 241, 0.08)',
+                  border: `1px solid ${hasError ? 'rgba(239, 68, 68, 0.3)' : isSuccess ? 'rgba(16, 185, 129, 0.2)' : 'rgba(99, 102, 241, 0.15)'}`,
+                  borderRadius: '8px',
+                }}>
+                  <span style={{
+                    fontWeight: 600,
+                    fontSize: '0.85rem',
+                    color: hasError ? '#fca5a5' : isSkipped ? '#94a3b8' : '#e2e8f0',
+                  }}>
+                    {step}
+                  </span>
+                  <span style={{
+                    fontSize: '0.8rem',
+                    color: hasError ? '#fca5a5' : isSuccess ? '#6ee7b7' : '#94a3b8',
+                    textAlign: 'right',
+                    maxWidth: '60%',
+                  }}>
+                    {result}
+                  </span>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

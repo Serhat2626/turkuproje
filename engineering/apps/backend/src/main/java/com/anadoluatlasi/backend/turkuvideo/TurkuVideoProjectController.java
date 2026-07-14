@@ -952,7 +952,20 @@ public class TurkuVideoProjectController {
                 results.put("step4_video", "❌ " + videoResult.getError());
             }
 
-            results.put("success", true);
+            // Gerçek başarı durumu — video oluştu mu?
+            boolean pipelineSuccess = videoResult.isSuccess();
+            boolean hasErrors = false;
+
+            // Adım sonuçlarını tarayarak hataları tespit et
+            for (Map.Entry<String, Object> entry : results.entrySet()) {
+                if (entry.getValue() instanceof String val && val.contains("❌")) {
+                    hasErrors = true;
+                    break;
+                }
+            }
+
+            results.put("success", pipelineSuccess);
+            results.put("hasErrors", hasErrors);
             return ResponseEntity.ok(ApiResponse.success(results));
 
         } catch (Exception e) {
