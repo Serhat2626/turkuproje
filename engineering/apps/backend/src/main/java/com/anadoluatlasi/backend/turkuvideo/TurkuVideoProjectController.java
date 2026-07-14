@@ -769,8 +769,39 @@ public class TurkuVideoProjectController {
             // ADIM 2: DALL-E görseller (MinIO'da zaten varsa atla)
             TurkuStoryboardPlan storyboard = project.getStoryboardPlan();
             String imageProvider = falImageService != null ? "Fal.ai Flux Pro" : "OpenAI gpt-image-1";
+
+            // Hikâye bağlamını hazırla — tüm görsellerde tutarlılık için
+            String storyContext = "";
+            String characterDesc = "";
+            if (project.getStoryPackage() != null) {
+                TurkuStoryPackage sp = project.getStoryPackage();
+                // Hikâye özetinden kısa bağlam çıkar (max 200 karakter)
+                if (sp.getStorySummary() != null) {
+                    storyContext = sp.getStorySummary().length() > 300
+                            ? sp.getStorySummary().substring(0, 300)
+                            : sp.getStorySummary();
+                }
+                // Duygusal tema ve bölge bağlamı ekle
+                if (sp.getEmotionalTheme() != null) {
+                    storyContext += ". Emotional theme: " + sp.getEmotionalTheme();
+                }
+                if (sp.getRegionContext() != null) {
+                    characterDesc = "Setting: " + sp.getRegionContext();
+                }
+            }
+            // Senaryo'dan karakter ve dönem bilgisi
+            if (project.getScenarioPlan() != null) {
+                TurkuScenarioPlan sc = project.getScenarioPlan();
+                if (sc.getNarrationTone() != null) {
+                    characterDesc += ". Tone: " + sc.getNarrationTone();
+                }
+            }
+
             if (storyboard != null && storyboard.getScenes() != null) {
                 int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
+                int totalScenes = storyboard.getScenes().size();
+                String previousVisual = null;
+
                 for (TurkuStoryboardScene scene : storyboard.getScenes()) {
                     String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
                     // MinIO'da zaten varsa atla
@@ -783,6 +814,7 @@ public class TurkuVideoProjectController {
 
                     if (exists) {
                         imgSkipped++;
+                        previousVisual = scene.getVisualDescription();
                         continue;
                     }
 
@@ -790,10 +822,15 @@ public class TurkuVideoProjectController {
                         TurkuImageGenerationRequest imgReq = TurkuImageGenerationRequest.builder()
                                 .projectId(id)
                                 .sceneNo(scene.getSceneNo())
+                                .totalScenes(totalScenes)
                                 .safePromptSummary(scene.getVisualDescription())
-                                .styleHint("cinematic watercolor, Anatolian documentary")
-                                .safeNegativeNotes("text, watermark, logo, modern elements")
+                                .styleHint("photorealistic cinematic film still, Anatolian historical drama")
+                                .safeNegativeNotes("text, watermark, logo, modern elements, cartoon, anime, illustration")
                                 .aspectRatioHint("16:9")
+                                .storyContext(storyContext)
+                                .characterDescription(characterDesc)
+                                .previousSceneVisual(previousVisual)
+                                .sceneMood(scene.getMood())
                                 .build();
 
                         // Fal.ai varsa onu kullan (Flux Pro), yoksa OpenAI (gpt-image-1)
@@ -807,8 +844,12 @@ public class TurkuVideoProjectController {
                             TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
                             imgSuccess++;
                         }
+
+                        // Önceki sahne görselini güncelle (sonraki sahne için)
+                        previousVisual = scene.getVisualDescription();
                     } catch (Exception e) {
                         imgFail++;
+                        previousVisual = scene.getVisualDescription();
                     }
                 }
                 results.put("step2_images", imageProvider + ": ✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");

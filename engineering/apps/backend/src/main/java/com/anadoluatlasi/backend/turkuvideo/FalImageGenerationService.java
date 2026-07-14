@@ -188,23 +188,55 @@ public class FalImageGenerationService {
     }
 
     /**
-     * Sahne için Flux Pro prompt'u hazırlar.
+     * Sahne için sinematik, hikâye-tutarlı Flux Pro prompt'u hazırlar.
+     *
+     * <p>Prompt stratejisi:
+     * 1. SABİT STİL PREFİX — tüm görsellerde aynı sinematik dil
+     * 2. HİKÂYE BAĞLAMI — AI, hikâyenin neresinde olduğunu bilir
+     * 3. KARAKTER TANIMI — aynı karakter her sahnede tutarlı
+     * 4. ÖNCEKİ SAHNE — görsel akış sağlar
+     * 5. SAHNE DETAYI — spesifik sahne açıklaması
+     * 6. MOOD/ATMOSFER — ışık ve renk yönlendirmesi</p>
      */
     private String buildFluxPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
 
-        sb.append("A cinematic, ultra-detailed scene for a Turkish folk song (türkü) documentary. ");
-        sb.append("Scene ").append(request.getSceneNo()).append(": ");
-        sb.append(request.getSafePromptSummary());
+        // 1. SABİT STİL — tüm sahnelerde tutarlı sinematik dil
+        sb.append("Photorealistic cinematic film still, shot on 35mm film, Anatolian historical drama. ");
+        sb.append("Natural lighting, rich earth tones, warm golden hour palette. ");
+        sb.append("Ottoman/Anatolian village setting, period-accurate costumes and architecture. ");
 
-        if (request.getStyleHint() != null && !request.getStyleHint().isBlank()) {
-            sb.append(". Style: ").append(request.getStyleHint());
+        // 2. SAHNE POZİSYONU — hikâyenin neresinde?
+        sb.append(String.format("Scene %d of %d in a visual story sequence. ",
+                request.getSceneNo(), request.getTotalScenes() > 0 ? request.getTotalScenes() : 25));
+
+        // 3. HİKÂYE BAĞLAMI — AI hikâyeyi bilsin
+        if (request.getStoryContext() != null && !request.getStoryContext().isBlank()) {
+            sb.append("Story context: ").append(request.getStoryContext()).append(". ");
         }
 
-        // Flux Pro kalite notları
-        sb.append(". Cinematic lighting, warm Anatolian color palette, earthy tones, ");
-        sb.append("atmospheric depth of field, documentary photography style, ");
-        sb.append("8K resolution, professional film still, no text, no watermarks.");
+        // 4. KARAKTER TANIMI — tutarlı karakter görünümü
+        if (request.getCharacterDescription() != null && !request.getCharacterDescription().isBlank()) {
+            sb.append("Characters: ").append(request.getCharacterDescription()).append(". ");
+        }
+
+        // 5. ÖNCEKİ SAHNE — görsel akış
+        if (request.getPreviousSceneVisual() != null && !request.getPreviousSceneVisual().isBlank()) {
+            sb.append("Previous scene showed: ").append(request.getPreviousSceneVisual()).append(". This scene continues the visual narrative. ");
+        }
+
+        // 6. BU SAHNENİN DETAYI
+        sb.append("THIS SCENE: ").append(request.getSafePromptSummary()).append(". ");
+
+        // 7. MOOD/ATMOSFER
+        if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
+            sb.append("Mood and atmosphere: ").append(request.getSceneMood()).append(". ");
+        }
+
+        // 8. KALİTE ve YASAK notları
+        sb.append("Ultra high detail, cinematic composition, emotional depth, ");
+        sb.append("professional film photography. ");
+        sb.append("No text, no watermarks, no logos, no modern elements, no animation style.");
 
         return sb.toString();
     }
