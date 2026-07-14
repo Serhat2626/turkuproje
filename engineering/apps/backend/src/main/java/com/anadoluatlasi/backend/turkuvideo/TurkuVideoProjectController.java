@@ -1170,43 +1170,21 @@ public class TurkuVideoProjectController {
     private String buildCharacterDescription(TurkuVideoProject project) {
         StringBuilder chars = new StringBuilder();
 
-        String turkuName = project.getTurkuName() != null ? project.getTurkuName() : "";
-
-        String storyText = "";
-        if (project.getStoryPackage() != null && project.getStoryPackage().getStorySummary() != null) {
-            storyText = project.getStoryPackage().getStorySummary();
-        }
-
-        String region = "";
-        if (project.getStoryPackage() != null && project.getStoryPackage().getRegionContext() != null) {
-            region = project.getStoryPackage().getRegionContext();
-        }
-
         chars.append("CRITICAL CHARACTER SHEET — USE EXACT SAME APPEARANCE IN EVERY SCENE. ");
         chars.append("DO NOT change age, face, hair, clothes between scenes. ");
 
-        if (storyText.toLowerCase().contains("sümmani") || turkuName.toLowerCase().contains("mihriban")) {
-            chars.append("HERO — SÜMMANI: YOUNG man, age 22-25, NOT old, NOT elderly, NOT gray hair. ")
-                 .append("Clean-shaven or very light short stubble (NO long beard, NO white beard). ")
-                 .append("Dark brown wavy hair, medium length. Warm brown eyes, handsome angular face. ")
-                 .append("Lean athletic build. Expressive, soulful gaze. ")
-                 .append("CLOTHING: Simple 19th-century Anatolian village clothes — ")
-                 .append("white cotton gömlek (shirt), dark wool yelek (vest), şalvar trousers, ")
-                 .append("leather kuşak (belt), leather çarık shoes. ")
-                 .append("NO turban, NO sarık. Simple dark wool takke (cap) occasionally. ")
-                 .append("Always carries his SAZ (bağlama, long-neck lute). ")
-                 .append("HEROINE — MIHRIBAN: YOUNG woman, age 18-20, strikingly beautiful. ")
-                 .append("Long flowing black hair, often partly covered with a light yemeni (headscarf). ")
-                 .append("Large almond-shaped dark brown eyes, delicate oval face, full lips. ")
-                 .append("Slender graceful figure. Shy, gentle expression. ")
-                 .append("CLOTHING: Colorful traditional Erzurum village dress — ")
-                 .append("long entari (dress) in rich colors (burgundy, emerald, deep blue), ")
-                 .append("embroidered şalvar underneath, ornate işlemeli yelek (embroidered vest), ")
-                 .append("silver jewelry (bilezik bracelets, küpe earrings). ")
-                 .append("FORBIDDEN: old people, gray/white hair, long beards, Arabic/Middle-Eastern clothing, ")
-                 .append("turban/sarık, armor, weapons, modern clothing. ")
-                 .append("This is a YOUNG LOVE story between two people in their early 20s. ");
+        // GPT-üretimi karakter çizelgesi varsa DOĞRUDAN kullan (en iyi seçenek)
+        if (project.getStoryPackage() != null
+                && project.getStoryPackage().getCharacterSheet() != null
+                && project.getStoryPackage().getCharacterSheet().length() > 100) {
+
+            String sheet = project.getStoryPackage().getCharacterSheet();
+            // Markdown formatını düz İngilizce prompt'a çevir
+            String englishSheet = convertCharacterSheetToPrompt(sheet);
+            chars.append(englishSheet);
+
         } else {
+            // Fallback: GPT karakter çizelgesi üretmemişse genel tanım
             chars.append("Main male character: YOUNG Anatolian man, age 25-30, dark hair, ")
                  .append("short beard or clean-shaven, brown eyes, handsome. ")
                  .append("Simple 19th century village clothes: white gömlek, dark yelek, şalvar. ")
@@ -1215,16 +1193,70 @@ public class TurkuVideoProjectController {
                  .append("long dark hair, beautiful, traditional colorful village dress (entari). ");
         }
 
-        chars.append("ERA: 19th century Ottoman-era Anatolia (NOT medieval, NOT modern). ");
-        if (!region.isBlank()) {
-            chars.append("LOCATION: ").append(region).append(" region. ");
-            if (region.toLowerCase().contains("erzurum")) {
-                chars.append("Cold mountainous eastern Anatolia, stone houses, snowy peaks. ");
-            }
-        } else {
-            chars.append("LOCATION: Anatolian mountain village, stone houses, rural landscape. ");
-        }
+        // Genel yasaklar (her zaman ekle)
+        chars.append("FORBIDDEN: turban, sarık, Arabic/Middle-Eastern clothing, ")
+             .append("medieval armor, weapons, modern clothing, text, watermark. ");
 
         return chars.toString();
+    }
+
+    /**
+     * Türkçe markdown karakter çizelgesini AI image prompt'a uygun
+     * İngilizce düz metne çevirir.
+     */
+    private String convertCharacterSheetToPrompt(String sheet) {
+        StringBuilder prompt = new StringBuilder();
+
+        // Satır satır işle — key: value formatını topla
+        String[] lines = sheet.split("\\n");
+        String currentCharacter = null;
+
+        for (String line : lines) {
+            String trimmed = line.trim();
+
+            // Karakter başlığı (### ile başlayan)
+            if (trimmed.startsWith("###") || trimmed.startsWith("## ")) {
+                if (currentCharacter != null) prompt.append(". ");
+                currentCharacter = trimmed.replaceAll("^#+\\s*", "").trim();
+                if (!currentCharacter.toLowerCase().contains("mekan")
+                        && !currentCharacter.toLowerCase().contains("dönem")) {
+                    prompt.append(currentCharacter.toUpperCase()).append(": ");
+                } else {
+                    prompt.append("SETTING: ");
+                }
+                continue;
+            }
+
+            // **Key:** Value formatını çıkar
+            if (trimmed.startsWith("**") && trimmed.contains(":**")) {
+                String value = trimmed.replaceAll("\\*\\*[^*]+:\\*\\*\\s*", "").trim();
+                if (!value.isBlank() && !value.startsWith("[")) {
+                    String key = trimmed.replaceAll("\\*\\*([^*]+):\\*\\*.*", "$1").trim();
+                    // İngilizce çevir (temel alanlar)
+                    switch (key.toLowerCase()) {
+                        case "i̇sim", "isim" -> prompt.append("Name: ").append(value).append(", ");
+                        case "yaş" -> prompt.append("Age: ").append(value).append(", ");
+                        case "fiziksel" -> prompt.append("Appearance: ").append(value).append(", ");
+                        case "kıyafet" -> prompt.append("Clothing: ").append(value).append(", ");
+                        case "ayırt edici" -> prompt.append("Distinctive: ").append(value).append(", ");
+                        case "i̇fade", "ifade" -> prompt.append("Expression: ").append(value).append(", ");
+                        case "dönem" -> prompt.append("Era: ").append(value).append(", ");
+                        case "bölge" -> prompt.append("Region: ").append(value).append(", ");
+                        case "mekan detayları" -> prompt.append("Location details: ").append(value).append(", ");
+                        case "mevsim" -> prompt.append("Season: ").append(value).append(", ");
+                        case "renk paleti" -> prompt.append("Color palette: ").append(value).append(", ");
+                        default -> prompt.append(value).append(", ");
+                    }
+                }
+            }
+        }
+
+        // Çok uzunsa kırp (prompt limiti)
+        String result = prompt.toString();
+        if (result.length() > 1500) {
+            result = result.substring(0, 1500);
+        }
+
+        return result;
     }
 }

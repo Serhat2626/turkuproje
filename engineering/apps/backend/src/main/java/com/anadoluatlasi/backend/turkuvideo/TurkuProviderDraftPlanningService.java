@@ -370,6 +370,10 @@ public class TurkuProviderDraftPlanningService {
     private TurkuStoryPackage buildStubStoryPackage(TurkuVideoProject project,
                                                      TurkuAiGenerationResult result) {
         String fullText = result.getSafeOutputSummary();
+
+        // Karakter çizelgesini GPT çıktısından parse et
+        String characterSheet = extractCharacterSheet(fullText);
+
         return TurkuStoryPackage.builder()
                 .turkuName(project.getTurkuName())
                 .regionContext(project.getRegion() != null ? project.getRegion() : "Anadolu")
@@ -378,11 +382,50 @@ public class TurkuProviderDraftPlanningService {
                 .culturalSignificance("Kültürel bağlam — insan incelemesi gerektirir")
                 .narrativeAngle("Sağlayıcı perspektifi")
                 .storySummary(fullText) // Tam hikâye metni
+                .characterSheet(characterSheet) // GPT-üretimi karakter tanımları
                 .sourceConfidence(result.getOutputConfidence())
                 .needsHumanReview(true)
                 .copyrightReviewRequired(true)
                 .reviewFlags(result.getReviewFlags())
                 .build();
+    }
+
+    /**
+     * GPT çıktısından "KARAKTER ÇİZELGESİ" bölümünü çıkarır.
+     * Bu bölüm BÖLÜM 1.5 ile BÖLÜM 2 arasında yer alır.
+     */
+    private String extractCharacterSheet(String fullText) {
+        if (fullText == null || fullText.isBlank()) return null;
+
+        // "KARAKTER ÇİZELGESİ" veya "Karakterler" bölümünü bul
+        int start = -1;
+        String[] markers = {"KARAKTER ÇİZELGESİ", "## Karakterler", "### Ana Erkek Karakter"};
+        for (String marker : markers) {
+            int idx = fullText.indexOf(marker);
+            if (idx >= 0) {
+                start = idx;
+                break;
+            }
+        }
+        if (start < 0) return null;
+
+        // Sonraki ana bölümde kes (BÖLÜM 2 veya SENARYO)
+        int end = fullText.length();
+        String[] endMarkers = {"# BÖLÜM 2", "BÖLÜM 2:", "# SENARYO", "═══════════════════════════════════════════\n                # BÖLÜM 2"};
+        for (String endMarker : endMarkers) {
+            int idx = fullText.indexOf(endMarker, start + 10);
+            if (idx >= 0 && idx < end) {
+                end = idx;
+            }
+        }
+        // Daha genel: sonraki "═══" satırında kes
+        int nextSep = fullText.indexOf("═══", start + 10);
+        if (nextSep >= 0 && nextSep < end) {
+            end = nextSep;
+        }
+
+        String sheet = fullText.substring(start, end).trim();
+        return sheet.length() > 50 ? sheet : null; // Çok kısa ise geçersiz
     }
 
     private TurkuScenarioPlan buildStubScenarioPlan(TurkuVideoProject project,

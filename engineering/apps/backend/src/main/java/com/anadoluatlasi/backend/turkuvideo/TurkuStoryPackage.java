@@ -17,6 +17,8 @@ public final class TurkuStoryPackage {
     private final String culturalSignificance;
     private final String narrativeAngle;
     private final String storySummary;
+    /** GPT-generated character sheet — fiziksel tanımlar, kıyafetler, yaş, mekan/dönem. Her türküye özel. */
+    private final String characterSheet;
     private final TurkuSourceConfidence sourceConfidence;
     private final boolean needsHumanReview;
     private final boolean copyrightReviewRequired;
@@ -30,6 +32,7 @@ public final class TurkuStoryPackage {
         this.culturalSignificance = b.culturalSignificance;
         this.narrativeAngle = b.narrativeAngle;
         this.storySummary = b.storySummary;
+        this.characterSheet = b.characterSheet;
         this.sourceConfidence = b.sourceConfidence;
         this.needsHumanReview = b.needsHumanReview;
         this.copyrightReviewRequired = b.copyrightReviewRequired;
@@ -43,6 +46,7 @@ public final class TurkuStoryPackage {
     public String getCulturalSignificance() { return culturalSignificance; }
     public String getNarrativeAngle() { return narrativeAngle; }
     public String getStorySummary() { return storySummary; }
+    public String getCharacterSheet() { return characterSheet; }
     public TurkuSourceConfidence getSourceConfidence() { return sourceConfidence; }
     public boolean isNeedsHumanReview() { return needsHumanReview; }
     public boolean isCopyrightReviewRequired() { return copyrightReviewRequired; }
@@ -58,6 +62,7 @@ public final class TurkuStoryPackage {
         private String culturalSignificance;
         private String narrativeAngle;
         private String storySummary;
+        private String characterSheet;
         private TurkuSourceConfidence sourceConfidence = TurkuSourceConfidence.UNKNOWN;
         private boolean needsHumanReview = true;
         private boolean copyrightReviewRequired = true;
@@ -70,6 +75,7 @@ public final class TurkuStoryPackage {
         public Builder culturalSignificance(String v) { this.culturalSignificance = v; return this; }
         public Builder narrativeAngle(String v) { this.narrativeAngle = v; return this; }
         public Builder storySummary(String v) { this.storySummary = v; return this; }
+        public Builder characterSheet(String v) { this.characterSheet = v; return this; }
         public Builder sourceConfidence(TurkuSourceConfidence v) { this.sourceConfidence = v; return this; }
         public Builder needsHumanReview(boolean v) { this.needsHumanReview = v; return this; }
         public Builder copyrightReviewRequired(boolean v) { this.copyrightReviewRequired = v; return this; }

@@ -584,6 +584,64 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 hasret gecelerinde nasıl yankılanıyor?]
 
                 ═══════════════════════════════════════════
+                # BÖLÜM 1.5: KARAKTER ÇİZELGESİ
+                ═══════════════════════════════════════════
+
+                HİKÂYEDEKİ BÜTÜN karakterler için FİZİKSEL TANIM yaz.
+                Bu tanımlar AI görsel üretiminde kullanılacak — TÜM sahnelerde
+                AYNI karakter çizilmesi için şart.
+
+                ÖNEMLİ: Sadece 2 karakter değil, FILM TADında bir kadro oluştur!
+                Hikâyeye göre yan karakterler de ekle (baba, anne, dost, rakip,
+                köy muhtarı, çoban, komşu vb.)
+
+                Yaş bilgisi KRİTİK — genç aşk hikâyesiyse genç insanlar çiz,
+                yaşlı bilge hikâyesiyse yaşlı. Dönemine ve bölgesine uygun giysi.
+                19. yy Anadolu köylüsünde sarık/türban YOKTUR.
+
+                ## Karakterler
+
+                ### Ana Erkek Karakter
+                **İsim:** [karakterin adı]
+                **Yaş:** [tam sayı — hikâyeye uygun, genç aşk hikâyesiyse 20-25]
+                **Fiziksel:** [yüz yapısı, saç rengi/uzunluğu/şekli, sakal durumu (genç ise tıraşlı veya hafif sakal), göz rengi, boy, beden yapısı]
+                **Kıyafet:** [dönemine ve bölgesine uygun DETAYLI kıyafet — renkleri, kumaş türlerini yaz. Gömlek rengi, yelek rengi, şalvar, kuşak, ayakkabı]
+                **Ayırt Edici:** [her zaman yanında taşıdığı nesne — saz, asa, at vs.]
+                **İfade:** [genel duygusal ifadesi — duygusal, kararlı, melankolik vs.]
+
+                ### Ana Kadın Karakter
+                **İsim:** [karakterin adı]
+                **Yaş:** [tam sayı — hikâyeye uygun]
+                **Fiziksel:** [yüz yapısı, saç rengi/uzunluğu, göz rengi, boy, beden yapısı]
+                **Kıyafet:** [DETAYLI — entari rengi/deseni, şalvar, yelek, başörtüsü/yemeni rengi, takılar (bilezik, küpe, kolye)]
+                **İfade:** [genel duygusal ifadesi]
+
+                ### Yan Karakter 1 (örn: baba, ağa, büyük)
+                **İsim:** [isim ve rolü]
+                **Yaş:** [tam sayı]
+                **Fiziksel:** [kısa fiziksel tanım]
+                **Kıyafet:** [kısa kıyafet tanımı]
+
+                ### Yan Karakter 2 (örn: arkadaş, anne, rakip)
+                **İsim:** [isim ve rolü]
+                **Yaş:** [tam sayı]
+                **Fiziksel:** [kısa fiziksel tanım]
+                **Kıyafet:** [kısa kıyafet tanımı]
+
+                ### Yan Karakter 3 (opsiyonel — hikâye gerektiriyorsa)
+                **İsim:** [isim ve rolü]
+                **Yaş:** [tam sayı]
+                **Fiziksel:** [kısa fiziksel tanım]
+                **Kıyafet:** [kısa kıyafet tanımı]
+
+                ### Mekan ve Dönem
+                **Dönem:** [hangi yüzyıl, hangi çağ]
+                **Bölge:** [hangi şehir/bölge]
+                **Mekan Detayları:** [köy mü, kasaba mı, evler nasıl (taş ev, ahşap, kerpiç), doğa nasıl (dağ, ova, nehir)]
+                **Mevsim:** [hikâyenin geçtiği mevsim(ler)]
+                **Renk Paleti:** [görsellerde kullanılacak baskın renkler]
+
+                ═══════════════════════════════════════════
                 # BÖLÜM 2: SENARYO (6-Beat, 10 Dakika)
                 ═══════════════════════════════════════════
 
