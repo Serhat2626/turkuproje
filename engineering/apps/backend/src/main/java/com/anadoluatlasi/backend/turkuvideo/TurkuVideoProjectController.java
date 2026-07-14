@@ -778,27 +778,24 @@ public class TurkuVideoProjectController {
             String characterDesc = "";
             if (project.getStoryPackage() != null) {
                 TurkuStoryPackage sp = project.getStoryPackage();
-                // Hikâye özetinden kısa bağlam çıkar (max 200 karakter)
+                // Hikâye özetinden bağlam çıkar
                 if (sp.getStorySummary() != null) {
-                    storyContext = sp.getStorySummary().length() > 300
-                            ? sp.getStorySummary().substring(0, 300)
+                    storyContext = sp.getStorySummary().length() > 500
+                            ? sp.getStorySummary().substring(0, 500)
                             : sp.getStorySummary();
                 }
-                // Duygusal tema ve bölge bağlamı ekle
+                // Duygusal tema ekle
                 if (sp.getEmotionalTheme() != null) {
                     storyContext += ". Emotional theme: " + sp.getEmotionalTheme();
                 }
                 if (sp.getRegionContext() != null) {
-                    characterDesc = "Setting: " + sp.getRegionContext();
+                    storyContext += ". Setting: " + sp.getRegionContext();
                 }
             }
-            // Senaryo'dan karakter ve dönem bilgisi
-            if (project.getScenarioPlan() != null) {
-                TurkuScenarioPlan sc = project.getScenarioPlan();
-                if (sc.getNarrationTone() != null) {
-                    characterDesc += ". Tone: " + sc.getNarrationTone();
-                }
-            }
+
+            // Karakter tanımı — hikâyeden detaylı fiziksel tanım çıkar
+            // Bu tanım TÜM sahnelerde aynı kalacak → karakter tutarlılığı
+            characterDesc = buildCharacterDescription(project);
 
             if (storyboard != null && storyboard.getScenes() != null) {
                 int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
@@ -834,6 +831,8 @@ public class TurkuVideoProjectController {
                                 .characterDescription(characterDesc)
                                 .previousSceneVisual(previousVisual)
                                 .sceneMood(scene.getMood())
+                                .narrationText(scene.getNarrationSummary())
+                                .sceneTitle(scene.getSceneTitle())
                                 .build();
 
                         // Fal.ai varsa onu kullan (Flux Pro), yoksa OpenAI (gpt-image-1)
@@ -1157,5 +1156,76 @@ public class TurkuVideoProjectController {
             default -> HttpStatus.BAD_REQUEST;
         };
         return ResponseEntity.status(status).body(ApiResponse.error(ex.getMessage()));
+    }
+
+    // ── Karakter Tanımı Builder ──────────────────────────────────────────
+
+    /**
+     * Hikâye ve senaryo içeriğinden tutarlı karakter tanımı oluşturur.
+     * Bu tanım TÜM sahnelerde aynı kalacak → AI her sahnede aynı karakterleri çizer.
+     *
+     * <p>Strateji: Hikâye metninden karakter isimlerini ve fiziksel betimlemelerini çıkar,
+     * bunları sabit bir "character sheet" formatında prompt'a ekle.</p>
+     */
+    private String buildCharacterDescription(TurkuVideoProject project) {
+        StringBuilder chars = new StringBuilder();
+
+        // Türkü adından ana karakteri çıkar
+        String turkuName = project.getTurkuName() != null ? project.getTurkuName() : "";
+
+        // Hikâyeden karakter ve mekan bilgisi çıkar
+        String storyText = "";
+        if (project.getStoryPackage() != null && project.getStoryPackage().getStorySummary() != null) {
+            storyText = project.getStoryPackage().getStorySummary();
+        }
+
+        // Senaryo'dan ek bilgi
+        String scenarioText = "";
+        if (project.getScenarioPlan() != null) {
+            TurkuScenarioPlan sc = project.getScenarioPlan();
+            if (sc.getLogline() != null) scenarioText = sc.getLogline();
+            if (sc.getNarrationTone() != null) scenarioText += " Tone: " + sc.getNarrationTone();
+        }
+
+        // Bölge bilgisi
+        String region = "";
+        if (project.getStoryPackage() != null && project.getStoryPackage().getRegionContext() != null) {
+            region = project.getStoryPackage().getRegionContext();
+        }
+
+        // Sabit karakter tanımı oluştur — AI her sahnede tutarlı çizsin
+        chars.append("IMPORTANT - SAME CHARACTERS IN EVERY SCENE: ");
+
+        // Hikâye metninden tanıdık karakter kalıplarını ara
+        if (storyText.toLowerCase().contains("sümmani") || turkuName.toLowerCase().contains("mihriban")) {
+            chars.append("Main character SÜMMANI: A young Anatolian folk poet (aşık), mid-20s, dark curly hair, ")
+                 .append("trimmed beard, deep thoughtful brown eyes, wearing traditional Ottoman-era village clothes ")
+                 .append("(shalvar, yelek, kuşak), always carrying his SAZ (bağlama instrument). ")
+                 .append("Strong but melancholic expression. ")
+                 .append("MIHRIBAN: A beautiful young woman, early 20s, long dark hair flowing over shoulders, ")
+                 .append("almond-shaped dark eyes, wearing colorful traditional Anatolian village dress (entari), ")
+                 .append("headscarf occasionally. Graceful, gentle expression. ");
+        } else {
+            // Genel Anadolu hikâyesi karakter şablonu
+            chars.append("Main male character: Anatolian man, 30s, dark hair, beard, brown eyes, ")
+                 .append("traditional Ottoman village clothing (shalvar, yelek). ")
+                 .append("Main female character: Anatolian woman, 20s, long dark hair, ")
+                 .append("traditional village dress. ");
+        }
+
+        // Mekan ve dönem sabitliği
+        if (!region.isBlank()) {
+            chars.append("Setting: ").append(region).append(", 19th century Ottoman Anatolia. ");
+        } else {
+            chars.append("Setting: 19th century Anatolian mountain village. ");
+        }
+
+        // Senaryo tonu
+        if (!scenarioText.isBlank()) {
+            chars.append("Narrative context: ").append(
+                    scenarioText.length() > 200 ? scenarioText.substring(0, 200) : scenarioText);
+        }
+
+        return chars.toString();
     }
 }

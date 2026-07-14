@@ -475,6 +475,14 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 FARKLI ve GÜÇLÜ bir görsel üretilecek. Görseller tek başlarına
                 izlense bile hikâye anlaşılmalı.
 
+                KRİTİK — SESLENDIRME METINLERİ İÇİN:
+                - Senaryo beat'lerindeki seslendirme metinlerini sahne sahne parçala ve KULLAN
+                - Kendi genel bilgi metni YAZMA. HİKÂYEYİ ANLAT.
+                - Her sahnenin seslendirmesi, hikâyenin O ANINI anlatmalı:
+                  "Sümmani onu gördüğü an kalbinde bir fırtına koptu..." gibi,
+                  "Türkü, Erzurum'un önemli bir parçasıdır" gibi genel bilgi DEĞİL.
+                - Olayları, duyguları, anları anlat — belgesel anlatıcısı gibi
+
                 KURALLAR:
                 - Türkçe yaz — belgesel kalitesinde, sinematik
                 - 25-30 SAHNE planla (toplam 600 saniye = 10 dakika)
@@ -492,8 +500,9 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 ### Sahne [numara]
                 **Süre:** [saniye cinsinden — toplam 600sn olmalı]
                 **Seslendirme:** [SESLENDİRME METNİ — 50-100 kelime.
-                Edebî, sinematik, duygusal. Belgesel anlatıcısı gibi yaz.
-                TTS ile seslendirilecek — doğal akıcı cümleler kullan.]
+                Senaryodaki hikâyenin bu anını anlat. Edebî, sinematik, duygusal.
+                TTS ile seslendirilecek — doğal akıcı cümleler kullan.
+                Genel bilgi verme, hikâyedeki olayları ve duyguları anlat.]
                 **Görsel:** [ÇOK DETAYLI görsel açıklama — AI image prompt olarak kullanılacak.
                 Renk paleti, ışık yönü, kompozisyon, atmosfer, mevsim, günün saati,
                 karakter pozisyonları, mekan detayları, arka plan elemanları.
@@ -612,6 +621,26 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 # BÖLÜM 3: STORYBOARD (25-30 Sahne)
                 ═══════════════════════════════════════════
 
+                ÇOK ÖNEMLİ — STORYBOARD OLUŞTURURKEN ŞU KURALLARA UYULMALI:
+
+                1. SESLENDIRME METINLERİ: Yukarıdaki senaryodaki her beat'in
+                   "Seslendirme" metnini sahne bazında PARÇALARA BÖL ve AYNİ İÇERİĞİ KULLAN.
+                   Kendi genel bilgi metni YAZMA. Senaryo beat'lerindeki hikâye anlatımını
+                   sahnelere dağıt. Her sahnenin seslendirmesi, senaryodaki hikâyenin
+                   o bölümünü anlatan, duygusal, edebî bir metin olmalı.
+
+                2. HİKÂYE ANLATIMI: Bu storyboard bir FİLM gibi. Senaryo beat'lerindeki
+                   hikâyeyi (tanışma, aşkın doğuşu, engeller, veda, miras) sahne sahne anlat.
+                   Genel tarihî bilgiler verme, HİKÂYEYİ ANLAT.
+
+                3. BÖLÜM 1'deki hikâye araştırmasının detaylı olay örgüsünü (prologue,
+                   tanışma, kader anı, umut, engeller, duygusal doruk, miras)
+                   kronolojik sırayla sahnelere yay.
+
+                4. Her sahne seslendirmesi 50-100 kelime — ama BU KELİMELER HİKÂYENİN
+                   o anını anlatmalı: "Sümmani Mihriban'ı gördüğü an..." gibi,
+                   "Türkü, Erzurum'un önemli bir parçasıdır" gibi genel bilgi DEĞİL.
+
                 Her sahne için AYRINTILI bilgi ver. Bu sahneler videonun iskeletidir.
                 Sessiz izlense bile görsellerden hikâye anlaşılmalı.
                 Her sahne FARKLI bir görsel olacak — tekrar YASAK.
@@ -619,8 +648,10 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 ### Sahne [N]
                 **Süre:** [saniye cinsinden — toplam 600sn = 10dk olmalı. Her sahne 15-25sn]
                 **Seslendirme:** [SESLENDİRME METNİ — 50-100 kelime.
-                TTS ile seslendirilecek. Akıcı, duygusal, sinematik yaz.
-                Kısa cümleler YAZMA. Edebî belgesel tarzı anlatım kullan.]
+                TTS ile seslendirilecek. Senaryodaki hikâyenin bu anını anlat.
+                Edebî, sinematik, duygusal belgesel anlatımı. Genel bilgi YAZMA.
+                Olayları, duyguları, anları anlat: "O gece sazını eline aldı..."
+                "Mihriban'ın gözlerinden süzülen yaşlar..." gibi.]
                 **Görsel:** [ÇOK DETAYLI görsel açıklama — AI image prompt olarak kullanılacak.
                 Renk paleti, ışık yönü, kompozisyon, atmosfer, mevsim, günün saati,
                 mekan detayları, karakter duruşları. HER SAHNE FARKLI GÖRSEL OLMALI.

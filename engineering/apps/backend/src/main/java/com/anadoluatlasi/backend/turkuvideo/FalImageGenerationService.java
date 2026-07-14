@@ -210,32 +210,49 @@ public class FalImageGenerationService {
         sb.append(String.format("Scene %d of %d in a visual story sequence. ",
                 request.getSceneNo(), request.getTotalScenes() > 0 ? request.getTotalScenes() : 25));
 
-        // 3. HİKÂYE BAĞLAMI — AI hikâyeyi bilsin
-        if (request.getStoryContext() != null && !request.getStoryContext().isBlank()) {
-            sb.append("Story context: ").append(request.getStoryContext()).append(". ");
-        }
-
-        // 4. KARAKTER TANIMI — tutarlı karakter görünümü
+        // 3. KARAKTER TANIMI — tutarlı karakter görünümü (EN ÖNEMLİ)
         if (request.getCharacterDescription() != null && !request.getCharacterDescription().isBlank()) {
-            sb.append("Characters: ").append(request.getCharacterDescription()).append(". ");
+            sb.append(request.getCharacterDescription()).append(". ");
         }
 
-        // 5. ÖNCEKİ SAHNE — görsel akış
+        // 4. HİKÂYENİN BU ANI — narration text'ten hangi olay/an olduğunu bildir
+        if (request.getNarrationText() != null && !request.getNarrationText().isBlank()) {
+            // Narration'dan kısa özet çıkar (prompt çok uzamasın)
+            String narration = request.getNarrationText();
+            if (narration.length() > 300) narration = narration.substring(0, 300);
+            sb.append("THIS MOMENT IN THE STORY: ").append(narration).append(". ");
+        }
+
+        // 5. SAHNE BAŞLIĞI
+        if (request.getSceneTitle() != null && !request.getSceneTitle().isBlank()) {
+            sb.append("Scene title: ").append(request.getSceneTitle()).append(". ");
+        }
+
+        // 6. ÖNCEKİ SAHNE — görsel akış sürekliliği
         if (request.getPreviousSceneVisual() != null && !request.getPreviousSceneVisual().isBlank()) {
-            sb.append("Previous scene showed: ").append(request.getPreviousSceneVisual()).append(". This scene continues the visual narrative. ");
+            String prevVisual = request.getPreviousSceneVisual();
+            if (prevVisual.length() > 150) prevVisual = prevVisual.substring(0, 150);
+            sb.append("Previous scene showed: ").append(prevVisual).append(". This scene continues the visual narrative. ");
         }
 
-        // 6. BU SAHNENİN DETAYI
-        sb.append("THIS SCENE: ").append(request.getSafePromptSummary()).append(". ");
+        // 7. BU SAHNENİN GÖRSEL DETAYI — storyboard'daki visual description
+        sb.append("VISUAL COMPOSITION: ").append(request.getSafePromptSummary()).append(". ");
 
-        // 7. MOOD/ATMOSFER
+        // 8. MOOD/ATMOSFER
         if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
             sb.append("Mood and atmosphere: ").append(request.getSceneMood()).append(". ");
         }
 
-        // 8. KALİTE ve YASAK notları
+        // 9. HİKÂYE BAĞLAMI — genel hikâye
+        if (request.getStoryContext() != null && !request.getStoryContext().isBlank()) {
+            String ctx = request.getStoryContext();
+            if (ctx.length() > 200) ctx = ctx.substring(0, 200);
+            sb.append("Overall story: ").append(ctx).append(". ");
+        }
+
+        // 10. KALİTE ve YASAK notları
         sb.append("Ultra high detail, cinematic composition, emotional depth, ");
-        sb.append("professional film photography. ");
+        sb.append("professional film photography, consistent characters throughout. ");
         sb.append("No text, no watermarks, no logos, no modern elements, no animation style.");
 
         return sb.toString();

@@ -38,4 +38,11 @@ public class TurkuImageGenerationRequest {
 
     /** Sahne mood/atmosfer — ışık ve renk yönlendirmesi */
     private String sceneMood;
+
+    /** Sahne seslendirme metni — hikâyenin bu anını anlatan metin.
+     *  Görsel, bu metindeki olayı/anı/duyguyu yansıtmalı. */
+    private String narrationText;
+
+    /** Sahne başlığı — sahnenin kısa adı */
+    private String sceneTitle;
 }
