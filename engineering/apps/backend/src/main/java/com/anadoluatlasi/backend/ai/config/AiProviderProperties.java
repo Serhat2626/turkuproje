@@ -89,6 +89,7 @@ public class AiProviderProperties {
 
     /**
      * ElevenLabs TTS provider ayarları.
+     * Duygusal, sinematik Türkçe seslendirme için optimize edilmiş.
      */
     @Data
     public static class ElevenLabs {
@@ -96,20 +97,24 @@ public class AiProviderProperties {
         /** ElevenLabs API key */
         private String apiKey;
 
-        /** Voice ID — Türkçe için uygun ses */
-        private String voiceId = "EXAVITQu4vr4xnSDxMaL";  // "Sarah" - multilingual, sıcak
+        /** Voice ID — Türkçe hikâye anlatımı için duygusal ses
+         *  Fatih: fZEjvS1BvpajAoOmWcEO (erkek, orta yaş, hikâyeci)
+         *  Ayça D: 5RqXmIU9ikjifeWoXHMG (kadın, sakin, samimi)
+         *  Asım Mirza: mEf7WY0hvNO6KqdAkUeA (erkek, derin, etkileyici)
+         */
+        private String voiceId = "fZEjvS1BvpajAoOmWcEO";  // "Fatih" - hikâye anlatıcı, duygusal
 
-        /** Model ID */
+        /** Model ID — v3 daha iyi Türkçe ve duygusal tonlama */
         private String modelId = "eleven_multilingual_v2";
 
-        /** Stability (0.0-1.0) — düşük=daha ifadeli, yüksek=daha kararlı */
-        private double stability = 0.5;
+        /** Stability (0.0-1.0) — DÜŞÜK = daha duygusal, doğal iniş-çıkışlar */
+        private double stability = 0.35;
 
-        /** Similarity boost (0.0-1.0) */
-        private double similarityBoost = 0.75;
+        /** Similarity boost (0.0-1.0) — sesin orijinal karakterini korur */
+        private double similarityBoost = 0.80;
 
-        /** Style (0.0-1.0) — anlatım stili yoğunluğu */
-        private double style = 0.4;
+        /** Style (0.0-1.0) — YÜKSEK = daha dramatik, ifadeli anlatım */
+        private double style = 0.65;
 
         /** ElevenLabs API base URL */
         private String baseUrl = "https://api.elevenlabs.io/v1";

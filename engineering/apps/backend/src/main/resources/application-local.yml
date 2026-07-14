@@ -35,11 +35,11 @@ ai:
     temperature: 0.7
   elevenlabs:
     api-key: ${ELEVENLABS_API_KEY:}
-    voice-id: ${ELEVENLABS_VOICE_ID:EXAVITQu4vr4xnSDxMaL}
+    voice-id: ${ELEVENLABS_VOICE_ID:fZEjvS1BvpajAoOmWcEO}  # "Fatih" — Türkçe hikâye anlatıcı
     model-id: eleven_multilingual_v2
-    stability: 0.5
-    similarity-boost: 0.75
-    style: 0.4
+    stability: 0.35        # Düşük = daha duygusal iniş-çıkışlar
+    similarity-boost: 0.80  # Sesin doğal karakterini korur
+    style: 0.65             # Yüksek = daha dramatik anlatım
   fal:
     api-key: ${FAL_API_KEY:}
     model: fal-ai/flux-pro/v1.1
