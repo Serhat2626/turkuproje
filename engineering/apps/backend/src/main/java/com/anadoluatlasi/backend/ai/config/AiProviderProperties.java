@@ -77,11 +77,11 @@ public class AiProviderProperties {
         /** OpenAI API base URL */
         private String baseUrl = "https://api.openai.com/v1";
 
-        /** HTTP istek timeout (saniye) */
-        private int timeoutSeconds = 60;
+        /** HTTP istek timeout (saniye) — PLANNING_BUNDLE uzun sürer */
+        private int timeoutSeconds = 180;
 
-        /** Maksimum output token sayısı */
-        private int maxOutputTokens = 2000;
+        /** Maksimum output token sayısı — 25-30 sahne storyboard + hikâye + senaryo için yeterli olmalı */
+        private int maxOutputTokens = 16000;
 
         /** Yaratıcılık parametresi (0.0–2.0) */
         private double temperature = 0.4;
