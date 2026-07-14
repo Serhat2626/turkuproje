@@ -392,8 +392,8 @@ function TurkuVideoWorkflowPage() {
         setActiveAction(null)
       }
 
-      // ── ADIM 3: DALL-E Görseller + TTS Ses + FFmpeg Video ──
-      setAutoRunProgress('⏳ 3/3: DALL-E görseller + TTS ses + FFmpeg video üretiliyor... (3-5 dk)')
+      // ── ADIM 3: Görseller + TTS Ses + FFmpeg Video ──
+      setAutoRunProgress('⏳ 3/3: Görseller + TTS ses + FFmpeg video üretiliyor... (bu adım uzun sürebilir)')
       setActiveAction('Tam Video Pipeline')
       try {
         const fullRes = await turkuApi.generateFullVideo(currentId)
@@ -404,6 +404,17 @@ function TurkuVideoWorkflowPage() {
         // Pipeline hatası — kısmi sonuçlar olabilir
       }
       setActiveAction(null)
+
+      // Video kontrolü — pipeline başarılı da olsa başarısız da olsa kontrol et
+      try {
+        const videoUrl = turkuApi.getVideoUrl(currentId)
+        const headRes = await fetch(videoUrl, { method: 'HEAD' })
+        if (headRes.ok) {
+          setVideoReady(true)
+        }
+      } catch {
+        // video not available
+      }
 
       // Son durumu güncelle
       await refreshProject(currentId)
