@@ -80,8 +80,8 @@ public class AiProviderProperties {
         /** HTTP istek timeout (saniye) — PLANNING_BUNDLE uzun sürer */
         private int timeoutSeconds = 180;
 
-        /** Maksimum output token sayısı — 35 sahne storyboard + hikâye + senaryo + karakter çizelgesi */
-        private int maxOutputTokens = 32000;
+        /** Maksimum output token sayısı — gpt-4o max: 16384. Bütçe takibi loglardan yapılır. */
+        private int maxOutputTokens = 16384;
 
         /** Yaratıcılık parametresi (0.0–2.0) */
         private double temperature = 0.4;

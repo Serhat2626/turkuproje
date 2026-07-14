@@ -877,14 +877,17 @@ public class TurkuVideoProjectController {
                         minioClient.statObject(io.minio.StatObjectArgs.builder()
                                 .bucket(minioConfig.getBucketName()).object(imagePath).build());
 
-                        // Geçici presigned URL oluştur (Kling erişebilsin)
-                        String imageUrl = minioClient.getPresignedObjectUrl(
-                                io.minio.GetPresignedObjectUrlArgs.builder()
-                                        .bucket(minioConfig.getBucketName())
-                                        .object(imagePath)
-                                        .method(io.minio.http.Method.GET)
-                                        .expiry(15, java.util.concurrent.TimeUnit.MINUTES)
-                                        .build());
+                        // Görseli MinIO'dan oku ve base64 data URI'ye çevir
+                        // (Fal.ai/Kling HTTPS URL veya data URI gerektirir, localhost HTTP çalışmaz)
+                        byte[] imageBytes;
+                        try (var stream = minioClient.getObject(io.minio.GetObjectArgs.builder()
+                                .bucket(minioConfig.getBucketName())
+                                .object(imagePath)
+                                .build())) {
+                            imageBytes = stream.readAllBytes();
+                        }
+                        String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
+                        String imageUrl = "data:image/png;base64," + base64Image;
 
                         // Hareket prompt'u: sahne mood + görsel açıklama
                         String motionPrompt = "Subtle cinematic motion in scene: " +
