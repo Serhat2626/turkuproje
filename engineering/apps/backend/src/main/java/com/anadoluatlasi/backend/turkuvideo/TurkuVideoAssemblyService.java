@@ -182,77 +182,194 @@ public class TurkuVideoAssemblyService {
         }
     }
 
-    // ── FFmpeg: Görsel + Ses → Video Segment ──
+    // ── FFmpeg: Görsel + Ses → Video Segment (Ken Burns efekti ile) ──
 
     private void createVideoSegment(Path imageFile, Path audioFile, Path outputFile) throws Exception {
-        // ffmpeg -loop 1 -i image.png -i audio.mp3
-        //   -c:v libx264 -tune stillimage -c:a aac -b:a 192k
-        //   -vf "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black"
-        //   -pix_fmt yuv420p -shortest -y output.mp4
+        // Ken Burns: zoom-in + hafif pan hareketi — görseli canlı ve sinematik yapar
+        // zoompan: z (zoom), d (duration frames), x/y (pan), s (output size), fps
+        String kenBurnsFilter = String.format(
+                "scale=3840:2160,zoompan=z='min(zoom+0.001,1.3)':d=%d:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=24",
+                24 * 60  // max 60sn yeterli
+        );
+
         List<String> cmd = List.of(
                 "ffmpeg", "-y",
                 "-loop", "1",
                 "-i", imageFile.toAbsolutePath().toString(),
                 "-i", audioFile.toAbsolutePath().toString(),
-                "-c:v", "libx264", "-tune", "stillimage",
+                "-c:v", "libx264", "-preset", "medium",
                 "-c:a", "aac", "-b:a", "192k",
-                "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black",
+                "-vf", kenBurnsFilter,
                 "-pix_fmt", "yuv420p",
                 "-shortest",
                 outputFile.toAbsolutePath().toString()
         );
-        runFFmpeg(cmd, "segment (image+audio)");
+        runFFmpeg(cmd, "segment (image+audio, Ken Burns)");
     }
 
     private void createAudioOnlySegment(Path audioFile, Path outputFile) throws Exception {
-        // Siyah ekran + ses
+        // Siyah ekran yerine gradient arka plan + ses
         List<String> cmd = List.of(
                 "ffmpeg", "-y",
-                "-f", "lavfi", "-i", "color=c=black:s=1920x1080:d=600",
+                "-f", "lavfi", "-i",
+                "color=c=0x1a1a2e:s=1920x1080:d=600,format=yuv420p",
                 "-i", audioFile.toAbsolutePath().toString(),
                 "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
                 "-pix_fmt", "yuv420p",
                 "-shortest",
                 outputFile.toAbsolutePath().toString()
         );
-        runFFmpeg(cmd, "segment (audio-only)");
+        runFFmpeg(cmd, "segment (audio-only, dark bg)");
     }
 
     private void createImageOnlySegment(Path imageFile, Path outputFile, int durationSeconds) throws Exception {
         int duration = durationSeconds > 0 ? durationSeconds : 10;
+        String kenBurnsFilter = String.format(
+                "scale=3840:2160,zoompan=z='min(zoom+0.001,1.3)':d=%d:x='iw/2-(iw/zoom/2)':y='ih/2-(ih/zoom/2)':s=1920x1080:fps=24",
+                24 * duration
+        );
+
         List<String> cmd = List.of(
                 "ffmpeg", "-y",
                 "-loop", "1",
                 "-i", imageFile.toAbsolutePath().toString(),
                 "-t", String.valueOf(duration),
-                "-c:v", "libx264", "-tune", "stillimage",
-                "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:-1:-1:color=black",
+                "-c:v", "libx264", "-preset", "medium",
+                "-vf", kenBurnsFilter,
                 "-pix_fmt", "yuv420p",
                 "-an",
                 outputFile.toAbsolutePath().toString()
         );
-        runFFmpeg(cmd, "segment (image-only)");
+        runFFmpeg(cmd, "segment (image-only, Ken Burns)");
     }
 
     // ── FFmpeg: Segmentleri Birleştir ──
 
     private void concatenateSegments(List<Path> segments, Path outputFile, Path tempDir) throws Exception {
-        // Concat dosyası oluştur
-        Path concatFile = tempDir.resolve("concat.txt");
-        StringBuilder sb = new StringBuilder();
-        for (Path seg : segments) {
-            sb.append("file '").append(seg.toAbsolutePath().toString().replace("\\", "/")).append("'\n");
+        if (segments.size() == 1) {
+            Files.copy(segments.get(0), outputFile);
+            return;
         }
-        Files.writeString(concatFile, sb.toString());
 
-        List<String> cmd = List.of(
-                "ffmpeg", "-y",
-                "-f", "concat", "-safe", "0",
-                "-i", concatFile.toAbsolutePath().toString(),
-                "-c", "copy",
-                outputFile.toAbsolutePath().toString()
-        );
-        runFFmpeg(cmd, "concat");
+        // Crossfade ile birleştirme: xfade filtresi
+        // Her segment arasında 0.6sn fade geçişi
+        double crossfadeDuration = 0.6;
+
+        // Segment sürelerini öğren (ffprobe ile)
+        List<Double> durations = new ArrayList<>();
+        for (Path seg : segments) {
+            double dur = getVideoDuration(seg);
+            durations.add(dur);
+        }
+
+        // Çok fazla segment varsa xfade çok karmaşıklaşır — concat + re-encode fallback
+        if (segments.size() > 15) {
+            log.info("{} segment var — concat+re-encode kullanılıyor (crossfade yerine)", segments.size());
+            Path concatFile = tempDir.resolve("concat.txt");
+            StringBuilder sb = new StringBuilder();
+            for (Path seg : segments) {
+                sb.append("file '").append(seg.toAbsolutePath().toString().replace("\\", "/")).append("'\n");
+            }
+            Files.writeString(concatFile, sb.toString());
+
+            List<String> cmd = List.of(
+                    "ffmpeg", "-y",
+                    "-f", "concat", "-safe", "0",
+                    "-i", concatFile.toAbsolutePath().toString(),
+                    "-c:v", "libx264", "-preset", "medium",
+                    "-c:a", "aac", "-b:a", "192k",
+                    "-pix_fmt", "yuv420p",
+                    outputFile.toAbsolutePath().toString()
+            );
+            runFFmpeg(cmd, "concat (re-encode)");
+            return;
+        }
+
+        // xfade ile crossfade birleştirme
+        StringBuilder filterComplex = new StringBuilder();
+        int inputCount = segments.size();
+
+        // Input'ları oluştur
+        List<String> cmd = new ArrayList<>();
+        cmd.add("ffmpeg");
+        cmd.add("-y");
+        for (Path seg : segments) {
+            cmd.add("-i");
+            cmd.add(seg.toAbsolutePath().toString());
+        }
+
+        // xfade chain: [0:v][1:v]xfade → [v01], [v01][2:v]xfade → [v02], ...
+        double offset = durations.get(0) - crossfadeDuration;
+        String lastVideoLabel = "[0:v]";
+        String lastAudioLabel = "[0:a]";
+
+        for (int i = 1; i < inputCount; i++) {
+            String outLabel = "[v" + i + "]";
+            String outAudioLabel = "[a" + i + "]";
+
+            filterComplex.append(String.format(
+                    "%s[%d:v]xfade=transition=fade:duration=%.1f:offset=%.1f%s;",
+                    lastVideoLabel, i, crossfadeDuration, Math.max(0, offset), outLabel
+            ));
+
+            filterComplex.append(String.format(
+                    "%s[%d:a]acrossfade=d=%.1f%s;",
+                    lastAudioLabel, i, crossfadeDuration, outAudioLabel
+            ));
+
+            if (i < inputCount - 1) {
+                offset += durations.get(i) - crossfadeDuration;
+            }
+            lastVideoLabel = outLabel;
+            lastAudioLabel = outAudioLabel;
+        }
+
+        // Son ; kaldır
+        String filter = filterComplex.toString();
+        if (filter.endsWith(";")) {
+            filter = filter.substring(0, filter.length() - 1);
+        }
+
+        cmd.add("-filter_complex");
+        cmd.add(filter);
+        cmd.add("-map");
+        cmd.add(lastVideoLabel);
+        cmd.add("-map");
+        cmd.add(lastAudioLabel);
+        cmd.add("-c:v");
+        cmd.add("libx264");
+        cmd.add("-preset");
+        cmd.add("medium");
+        cmd.add("-c:a");
+        cmd.add("aac");
+        cmd.add("-b:a");
+        cmd.add("192k");
+        cmd.add("-pix_fmt");
+        cmd.add("yuv420p");
+        cmd.add(outputFile.toAbsolutePath().toString());
+
+        runFFmpeg(cmd, "crossfade concat");
+    }
+
+    /**
+     * FFprobe ile video süresini öğren (saniye cinsinden)
+     */
+    private double getVideoDuration(Path videoFile) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffprobe", "-v", "quiet", "-show_entries", "format=duration",
+                    "-of", "default=noprint_wrappers=1:nokey=1",
+                    videoFile.toAbsolutePath().toString()
+            );
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            String output = new String(p.getInputStream().readAllBytes()).trim();
+            p.waitFor();
+            return Double.parseDouble(output);
+        } catch (Exception e) {
+            log.warn("FFprobe hatası, varsayılan 20sn kullanılıyor: {}", e.getMessage());
+            return 20.0;
+        }
     }
 
     // ── FFmpeg: Müzik Mix ──
@@ -291,26 +408,83 @@ public class TurkuVideoAssemblyService {
             log.info("Fon müziği eklendi: size={}KB", Files.size(fonFile) / 1024);
         }
 
-        // Adım 2: Türkü kaydını sona ekle (varsa)
+        // Adım 2: Türkü kaydını sona ekle (varsa) — GÖRSEL SLIDESHOW ile
         if (hasTurku) {
             String turkuMinioPath = String.format("turku-video/%s/music/turku.mp3", projectId);
             Path turkuFile = downloadFromMinio(turkuMinioPath, tempDir.resolve("turku_music.mp3"));
 
-            // Türkü ses dosyasından video segment oluştur (son görsel + türkü ses)
-            // Son sahne görselini kullan, yoksa siyah ekran
+            // Türkü bölümü: sahne görsellerini slideshow olarak göster
             Path turkuSegment = tempDir.resolve("turku_segment.mp4");
 
-            // Siyah ekran + türkü tam ses (türkü uzunluğu kadar)
-            List<String> turkuCmd = new ArrayList<>(List.of(
-                    "ffmpeg", "-y",
-                    "-f", "lavfi", "-i", "color=c=black:s=1920x1080:r=24",
-                    "-i", turkuFile.toAbsolutePath().toString(),
-                    "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
-                    "-pix_fmt", "yuv420p",
-                    "-shortest",
-                    turkuSegment.toAbsolutePath().toString()
-            ));
-            runFFmpeg(turkuCmd, "türkü segment");
+            // MinIO'dan mevcut sahne görsellerini bul
+            List<Path> sceneImages = new ArrayList<>();
+            for (int i = 1; i <= 35; i++) {
+                String imgPath = String.format("turku-video/%s/scenes/%d.png", projectId, i);
+                try {
+                    minioClient.statObject(io.minio.StatObjectArgs.builder()
+                            .bucket(minioConfig.getBucketName()).object(imgPath).build());
+                    Path img = downloadFromMinio(imgPath, tempDir.resolve("turku_slide_" + i + ".png"));
+                    sceneImages.add(img);
+                } catch (Exception ignored) {}
+            }
+
+            if (!sceneImages.isEmpty()) {
+                // Türkü süresi
+                double turkuDuration = getVideoDuration(turkuFile);
+                if (turkuDuration <= 0) turkuDuration = 180; // fallback 3dk
+                double perImageDuration = turkuDuration / sceneImages.size();
+                if (perImageDuration < 5) perImageDuration = 5;
+
+                // Her görselden Ken Burns segment oluştur
+                List<Path> turkuSlides = new ArrayList<>();
+                for (int i = 0; i < sceneImages.size(); i++) {
+                    Path slideOut = tempDir.resolve("turku_slideseg_" + i + ".mp4");
+                    createImageOnlySegment(sceneImages.get(i), slideOut, (int) perImageDuration);
+                    turkuSlides.add(slideOut);
+                }
+
+                // Slideshow concat
+                Path slideshowConcat = tempDir.resolve("turku_slideshow.mp4");
+                Path concatTxt = tempDir.resolve("turku_slides_concat.txt");
+                StringBuilder slidesSb = new StringBuilder();
+                for (Path slide : turkuSlides) {
+                    slidesSb.append("file '").append(slide.toAbsolutePath().toString().replace("\\", "/")).append("'\n");
+                }
+                Files.writeString(concatTxt, slidesSb.toString());
+
+                List<String> slideshowCmd = List.of(
+                        "ffmpeg", "-y",
+                        "-f", "concat", "-safe", "0",
+                        "-i", concatTxt.toAbsolutePath().toString(),
+                        "-c:v", "libx264", "-preset", "medium",
+                        "-pix_fmt", "yuv420p",
+                        slideshowConcat.toAbsolutePath().toString()
+                );
+                runFFmpeg(slideshowCmd, "türkü slideshow");
+
+                // Slideshow + türkü ses birleştir
+                List<String> mergeCmd = List.of(
+                        "ffmpeg", "-y",
+                        "-i", slideshowConcat.toAbsolutePath().toString(),
+                        "-i", turkuFile.toAbsolutePath().toString(),
+                        "-c:v", "copy", "-c:a", "aac", "-b:a", "192k",
+                        "-shortest",
+                        turkuSegment.toAbsolutePath().toString()
+                );
+                runFFmpeg(mergeCmd, "türkü slideshow+ses");
+            } else {
+                // Görsel yoksa koyu arka plan kullan (siyah değil)
+                List<String> turkuCmd = new ArrayList<>(List.of(
+                        "ffmpeg", "-y",
+                        "-f", "lavfi", "-i", "color=c=0x1a1a2e:s=1920x1080:r=24",
+                        "-i", turkuFile.toAbsolutePath().toString(),
+                        "-c:v", "libx264", "-c:a", "aac", "-b:a", "192k",
+                        "-pix_fmt", "yuv420p",
+                        "-shortest",
+                        turkuSegment.toAbsolutePath().toString()
+                ));
+                runFFmpeg(turkuCmd, "türkü segment (no images)");
+            }
 
             // Ana video + türkü segmentini birleştir
             Path concatWithTurku = tempDir.resolve("concat_turku.txt");
@@ -319,7 +493,6 @@ public class TurkuVideoAssemblyService {
                     "file '" + turkuSegment.toAbsolutePath().toString().replace("\\", "/") + "'\n");
 
             Path turkuFinal = tempDir.resolve("turku_final.mp4");
-            // concat ile codec uyumu olması için re-encode
             List<String> concatCmd = new ArrayList<>(List.of(
                     "ffmpeg", "-y",
                     "-f", "concat", "-safe", "0",
@@ -330,7 +503,8 @@ public class TurkuVideoAssemblyService {
             ));
             runFFmpeg(concatCmd, "türkü concat");
             currentVideo = turkuFinal;
-            log.info("Türkü kaydı eklendi: turkuSize={}KB", Files.size(turkuFile) / 1024);
+            log.info("Türkü kaydı görsel slideshow ile eklendi: turkuSize={}KB, imageCount={}",
+                    Files.size(turkuFile) / 1024, sceneImages.size());
         }
 
         // Son video'yu output'a kopyala

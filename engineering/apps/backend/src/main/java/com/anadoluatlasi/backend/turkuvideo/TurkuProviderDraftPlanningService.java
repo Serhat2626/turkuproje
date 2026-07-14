@@ -462,7 +462,7 @@ public class TurkuProviderDraftPlanningService {
             sections = text.split("(?m)^\\*{0,2}\\s*Beat\\s+\\d+");
         }
 
-        for (int i = 1; i < sections.length && i <= 10; i++) {
+        for (int i = 1; i < sections.length && i <= 35; i++) {
             String section = sections[i];
 
             String title = extractField(section, "^[:\\s]*([^\\n]+)");
