@@ -49,7 +49,7 @@ class TurkuRenderManifestTest {
                 bootstrapService, planningService, assetService,
                 draftService, imageBatchService, compositionService,
                 renderManifestService, renderJobService, renderExecutionService,
-                new TurkuStoryboardInternalRenderChainHarness(), actorResolver);
+                new TurkuStoryboardInternalRenderChainHarness(), actorResolver, null, null, null);
     }
 
     private TurkuVideoProject bootstrapToCompositionReady() {

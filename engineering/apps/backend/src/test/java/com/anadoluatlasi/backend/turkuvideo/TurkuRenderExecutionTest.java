@@ -47,7 +47,7 @@ class TurkuRenderExecutionTest {
         controller = new TurkuVideoProjectController(
                 bootstrapService, planningService, assetService,
                 draftService, imageBatchService, compositionService,
-                renderManifestService, renderJobService, executionService, new TurkuStoryboardInternalRenderChainHarness(), actorResolver);
+                renderManifestService, renderJobService, executionService, new TurkuStoryboardInternalRenderChainHarness(), actorResolver, null, null, null);
     }
 
     private TurkuVideoProject bootstrapProject() {
