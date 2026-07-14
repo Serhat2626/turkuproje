@@ -115,7 +115,7 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
         // OpenAI çağrısı
         String aiContent;
         try {
-            aiContent = callOpenAi(systemPrompt, userPrompt, request.getProjectId());
+            aiContent = callOpenAi(systemPrompt, userPrompt, request.getProjectId(), stage);
         } catch (Exception e) {
             log.error("OpenAI Türkü üretim hatası: projectId={}, stage={}, error={}",
                     request.getProjectId(), stage, e.getMessage());
@@ -442,6 +442,38 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 ## Kaynak Notu
                 [Bilgi kaynakları ve güvenilirlik değerlendirmesi — 150 kelime.
                 Gerçek bilgi / halk rivayeti / kurgu ayrımı net belirtilmeli.]
+
+                ═══════════════════════════════════════════
+                # KARAKTER ÇİZELGESİ
+                ═══════════════════════════════════════════
+
+                HİKÂYEDEKİ TÜM KARAKTERLERİ FİZİKSEL OLARAK TANIMLA.
+                Bu tanımlar AI görsel üretim için kullanılacak — DETAYLI ol.
+
+                ### Ana Erkek Karakter
+                **İsim:** [hikâyedeki gerçek isim]
+                **Yaş:** [hikâyeye uygun yaş aralığı]
+                **Fiziksel:** [saç rengi/tipi, ten rengi, yüz hatları, boy/kilo tahmini,
+                sakal durumu — DETAYLI ve SPESİFİK. "yakışıklı" gibi genel tanım YAZMA.
+                "Koyu kahverengi dalgalı saçlar, buğday tenli, keskin burun, hafif kaşları çatık,
+                ince bıyıklı, atletik yapılı" gibi yaz.]
+                **Kıyafet:** [döneme uygun — yelek, şalvar, kuşak, çarık vs. DETAYLI]
+                **Karakteristik:** [saz taşır, yüzük, tespih vs.]
+
+                ### Ana Kadın Karakter
+                **İsim:** [hikâyedeki gerçek isim]
+                **Yaş:** [hikâyeye uygun]
+                **Fiziksel:** [DETAYLI fiziksel tanım — saç, ten, göz, yüz hatları]
+                **Kıyafet:** [döneme uygun — entari, yemeni, takılar vs.]
+                **Karakteristik:** [belirleyici obje/aksesuar]
+
+                ### Yan Karakterler (en az 2-3 tane)
+                Her yan karakter için:
+                **İsim/Rol:** [ör: Kızın babası, köy ağası, ana karakterin dostu]
+                **Yaş:** [tahmini]
+                **Fiziksel:** [kısa ama net tanım]
+                **Kıyafet:** [döneme/statüsüne uygun]
+                **Hikâyedeki rolü:** [neden önemli]
                 """;
 
             case "SCENARIO" -> """
@@ -471,46 +503,39 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 Görevin: verilen senaryo için 10 dakikalık belgesel videonun
                 sahne bazlı DETAYLI storyboard planını oluşturmak.
 
-                ÖNEMLİ: Bu video SİNEMA FİLMİ kalitesinde olacak. Her sahne için
-                FARKLI ve GÜÇLÜ bir görsel üretilecek. Görseller tek başlarına
-                izlense bile hikâye anlaşılmalı.
+                *** KRİTİK KURALLAR — UYULMASI ZORUNLU ***
 
-                KRİTİK — SESLENDIRME METINLERİ İÇİN:
-                - Senaryo beat'lerindeki seslendirme metinlerini sahne sahne parçala ve KULLAN
-                - Kendi genel bilgi metni YAZMA. HİKÂYEYİ ANLAT.
-                - Her sahnenin seslendirmesi, hikâyenin O ANINI anlatmalı:
-                  "Sümmani onu gördüğü an kalbinde bir fırtına koptu..." gibi,
-                  "Türkü, Erzurum'un önemli bir parçasıdır" gibi genel bilgi DEĞİL.
-                - Olayları, duyguları, anları anlat — belgesel anlatıcısı gibi
+                1. TAM 35 SAHNE YAZILACAK. 10 veya 15 sahne yazıp bırakmak YASAKTIR.
+                   Sahne 1'den Sahne 35'e kadar HEPSINI yaz.
 
-                KURALLAR:
-                - Türkçe yaz — belgesel kalitesinde, sinematik
-                - 25-30 SAHNE planla (toplam 600 saniye = 10 dakika)
-                - Her sahne 15-25 saniye sürmeli (kısa ve dinamik)
-                - Her sahne seslendirmesi 50-100 kelime — TTS ile seslendirilecek
-                - Uzun, akıcı, duygusal cümleler yaz. Kısa kuru cümleler YAZMA
-                - GÖRSEL açıklamaları ÇOK DETAYLI yaz — AI image prompt olarak kullanılacak
-                - Her sahne FARKLI bir görsel olmalı — tekrar YASAK
-                - Görseller hikâyeyi anlatmalı: sessiz film gibi izlense anlaşılmalı
-                - Sahneler arası akıcı geçiş sağla
-                - Şarkı sözleri YAZMA
-                - Mekan, ışık, renk paleti, atmosfer her sahnede değişmeli
+                2. BU BİR FİLM. Sessiz izleyen biri bile görsellerden hikâyeyi anlayabilmeli.
+                   Her sahne hikâyenin bir ANINI gösterir — karakter portresi DEĞİL.
+
+                3. YASAK GÖRSELLER:
+                   - İki kişi yan yana durup kameraya bakan portre ❌
+                   - Genel "güzel manzara" görseli ❌
+                   - Aynı sahnenin tekrarı ❌
+
+                4. ZORUNLU GÖRSELLER:
+                   - Her sahne bir AKSİYON/AN gösterir: yürüme, saz çalma, ağlama, veda...
+                   - Kamera açıları DEĞİŞKEN: close-up, wide, silüet, kuş bakışı...
+                   - Yan karakterler (baba, arkadaş, ağa) kendi sahnelerinde görülmeli
+
+                5. SESLENDIRME: Senaryo beat'lerindeki hikâyeyi sahnelere dağıt.
+                   Her sahne 40-80 kelime. HİKÂYENİN O ANINI anlat, genel bilgi DEĞİL.
 
                 FORMAT (her sahne için):
                 ### Sahne [numara]
-                **Süre:** [saniye cinsinden — toplam 600sn olmalı]
-                **Seslendirme:** [SESLENDİRME METNİ — 50-100 kelime.
-                Senaryodaki hikâyenin bu anını anlat. Edebî, sinematik, duygusal.
-                TTS ile seslendirilecek — doğal akıcı cümleler kullan.
-                Genel bilgi verme, hikâyedeki olayları ve duyguları anlat.]
-                **Görsel:** [ÇOK DETAYLI görsel açıklama — AI image prompt olarak kullanılacak.
-                Renk paleti, ışık yönü, kompozisyon, atmosfer, mevsim, günün saati,
-                karakter pozisyonları, mekan detayları, arka plan elemanları.
-                Bu açıklama ile üretilen görsel SAHNEDEN bir kare gibi olmalı.]
-                **Mood:** [Duygusal atmosfer — açıklayıcı]
-                **Kamera:** [Kamera açısı/hareketi — close-up, wide, aerial vs.]
+                **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
+                **Seslendirme:** [TTS ile seslendirilecek — 40-80 kelime.
+                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
+                **Görsel:** [DETAYLI sinematik görsel — AI image prompt olacak.
+                Kim var + ne yapıyor + nerede + ışık/hava + kamera açısı + duygu.
+                Minimum 2-3 cümle.]
+                **Mood:** [Duygusal atmosfer]
+                **Kamera:** [Kamera açısı — her sahnede DEĞİŞTİR]
                 **Geçiş:** [Sonraki sahneye geçiş efekti]
-                **Müzik:** [Müzik atmosferi ve enstrüman]
+                **Müzik:** [Müzik atmosferi]
                 """;
 
             case "PLANNING_BUNDLE" -> """
@@ -676,48 +701,70 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 **Müzik:** [Kapanış melodisi]
 
                 ═══════════════════════════════════════════
-                # BÖLÜM 3: STORYBOARD (25-30 Sahne)
+                # BÖLÜM 3: STORYBOARD (TAM 35 SAHNE — EKSİK BIRAKMA)
                 ═══════════════════════════════════════════
 
-                ÇOK ÖNEMLİ — STORYBOARD OLUŞTURURKEN ŞU KURALLARA UYULMALI:
+                *** KRİTİK KURALLAR — UYULMASI ZORUNLU ***
 
-                1. SESLENDIRME METINLERİ: Yukarıdaki senaryodaki her beat'in
-                   "Seslendirme" metnini sahne bazında PARÇALARA BÖL ve AYNİ İÇERİĞİ KULLAN.
-                   Kendi genel bilgi metni YAZMA. Senaryo beat'lerindeki hikâye anlatımını
-                   sahnelere dağıt. Her sahnenin seslendirmesi, senaryodaki hikâyenin
-                   o bölümünü anlatan, duygusal, edebî bir metin olmalı.
+                1. TAM 35 SAHNE YAZILACAK. 10 veya 15 sahne yazıp bırakmak YASAKTIR.
+                   Sahne 1'den Sahne 35'e kadar HEPSINI yaz.
 
-                2. HİKÂYE ANLATIMI: Bu storyboard bir FİLM gibi. Senaryo beat'lerindeki
-                   hikâyeyi (tanışma, aşkın doğuşu, engeller, veda, miras) sahne sahne anlat.
-                   Genel tarihî bilgiler verme, HİKÂYEYİ ANLAT.
+                2. BU BİR FİLM. Sessiz izleyen biri bile görsellerden hikâyeyi anlayabilmeli.
+                   Her sahne hikâyenin bir ANINI gösterir — karakter portresi DEĞİL.
 
-                3. BÖLÜM 1'deki hikâye araştırmasının detaylı olay örgüsünü (prologue,
-                   tanışma, kader anı, umut, engeller, duygusal doruk, miras)
-                   kronolojik sırayla sahnelere yay.
+                3. YASAK GÖRSELLER:
+                   - İki kişi yan yana durup kameraya bakan portre ❌
+                   - Genel "güzel manzara" görseli ❌
+                   - Aynı sahnenin tekrarı ❌
+                   - Karaktersiz boş mekan ❌
 
-                4. Her sahne seslendirmesi 50-100 kelime — ama BU KELİMELER HİKÂYENİN
-                   o anını anlatmalı: "Sümmani Mihriban'ı gördüğü an..." gibi,
-                   "Türkü, Erzurum'un önemli bir parçasıdır" gibi genel bilgi DEĞİL.
+                4. ZORUNLU GÖRSELLER:
+                   - Her sahne bir AKSİYON/AN gösterir: yürüme, saz çalma, ağlama,
+                     mektup yazma, at sürme, hasret, kavuşma, veda...
+                   - Kamera açıları DEĞİŞKEN: close-up yüz, wide manzara, arkadan silüet,
+                     kuş bakışı köy, omuz üstü, alt açı, yan profil...
+                   - Her sahnede FARKLI mekan veya FARKLI an
+                   - Yan karakterler (baba, arkadaş, ağa) kendi sahnelerinde görülmeli
 
-                Her sahne için AYRINTILI bilgi ver. Bu sahneler videonun iskeletidir.
-                Sessiz izlense bile görsellerden hikâye anlaşılmalı.
-                Her sahne FARKLI bir görsel olacak — tekrar YASAK.
+                5. GÖRSEL PROMPT ÖRNEKLERİ (bu tarzda yaz):
+                   ✅ "Genç adam tek başına karda yürüyor, sırtında sazı, karşıda sisli dağlar,
+                      akşam güneşi alçak, uzun gölgesi karın üzerinde, yalnızlık hissi"
+                   ✅ "Genç kadın pencerenin önünde oturuyor, elinde yarım örme, dışarıda yağmur,
+                      yüzünde hüzünlü tebessüm, iç mekanda sıcak lamba ışığı"
+                   ✅ "Baba kızına sert bakıyor, avluda, arka planda at arabasına eşya yükleniyor,
+                      dramatik bulutlu gökyüzü, geniş açı"
+                   ❌ "Güzel bir erkek ve kadın yan yana duruyor" ← BU YASAK
+
+                6. HİKÂYE KRONOLOJİSİ:
+                   Sahne 1-3: Mekan tanıtımı, dönem, köy atmosferi
+                   Sahne 4-8: Ana karakterin tanıtımı, günlük yaşam
+                   Sahne 9-14: Tanışma, ilk bakış, aşkın doğuşu
+                   Sahne 15-20: Mutlu anlar, gizli buluşmalar
+                   Sahne 21-26: Engeller, baba/ağa karşı çıkma, acı
+                   Sahne 27-30: Ayrılık, göç, veda
+                   Sahne 31-33: Hasret, yalnızlık, türkünün doğuşu
+                   Sahne 34-35: Miras, türkünün günümüze ulaşması
+
+                7. SESLENDİRME: Senaryodaki beat'lerin hikâye anlatımını sahnelere dağıt.
+                   Her sahne 40-80 kelime seslendirme. Genel tarihî bilgi DEĞİL,
+                   hikâyenin o anını anlat: "O akşam sazını eline aldığında..."
 
                 ### Sahne [N]
-                **Süre:** [saniye cinsinden — toplam 600sn = 10dk olmalı. Her sahne 15-25sn]
-                **Seslendirme:** [SESLENDİRME METNİ — 50-100 kelime.
-                TTS ile seslendirilecek. Senaryodaki hikâyenin bu anını anlat.
-                Edebî, sinematik, duygusal belgesel anlatımı. Genel bilgi YAZMA.
-                Olayları, duyguları, anları anlat: "O gece sazını eline aldı..."
-                "Mihriban'ın gözlerinden süzülen yaşlar..." gibi.]
-                **Görsel:** [ÇOK DETAYLI görsel açıklama — AI image prompt olarak kullanılacak.
-                Renk paleti, ışık yönü, kompozisyon, atmosfer, mevsim, günün saati,
-                mekan detayları, karakter duruşları. HER SAHNE FARKLI GÖRSEL OLMALI.
-                Sessiz film gibi: bu görsel tek başına sahneyi anlatabilmeli.]
-                **Mood:** [Duygusal atmosfer — açıklayıcı]
-                **Kamera:** [Kamera açısı ve hareketi — close-up, wide, aerial vs.]
+                **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
+                **Seslendirme:** [TTS ile seslendirilecek metin — 40-80 kelime.
+                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
+                **Görsel:** [DETAYLI sinematik görsel açıklama — bu metin direkt AI image
+                prompt'u olacak. Şunları MUTLAKA belirt:
+                - Kim var? (karakter adı + ne yapıyor)
+                - Nerede? (mekan detayı)
+                - Nasıl? (ışık, hava, mevsim, günün saati)
+                - Kamera? (close-up, wide, silüet, arkadan vs.)
+                - Duygu? (hüzün, sevinç, öfke, hasret)
+                Minimum 2-3 cümle görsel açıklama.]
+                **Mood:** [Duygusal atmosfer]
+                **Kamera:** [Kamera açısı — her sahnede DEĞİŞTİR]
                 **Geçiş:** [Sonraki sahneye geçiş efekti]
-                **Müzik:** [Müzik atmosferi ve enstrüman]
+                **Müzik:** [Müzik atmosferi]
                 """;
 
             default -> "Sen bir içerik uzmanısın. Verilen konu hakkında Türkçe detaylı bilgi üret.";
@@ -771,6 +818,10 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
     // ── OpenAI HTTP Call ─────────────────────────────────────
 
     private String callOpenAi(String systemPrompt, String userPrompt, UUID projectId) {
+        return callOpenAi(systemPrompt, userPrompt, projectId, "UNKNOWN");
+    }
+
+    private String callOpenAi(String systemPrompt, String userPrompt, UUID projectId, String stage) {
         ChatCompletionRequest requestBody = ChatCompletionRequest.builder()
                 .model(config.getModel())
                 .messages(List.of(
@@ -780,6 +831,10 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 .temperature(config.getTemperature())
                 .maxOutputTokens(config.getMaxOutputTokens())
                 .build();
+
+        log.info("🤖 OpenAI çağrısı başlatılıyor: stage={}, model={}, maxTokens={}, systemPromptLen={}, userPromptLen={}",
+                stage, config.getModel(), config.getMaxOutputTokens(),
+                systemPrompt.length(), userPrompt.length());
 
         try {
             ChatCompletionResponse response = restClient.post()
@@ -798,17 +853,41 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 throw new RuntimeException("OpenAI yanıtında content boş");
             }
 
+            // ── TOKEN KULLANIM TAKİBİ (Bütçe hesaplaması için) ──
+            if (response.getUsage() != null) {
+                var usage = response.getUsage();
+                log.info("💰 TOKEN KULLANIMI [{}] | model={} | prompt={} | completion={} | total={} | projectId={}",
+                        stage, config.getModel(),
+                        usage.getPromptTokens(), usage.getCompletionTokens(),
+                        usage.getTotalTokens(), projectId);
+            }
+
             // Content filter kontrolü
             if ("content_filter".equals(choice.getFinishReason())) {
                 throw new RuntimeException("OpenAI content filter — içerik reddedildi");
             }
 
-            return choice.getMessage().getContent();
+            // Token limiti kontrolü — "length" = yanıt kesildi!
+            if ("length".equals(choice.getFinishReason())) {
+                log.warn("⚠️ [{}] OpenAI yanıtı TOKEN LİMİTİ nedeniyle KESİLDİ! " +
+                        "maxOutputTokens={}, completionTokens={}, kesilen metin: {} karakter",
+                        stage, config.getMaxOutputTokens(),
+                        response.getUsage() != null ? response.getUsage().getCompletionTokens() : "?",
+                        choice.getMessage().getContent().length());
+            }
+
+            String content = choice.getMessage().getContent();
+            log.info("✅ [{}] OpenAI yanıt alındı: finishReason={}, contentLen={} karakter",
+                    stage, choice.getFinishReason(), content.length());
+
+            return content;
 
         } catch (RestClientResponseException e) {
             int status = e.getStatusCode().value();
+            log.error("❌ [{}] OpenAI HTTP {} hatası: {}", stage, status, e.getResponseBodyAsString());
             throw new RuntimeException("OpenAI HTTP " + status + " hatası");
         } catch (ResourceAccessException e) {
+            log.error("❌ [{}] OpenAI bağlantı/timeout hatası: {}", stage, e.getMessage());
             throw new RuntimeException("OpenAI bağlantı/timeout hatası: " + e.getMessage());
         }
     }

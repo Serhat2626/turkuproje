@@ -30,8 +30,8 @@ ai:
   openai:
     api-key: ${OPENAI_API_KEY:}
     model: ${OPENAI_MODEL:gpt-4o}
-    timeout-seconds: 120
-    max-output-tokens: 4000
+    timeout-seconds: 180
+    # max-output-tokens: Kısıtlanmıyor (Java default: 32000). Bütçe takibi loglardan yapılır.
     temperature: 0.7
   elevenlabs:
     api-key: ${ELEVENLABS_API_KEY:}

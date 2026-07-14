@@ -1,5 +1,6 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.ArrayList;
@@ -16,6 +17,7 @@ import java.util.UUID;
  *
  * <p>Does NOT replace FP-019 prepare-* paths. generate-* is additive.</p>
  */
+@Slf4j
 @Service
 public class TurkuProviderDraftPlanningService {
 
@@ -505,26 +507,44 @@ public class TurkuProviderDraftPlanningService {
             sections = text.split("(?m)^\\*{0,2}\\s*Beat\\s+\\d+");
         }
 
-        for (int i = 1; i < sections.length && i <= 35; i++) {
+        for (int i = 1; i < sections.length && i <= 40; i++) {
             String section = sections[i];
 
             String title = extractField(section, "^[:\\s]*([^\\n]+)");
-            String narration = extractField(section, "\\*{0,2}Seslendirme:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+
+            // Çok satırlı alanlar — Görsel ve Seslendirme birden fazla satıra yayılabilir
+            String narration = extractMultiLineField(section, "Seslendirme");
             if (narration == null) {
-                narration = extractField(section, "\\*{0,2}Narration:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+                narration = extractMultiLineField(section, "Narration");
             }
-            String visual = extractField(section, "\\*{0,2}Görsel:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String visual = extractMultiLineField(section, "Görsel");
+            if (visual == null) {
+                visual = extractMultiLineField(section, "Visual");
+            }
+
+            // Tek satırlık alanlar
             String music = extractField(section, "\\*{0,2}Müzik:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
-            String mood = extractField(section, "\\*{0,2}Duygu:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String mood = extractField(section, "\\*{0,2}(?:Mood|Duygu):?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String camera = extractField(section, "\\*{0,2}Kamera:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String transition = extractField(section, "\\*{0,2}Geçiş:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
             String duration = extractField(section, "\\*{0,2}Süre:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
 
-            // Süreyi saniyeye çevir (ör: "0:00 - 0:30" → 30)
-            int durationSec = parseDurationToSeconds(duration, 30);
+            // Süreyi saniyeye çevir (ör: "0:00 - 0:30" → 30 veya "15 saniye" → 15)
+            int durationSec = parseDurationToSeconds(duration, 17); // 35 sahne × 17sn ≈ 600sn
 
             // Narration: tırnakları temizle
             if (narration != null) {
                 narration = narration.replaceAll("^\"|\"$", "").trim();
             }
+
+            // Visual: boşsa narration'dan fallback
+            if ((visual == null || visual.isBlank()) && narration != null) {
+                visual = "Sahne anlatımı: " + narration;
+            }
+
+            log.debug("Sahne {} parse: visualLen={}, narrationLen={}", i,
+                    visual != null ? visual.length() : 0,
+                    narration != null ? narration.length() : 0);
 
             scenes.add(new TurkuStoryboardScene(
                     i,
@@ -533,8 +553,8 @@ public class TurkuProviderDraftPlanningService {
                     narration != null ? narration : "Anlatım metni",
                     mood != null ? mood : (project.getMood() != null ? project.getMood() : "Hüzünlü"),
                     durationSec,
-                    "Orta plan",
-                    i == 1 ? "Fade in" : "Çapraz geçiş",
+                    camera != null ? camera : "Orta plan",
+                    transition != null ? transition : (i == 1 ? "Fade in" : "Çapraz geçiş"),
                     music != null ? music : "Bağlama ve keman"
             ));
         }
@@ -558,6 +578,52 @@ public class TurkuProviderDraftPlanningService {
         return matcher.find() ? matcher.group(1).trim() : null;
     }
 
+    /**
+     * Çok satırlı alan çıkarma — GPT çıktısında "**Görsel:**" gibi alanlar
+     * birden fazla satıra yayılabilir. Bu metod alan başından sonraki "**" alanına
+     * kadar olan TÜM satırları yakalar.
+     *
+     * Örnek GPT çıktısı:
+     * **Görsel:** Genç adam tek başına karda yürüyor, sırtında sazı,
+     * karşıda sisli dağlar, akşam güneşi alçak.
+     * **Mood:** Hüzünlü
+     *
+     * → "Genç adam tek başına karda yürüyor, sırtında sazı, karşıda sisli dağlar, akşam güneşi alçak."
+     */
+    private String extractMultiLineField(String section, String fieldName) {
+        // Field başlangıcını bul: **Görsel:** veya **Görsel** veya Görsel:
+        String pattern = "\\*{0,2}" + fieldName + ":?\\*{0,2}\\s*";
+        var matcher = java.util.regex.Pattern.compile(pattern, java.util.regex.Pattern.MULTILINE)
+                .matcher(section);
+
+        if (!matcher.find()) return null;
+
+        int start = matcher.end();
+
+        // Sonraki bold field'ı bul: **Mood:** veya **Kamera:** vs.
+        var nextFieldMatcher = java.util.regex.Pattern.compile(
+                "(?m)^\\s*\\*{2}\\w", java.util.regex.Pattern.MULTILINE
+        ).matcher(section);
+
+        int end = section.length();
+        // start'tan sonraki ilk field başlangıcını bul
+        nextFieldMatcher.region(start, section.length());
+        if (nextFieldMatcher.find()) {
+            end = nextFieldMatcher.start();
+        }
+
+        String result = section.substring(start, end).trim();
+
+        // Boş satırları ve fazla boşlukları temizle, ama içeriği koru
+        result = result.replaceAll("\\n\\s*\\n", " ")  // çift satır → boşluk
+                       .replaceAll("\\n", " ")           // tek satır → boşluk
+                       .replaceAll("\\s{2,}", " ")       // çoklu boşluk → tek
+                       .replaceAll("^[\\[\\(]|[\\]\\)]$", "") // köşeli/yuvarlak parantez temizle
+                       .trim();
+
+        return result.isBlank() ? null : result;
+    }
+
     private int parseDurationToSeconds(String durationStr, int defaultSec) {
         if (durationStr == null || durationStr.isBlank()) return defaultSec;
         try {
@@ -568,6 +634,20 @@ public class TurkuProviderDraftPlanningService {
                 int startSec = Integer.parseInt(matcher.group(1)) * 60 + Integer.parseInt(matcher.group(2));
                 int endSec = Integer.parseInt(matcher.group(3)) * 60 + Integer.parseInt(matcher.group(4));
                 return Math.max(endSec - startSec, 10);
+            }
+
+            // "15 saniye" veya "15sn" veya "15 seconds" formatı
+            var secMatcher = java.util.regex.Pattern.compile("(\\d+)\\s*(?:saniye|sn|seconds?|sec)")
+                    .matcher(durationStr);
+            if (secMatcher.find()) {
+                return Math.max(Integer.parseInt(secMatcher.group(1)), 5);
+            }
+
+            // Düz sayı: "17"
+            var numMatcher = java.util.regex.Pattern.compile("^\\s*(\\d+)\\s*$")
+                    .matcher(durationStr);
+            if (numMatcher.find()) {
+                return Math.max(Integer.parseInt(numMatcher.group(1)), 5);
             }
         } catch (Exception e) {
             // ignore parse errors
