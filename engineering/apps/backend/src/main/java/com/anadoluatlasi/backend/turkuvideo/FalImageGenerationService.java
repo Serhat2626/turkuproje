@@ -190,64 +190,69 @@ public class FalImageGenerationService {
     /**
      * Sahne için sinematik, hikâye-tutarlı Flux Pro prompt'u hazırlar.
      *
-     * <p>Prompt stratejisi:
-     * 1. SABİT STİL PREFİX — tüm görsellerde aynı sinematik dil
-     * 2. HİKÂYE BAĞLAMI — AI, hikâyenin neresinde olduğunu bilir
-     * 3. KARAKTER TANIMI — aynı karakter her sahnede tutarlı
-     * 4. ÖNCEKİ SAHNE — görsel akış sağlar
-     * 5. SAHNE DETAYI — spesifik sahne açıklaması
-     * 6. MOOD/ATMOSFER — ışık ve renk yönlendirmesi</p>
+     * <p>TEMEL İLKELER:
+     * 1. GÖRSEL AÇIKLAMA HER ŞEYİN ÖNÜNDEDİR — Fal.ai promptun başını en çok dikkate alır
+     * 2. Türkçe metin GÖNDERME — Fal.ai İngilizce model, Türkçeyi anlamaz
+     * 3. Her sahne bir AKSİYON göstermeli — portre DEĞİL
+     * 4. Karakter tanımı sadece gerektiğinde ve KISA</p>
      */
     private String buildFluxPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
 
-        // 1. KARAKTER TANIMI — EN BAŞA (prompt'un başı en ağırlıklı)
+        // ═══ 1. ANA GÖRSEL AÇIKLAMA (EN ÖNEMLİ — prompt'un başı) ═══
+        String visual = request.getSafePromptSummary();
+        if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
+            sb.append(visual).append(". ");
+        }
+
+        // ═══ 2. SİNEMATİK STİL ═══
+        sb.append("Photorealistic cinematic film still, 35mm film grain, shallow depth of field. ");
+        sb.append("Natural golden hour lighting, warm earth tones. ");
+
+        // ═══ 3. KAMERA AÇISI (sahne numarasına göre değişken) ═══
+        int sceneNo = request.getSceneNo();
+        String cameraAngle = switch (sceneNo % 7) {
+            case 0 -> "Extreme wide establishing shot, vast Anatolian landscape";
+            case 1 -> "Medium close-up, face partially visible, emotional expression";
+            case 2 -> "Over-the-shoulder shot, looking at something in the distance";
+            case 3 -> "Low angle dramatic shot, silhouette against sky";
+            case 4 -> "Bird's eye view, figure small in vast landscape";
+            case 5 -> "Dutch angle, dynamic tension, movement blur";
+            default -> "Wide shot, full body in environment, environmental storytelling";
+        };
+        sb.append(cameraAngle).append(". ");
+
+        // ═══ 4. KARAKTER (sadece görsel açıklamada karakter geçiyorsa) ═══
         if (request.getCharacterDescription() != null && !request.getCharacterDescription().isBlank()) {
-            sb.append(request.getCharacterDescription()).append(" ");
+            // Karakter tanımını kısalt — sadece fiziksel özellikler (max 300 char)
+            String charDesc = request.getCharacterDescription();
+            if (charDesc.length() > 300) charDesc = charDesc.substring(0, 300);
+            sb.append(charDesc).append(". ");
         }
 
-        // 2. SABİT STİL — sinematik dil (Ottoman kelimesinden kaçın → yaşlı adam tetikliyor)
-        sb.append("Photorealistic cinematic film still, 35mm film look, historical Anatolian drama. ");
-        sb.append("Natural lighting, rich earth tones, warm color palette. ");
-        sb.append("Rural Anatolian village setting, 19th century period-accurate. ");
-
-        // 3. HİKÂYENİN BU ANI — ne oluyor bu sahnede?
-        if (request.getNarrationText() != null && !request.getNarrationText().isBlank()) {
-            String narration = request.getNarrationText();
-            if (narration.length() > 250) narration = narration.substring(0, 250);
-            sb.append("DEPICTING THIS STORY MOMENT: ").append(narration).append(". ");
-        }
-
-        // 4. SAHNE BAŞLIĞI
-        if (request.getSceneTitle() != null && !request.getSceneTitle().isBlank()) {
-            sb.append("Scene: ").append(request.getSceneTitle()).append(". ");
-        }
-
-        // 5. SAHNE POZİSYONU
-        sb.append(String.format("(Scene %d of %d) ",
-                request.getSceneNo(), request.getTotalScenes() > 0 ? request.getTotalScenes() : 25));
-
-        // 6. BU SAHNENİN GÖRSEL DETAYI — storyboard'daki visual description
-        sb.append("VISUAL: ").append(request.getSafePromptSummary()).append(". ");
-
-        // 7. ÖNCEKİ SAHNE — görsel süreklilik
-        if (request.getPreviousSceneVisual() != null && !request.getPreviousSceneVisual().isBlank()) {
-            String prevVisual = request.getPreviousSceneVisual();
-            if (prevVisual.length() > 120) prevVisual = prevVisual.substring(0, 120);
-            sb.append("Continues from: ").append(prevVisual).append(". ");
-        }
-
-        // 8. MOOD
+        // ═══ 5. MOOD/ATMOSFER ═══
         if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
-            sb.append("Mood: ").append(request.getSceneMood()).append(". ");
+            sb.append("Emotional atmosphere: ").append(request.getSceneMood()).append(". ");
         }
 
-        // 9. KALİTE + GÜÇLÜ YASAKLAR
-        sb.append("Ultra detailed, cinematic composition, emotional depth, film photography. ");
-        sb.append("ABSOLUTELY NO: old people, elderly, gray hair, white beard, long beard, turban, sarık, ");
-        sb.append("Arabic clothing, medieval armor, weapons, text, watermark, logo, modern elements, anime, cartoon.");
+        // ═══ 6. ÖNCEKİ SAHNE BAĞLANTISI (görsel süreklilik) ═══
+        if (request.getPreviousSceneVisual() != null && !request.getPreviousSceneVisual().isBlank()) {
+            String prev = request.getPreviousSceneVisual();
+            if (prev.length() > 100) prev = prev.substring(0, 100);
+            sb.append("Visual continuity from previous: ").append(prev).append(". ");
+        }
 
-        return sb.toString();
+        // ═══ 7. GÜÇLÜ YASAKLAR ═══
+        sb.append("ABSOLUTELY FORBIDDEN: looking directly at camera, static portrait pose, ");
+        sb.append("two people standing side by side facing camera, symmetrical composition, ");
+        sb.append("old elderly person, gray hair, white beard, turban, ");
+        sb.append("Arabic clothing, text, watermark, logo, modern elements, anime, cartoon. ");
+        sb.append("Characters must be engaged in ACTION, never posing.");
+
+        String prompt = sb.toString();
+        log.debug("Fal.ai prompt sahne {}: {}", sceneNo,
+                prompt.length() > 200 ? prompt.substring(0, 200) + "..." : prompt);
+        return prompt;
     }
 
     private String uploadToMinio(UUID projectId, int sceneNo, byte[] imageBytes) {

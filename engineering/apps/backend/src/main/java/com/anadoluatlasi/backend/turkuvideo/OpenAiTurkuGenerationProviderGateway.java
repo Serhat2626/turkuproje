@@ -444,36 +444,40 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 Gerçek bilgi / halk rivayeti / kurgu ayrımı net belirtilmeli.]
 
                 ═══════════════════════════════════════════
-                # KARAKTER ÇİZELGESİ
+                # KARAKTER ÇİZELGESİ (⚠️ İNGİLİZCE YAZ!)
                 ═══════════════════════════════════════════
 
-                HİKÂYEDEKİ TÜM KARAKTERLERİ FİZİKSEL OLARAK TANIMLA.
-                Bu tanımlar AI görsel üretim için kullanılacak — DETAYLI ol.
+                ⚠️ Bu bölüm AI görsel üretim prompt'u olarak kullanılacak.
+                Fal.ai modeli Türkçe ANLAMIYOR. Tüm fiziksel tanımları İNGİLİZCE yaz.
+                Sadece isimler Türkçe kalabilir.
 
-                ### Ana Erkek Karakter
-                **İsim:** [hikâyedeki gerçek isim]
-                **Yaş:** [hikâyeye uygun yaş aralığı]
-                **Fiziksel:** [saç rengi/tipi, ten rengi, yüz hatları, boy/kilo tahmini,
-                sakal durumu — DETAYLI ve SPESİFİK. "yakışıklı" gibi genel tanım YAZMA.
-                "Koyu kahverengi dalgalı saçlar, buğday tenli, keskin burun, hafif kaşları çatık,
-                ince bıyıklı, atletik yapılı" gibi yaz.]
-                **Kıyafet:** [döneme uygun — yelek, şalvar, kuşak, çarık vs. DETAYLI]
-                **Karakteristik:** [saz taşır, yüzük, tespih vs.]
+                ### Main Male Character
+                **Name:** [hikâyedeki gerçek isim]
+                **Age:** [age range fitting the story]
+                **Physical:** [DETAILED — hair color/type, skin tone, facial features,
+                build, facial hair. Example: "Dark wavy hair, wheat-colored skin,
+                sharp nose, slightly furrowed brows, thin mustache, athletic build"]
+                **Clothing:** [period-accurate Anatolian — vest, şalvar, sash, çarık.
+                Example: "Dark brown wool vest over white linen shirt, loose gray
+                şalvar pants, leather belt with small pouch, worn leather çarık boots"]
+                **Distinctive:** [saz on back, ring, prayer beads, scar, etc.]
 
-                ### Ana Kadın Karakter
-                **İsim:** [hikâyedeki gerçek isim]
-                **Yaş:** [hikâyeye uygun]
-                **Fiziksel:** [DETAYLI fiziksel tanım — saç, ten, göz, yüz hatları]
-                **Kıyafet:** [döneme uygun — entari, yemeni, takılar vs.]
-                **Karakteristik:** [belirleyici obje/aksesuar]
+                ### Main Female Character
+                **Name:** [hikâyedeki gerçek isim]
+                **Age:** [age range]
+                **Physical:** [DETAILED English description — hair, skin, eyes, face]
+                **Clothing:** [period-accurate — entari, yemeni, jewelry.
+                Example: "Burgundy embroidered entari dress, white yemeni headscarf
+                loosely draped, silver coin necklace, henna on hands"]
+                **Distinctive:** [defining object/accessory]
 
-                ### Yan Karakterler (en az 2-3 tane)
-                Her yan karakter için:
-                **İsim/Rol:** [ör: Kızın babası, köy ağası, ana karakterin dostu]
-                **Yaş:** [tahmini]
-                **Fiziksel:** [kısa ama net tanım]
-                **Kıyafet:** [döneme/statüsüne uygun]
-                **Hikâyedeki rolü:** [neden önemli]
+                ### Supporting Characters (minimum 2-3)
+                For each:
+                **Name/Role:** [e.g. Father, village ağa, best friend]
+                **Age:** [estimated]
+                **Physical:** [short but clear ENGLISH description]
+                **Clothing:** [period and status appropriate]
+                **Story role:** [why this character matters]
                 """;
 
             case "SCENARIO" -> """
@@ -527,11 +531,16 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 FORMAT (her sahne için):
                 ### Sahne [numara]
                 **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
-                **Seslendirme:** [TTS ile seslendirilecek — 40-80 kelime.
+                **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek — 40-80 kelime.
                 Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
-                **Görsel:** [DETAYLI sinematik görsel — AI image prompt olacak.
-                Kim var + ne yapıyor + nerede + ışık/hava + kamera açısı + duygu.
-                Minimum 2-3 cümle.]
+                **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin AI image prompt olacak.
+                Fal.ai modeli Türkçe ANLAMIYOR. İngilizce yaz!
+                Format: "[Character] is [doing action] in [location].
+                [Lighting/weather]. [Camera angle]. [Emotion]."
+                Örnek: "Young man sitting at wooden table writing a letter by
+                candlelight, old papers scattered around, deep thought on face,
+                warm interior glow, close-up shot"
+                ASLA iki kişi yan yana kameraya bakıyor YAZMA.]
                 **Mood:** [Duygusal atmosfer]
                 **Kamera:** [Kamera açısı — her sahnede DEĞİŞTİR]
                 **Geçiş:** [Sonraki sahneye geçiş efekti]
@@ -609,62 +618,68 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 hasret gecelerinde nasıl yankılanıyor?]
 
                 ═══════════════════════════════════════════
-                # BÖLÜM 1.5: KARAKTER ÇİZELGESİ
+                # BÖLÜM 1.5: KARAKTER ÇİZELGESİ (⚠️ İNGİLİZCE YAZ!)
                 ═══════════════════════════════════════════
 
-                HİKÂYEDEKİ BÜTÜN karakterler için FİZİKSEL TANIM yaz.
-                Bu tanımlar AI görsel üretiminde kullanılacak — TÜM sahnelerde
-                AYNI karakter çizilmesi için şart.
+                ⚠️ KRİTİK: Bu bölüm AI görsel üretim prompt'u olarak DOĞRUDAN kullanılacak.
+                Fal.ai modeli Türkçe ANLAMIYOR. Fiziksel tanımları İNGİLİZCE yaz.
+                Sadece isimler Türkçe kalabilir.
 
-                ÖNEMLİ: Sadece 2 karakter değil, FILM TADında bir kadro oluştur!
-                Hikâyeye göre yan karakterler de ekle (baba, anne, dost, rakip,
-                köy muhtarı, çoban, komşu vb.)
+                Film kadrosu oluştur — sadece 2 kişi değil, yan karakterler de!
+                Yaş, dönem ve bölgeye uygun giyim. 19. yy Anadolu köylüsünde
+                sarık/türban YOKTUR.
 
-                Yaş bilgisi KRİTİK — genç aşk hikâyesiyse genç insanlar çiz,
-                yaşlı bilge hikâyesiyse yaşlı. Dönemine ve bölgesine uygun giysi.
-                19. yy Anadolu köylüsünde sarık/türban YOKTUR.
+                ## Characters
 
-                ## Karakterler
+                ### Main Male Character
+                **Name:** [hikâyedeki gerçek isim]
+                **Age:** [exact number — young love story = 20-25]
+                **Physical:** [DETAILED: face shape, hair color/length/style,
+                beard status (young = clean-shaven or light stubble), eye color,
+                height, build. Example: "Dark wavy hair reaching collar, wheat-colored
+                skin, strong jawline, light stubble, deep brown eyes, athletic build"]
+                **Clothing:** [period-accurate with COLORS: "Dark brown wool vest over
+                cream linen shirt, charcoal şalvar, red woven sash at waist,
+                worn leather çarık boots"]
+                **Distinctive:** [always carries saz on back, silver ring, etc.]
+                **Expression:** [emotional, determined, melancholic, etc.]
 
-                ### Ana Erkek Karakter
-                **İsim:** [karakterin adı]
-                **Yaş:** [tam sayı — hikâyeye uygun, genç aşk hikâyesiyse 20-25]
-                **Fiziksel:** [yüz yapısı, saç rengi/uzunluğu/şekli, sakal durumu (genç ise tıraşlı veya hafif sakal), göz rengi, boy, beden yapısı]
-                **Kıyafet:** [dönemine ve bölgesine uygun DETAYLI kıyafet — renkleri, kumaş türlerini yaz. Gömlek rengi, yelek rengi, şalvar, kuşak, ayakkabı]
-                **Ayırt Edici:** [her zaman yanında taşıdığı nesne — saz, asa, at vs.]
-                **İfade:** [genel duygusal ifadesi — duygusal, kararlı, melankolik vs.]
+                ### Main Female Character
+                **Name:** [hikâyedeki gerçek isim]
+                **Age:** [exact number]
+                **Physical:** [DETAILED: face, long dark braided hair, eye color, etc.
+                Example: "Long dark braided hair past waist, olive skin, almond-shaped
+                green eyes, delicate face, slender build"]
+                **Clothing:** [DETAILED with colors: "Deep burgundy embroidered entari,
+                cream yemeni headscarf loosely draped, silver coin necklace,
+                thin gold bangles, henna on hands"]
+                **Expression:** [hopeful, longing, gentle, etc.]
 
-                ### Ana Kadın Karakter
-                **İsim:** [karakterin adı]
-                **Yaş:** [tam sayı — hikâyeye uygun]
-                **Fiziksel:** [yüz yapısı, saç rengi/uzunluğu, göz rengi, boy, beden yapısı]
-                **Kıyafet:** [DETAYLI — entari rengi/deseni, şalvar, yelek, başörtüsü/yemeni rengi, takılar (bilezik, küpe, kolye)]
-                **İfade:** [genel duygusal ifadesi]
+                ### Supporting Character 1 (e.g. father, ağa, elder)
+                **Name/Role:** [name and role]
+                **Age:** [number]
+                **Physical:** [short English description]
+                **Clothing:** [short English description]
 
-                ### Yan Karakter 1 (örn: baba, ağa, büyük)
-                **İsim:** [isim ve rolü]
-                **Yaş:** [tam sayı]
-                **Fiziksel:** [kısa fiziksel tanım]
-                **Kıyafet:** [kısa kıyafet tanımı]
+                ### Supporting Character 2 (e.g. friend, mother, rival)
+                **Name/Role:** [name and role]
+                **Age:** [number]
+                **Physical:** [short English description]
+                **Clothing:** [short English description]
 
-                ### Yan Karakter 2 (örn: arkadaş, anne, rakip)
-                **İsim:** [isim ve rolü]
-                **Yaş:** [tam sayı]
-                **Fiziksel:** [kısa fiziksel tanım]
-                **Kıyafet:** [kısa kıyafet tanımı]
+                ### Supporting Character 3 (optional — if story requires)
+                **Name/Role:** [name and role]
+                **Age:** [number]
+                **Physical:** [short English description]
+                **Clothing:** [short English description]
 
-                ### Yan Karakter 3 (opsiyonel — hikâye gerektiriyorsa)
-                **İsim:** [isim ve rolü]
-                **Yaş:** [tam sayı]
-                **Fiziksel:** [kısa fiziksel tanım]
-                **Kıyafet:** [kısa kıyafet tanımı]
-
-                ### Mekan ve Dönem
-                **Dönem:** [hangi yüzyıl, hangi çağ]
-                **Bölge:** [hangi şehir/bölge]
-                **Mekan Detayları:** [köy mü, kasaba mı, evler nasıl (taş ev, ahşap, kerpiç), doğa nasıl (dağ, ova, nehir)]
-                **Mevsim:** [hikâyenin geçtiği mevsim(ler)]
-                **Renk Paleti:** [görsellerde kullanılacak baskın renkler]
+                ### Setting and Period
+                **Era:** [which century, which age]
+                **Region:** [which city/region]
+                **Location Details:** [village/town, house types (stone/wood/mudbrick),
+                nature (mountain, plain, river)]
+                **Season:** [season(s) in the story]
+                **Color Palette:** [dominant colors for visuals]
 
                 ═══════════════════════════════════════════
                 # BÖLÜM 2: SENARYO (6-Beat, 10 Dakika)
@@ -751,16 +766,16 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
                 ### Sahne [N]
                 **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
-                **Seslendirme:** [TTS ile seslendirilecek metin — 40-80 kelime.
+                **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek metin — 40-80 kelime.
                 Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
-                **Görsel:** [DETAYLI sinematik görsel açıklama — bu metin direkt AI image
-                prompt'u olacak. Şunları MUTLAKA belirt:
-                - Kim var? (karakter adı + ne yapıyor)
-                - Nerede? (mekan detayı)
-                - Nasıl? (ışık, hava, mevsim, günün saati)
-                - Kamera? (close-up, wide, silüet, arkadan vs.)
-                - Duygu? (hüzün, sevinç, öfke, hasret)
-                Minimum 2-3 cümle görsel açıklama.]
+                **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin direkt AI image prompt olacak,
+                Fal.ai modeli Türkçe anlamıyor!
+                Şu formatı kullan: "[Karakter] is [doing action] in [location].
+                [Lighting/weather]. [Camera angle]. [Emotional detail]."
+                Örnek: "Young man walking alone through snowy mountain path,
+                carrying a saz on his back, long shadows on snow,
+                low winter sun, wide establishing shot, deep loneliness"
+                ASLA iki kişi yan yana portre YAZMA. Her sahne bir AN/AKSİYON göstermeli.]
                 **Mood:** [Duygusal atmosfer]
                 **Kamera:** [Kamera açısı — her sahnede DEĞİŞTİR]
                 **Geçiş:** [Sonraki sahneye geçiş efekti]
