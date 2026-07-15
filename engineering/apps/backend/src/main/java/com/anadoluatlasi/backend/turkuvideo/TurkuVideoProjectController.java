@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import com.anadoluatlasi.backend.common.api.ApiResponse;
 import com.anadoluatlasi.backend.config.MinioConfig;
 import com.anadoluatlasi.backend.review.AdminActorBoundaryPolicy;
@@ -47,6 +50,8 @@ import java.util.UUID;
 @RequestMapping("/api/admin/turku-video-projects")
 @Tag(name = "Türkü Video Projects", description = "Türkü video proje yönetimi (dahili/admin)")
 public class TurkuVideoProjectController {
+
+    private static final Logger log = LoggerFactory.getLogger(TurkuVideoProjectController.class);
 
     private final TurkuVideoProjectBootstrapService bootstrapService;
     private final TurkuVideoPlanningService planningService;
@@ -840,7 +845,10 @@ public class TurkuVideoProjectController {
                             TurkuImageGenerationResult result = falImageService.generateImage(imgReq,
                                     TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
                             if (result.isSuccess()) imgSuccess++;
-                            else imgFail++;
+                            else {
+                                imgFail++;
+                                log.error("Görsel üretim hatası: sahne={}, errorCode={}", scene.getSceneNo(), result.getSafeErrorCode());
+                            }
                         } else if (providerDraftService.getGateway() instanceof OpenAiTurkuGenerationProviderGateway openAiGateway) {
                             openAiGateway.generateImage(imgReq,
                             TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
@@ -852,9 +860,23 @@ public class TurkuVideoProjectController {
                     } catch (Exception e) {
                         imgFail++;
                         previousVisual = scene.getVisualDescription();
+                        log.error("Görsel üretim exception: sahne={}, error={}", scene.getSceneNo(), e.getMessage(), e);
                     }
                 }
                 results.put("step2_images", imageProvider + ": ✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");
+
+                // ═══ FAIL-FAST: Görseller başarısız → sonraki adımlar anlamsız ═══
+                // Hiç yeni görsel üretilemedi VE mevcut de yoksa → pipeline'ı durdur
+                if (imgSuccess == 0 && imgSkipped == 0) {
+                    log.error("Pipeline durduruluyor: hiçbir görsel üretilemedi (35/35 hata). TTS ve FFmpeg atlanıyor.");
+                    results.put("step2_5_video", "⏭️ Görseller başarısız — atlandı");
+                    results.put("step3_tts", "⏭️ Görseller başarısız — atlandı");
+                    results.put("step4_video", "❌ Görseller olmadan video oluşturulamaz");
+                    results.put("success", false);
+                    results.put("hasErrors", true);
+                    results.put("failReason", "Görsel üretimi tamamen başarısız oldu. Fal.ai API key/bakiye kontrolü yapın.");
+                    return ResponseEntity.ok(ApiResponse.success(results));
+                }
             }
 
             // ADIM 2.5: Image-to-Video (Kling AI ile hareketlendirme)
