@@ -802,8 +802,8 @@ public class TurkuVideoProjectController {
             // Bu tanım TÜM sahnelerde aynı kalacak → karakter tutarlılığı
             characterDesc = buildCharacterDescription(project);
 
+            int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
             if (storyboard != null && storyboard.getScenes() != null) {
-                int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
                 int totalScenes = storyboard.getScenes().size();
                 String previousVisual = null;
 
@@ -864,23 +864,22 @@ public class TurkuVideoProjectController {
                     }
                 }
                 results.put("step2_images", imageProvider + ": ✅ " + imgSuccess + " yeni, ⏭️ " + imgSkipped + " mevcut, ❌ " + imgFail + " hata");
-
-                // ═══ FAIL-FAST: Görseller başarısız → sonraki adımlar anlamsız ═══
-                // Hiç yeni görsel üretilemedi VE mevcut de yoksa → pipeline'ı durdur
-                if (imgSuccess == 0 && imgSkipped == 0) {
-                    log.error("Pipeline durduruluyor: hiçbir görsel üretilemedi (35/35 hata). TTS ve FFmpeg atlanıyor.");
-                    results.put("step2_5_video", "⏭️ Görseller başarısız — atlandı");
-                    results.put("step3_tts", "⏭️ Görseller başarısız — atlandı");
-                    results.put("step4_video", "❌ Görseller olmadan video oluşturulamaz");
-                    results.put("success", false);
-                    results.put("hasErrors", true);
-                    results.put("failReason", "Görsel üretimi tamamen başarısız oldu. Fal.ai API key/bakiye kontrolü yapın.");
-                    return ResponseEntity.ok(ApiResponse.success(results));
-                }
             }
 
-            // ADIM 2.5: Image-to-Video (Kling AI ile hareketlendirme)
-            if (falVideoService != null && storyboard != null && storyboard.getScenes() != null) {
+            // ═══ BAĞIMLILIK GRAFİĞİ ═══
+            // Görseller → Kling Video (bağımlı) → FFmpeg (bağımlı)
+            // Storyboard → TTS (BAĞIMSIZ — görselden etkilenmez)
+            //
+            // imgSuccess + imgSkipped = kullanılabilir görsel sayısı
+            // Eğer 0 ise: Kling ve FFmpeg anlamsız, ama TTS çalışmalı
+            int availableImages = imgSuccess + imgSkipped;
+            boolean imagesAvailable = availableImages > 0;
+
+            // ADIM 2.5: Image-to-Video (Kling AI) — GÖRSELLERE BAĞIMLI
+            if (!imagesAvailable) {
+                log.warn("Kling AI atlanıyor: kullanılabilir görsel yok (0/{} sahne)", storyboard != null && storyboard.getScenes() != null ? storyboard.getScenes().size() : 0);
+                results.put("step2_5_video", "⏭️ Görsel yok — Kling atlandı");
+            } else if (falVideoService != null && storyboard != null && storyboard.getScenes() != null) {
                 int vidSuccess = 0, vidFail = 0, vidSkipped = 0;
                 for (TurkuStoryboardScene scene : storyboard.getScenes()) {
                     // Video klip zaten varsa atla
@@ -892,15 +891,24 @@ public class TurkuVideoProjectController {
                         continue;
                     } catch (Exception ignored) {}
 
-                    // Görsel URL'sini oluştur (MinIO'dan)
+                    // Bu sahne için görsel var mı? Yoksa atla (Kling görselsiz çalışamaz)
                     String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
+                    boolean sceneImageExists = false;
                     try {
-                        // MinIO görsel var mı kontrol
                         minioClient.statObject(io.minio.StatObjectArgs.builder()
                                 .bucket(minioConfig.getBucketName()).object(imagePath).build());
+                        sceneImageExists = true;
+                    } catch (Exception ignored) {}
 
-                        // Görseli MinIO'dan oku ve base64 data URI'ye çevir
-                        // (Fal.ai/Kling HTTPS URL veya data URI gerektirir, localhost HTTP çalışmaz)
+                    if (!sceneImageExists) {
+                        vidFail++;
+                        log.debug("Kling atlandı: sahne {} için görsel yok", scene.getSceneNo());
+                        continue;
+                    }
+
+                    // Görseli MinIO'dan oku ve base64 data URI'ye çevir
+                    // (Fal.ai/Kling HTTPS URL veya data URI gerektirir, localhost HTTP çalışmaz)
+                    try {
                         byte[] imageBytes;
                         try (var stream = minioClient.getObject(io.minio.GetObjectArgs.builder()
                                 .bucket(minioConfig.getBucketName())
@@ -967,18 +975,23 @@ public class TurkuVideoProjectController {
                 results.put("step3_tts", "⏭️ TTS servisi yok (ai.tts-provider ayarlayın)");
             }
 
-            // ADIM 4: FFmpeg video birleştirme (her zaman yeniden yapılır — müzik vs. değişmiş olabilir)
-            TurkuVideoAssemblyService.VideoAssemblyResult videoResult = videoAssemblyService.assembleVideo(id);
-            if (videoResult.isSuccess()) {
-                results.put("step4_video", "✅ " + videoResult.getSegmentCount() + " segment, " +
-                        (videoResult.getVideoSizeBytes() / 1024 / 1024) + " MB");
-                results.put("videoUrl", "/api/admin/turku-video-projects/" + id + "/video");
+            // ADIM 4: FFmpeg video birleştirme — GÖRSELLERE BAĞIMLI
+            if (!imagesAvailable) {
+                log.warn("FFmpeg atlanıyor: kullanılabilir görsel yok");
+                results.put("step4_video", "⏭️ Görsel yok — video oluşturulamaz. Fal.ai API key/bakiye kontrolü yapın.");
             } else {
-                results.put("step4_video", "❌ " + videoResult.getError());
+                TurkuVideoAssemblyService.VideoAssemblyResult videoResult = videoAssemblyService.assembleVideo(id);
+                if (videoResult.isSuccess()) {
+                    results.put("step4_video", "✅ " + videoResult.getSegmentCount() + " segment, " +
+                            (videoResult.getVideoSizeBytes() / 1024 / 1024) + " MB");
+                    results.put("videoUrl", "/api/admin/turku-video-projects/" + id + "/video");
+                } else {
+                    results.put("step4_video", "❌ " + videoResult.getError());
+                }
             }
 
-            // Gerçek başarı durumu — video oluştu mu?
-            boolean pipelineSuccess = videoResult.isSuccess();
+            // Gerçek başarı durumu
+            boolean pipelineSuccess = imagesAvailable && results.containsKey("videoUrl");
             boolean hasErrors = false;
 
             // Adım sonuçlarını tarayarak hataları tespit et
@@ -991,6 +1004,9 @@ public class TurkuVideoProjectController {
 
             results.put("success", pipelineSuccess);
             results.put("hasErrors", hasErrors);
+            if (!imagesAvailable) {
+                results.put("failReason", "Görsel üretimi başarısız. Fal.ai API key/bakiye kontrolü yapın.");
+            }
             return ResponseEntity.ok(ApiResponse.success(results));
 
         } catch (Exception e) {
