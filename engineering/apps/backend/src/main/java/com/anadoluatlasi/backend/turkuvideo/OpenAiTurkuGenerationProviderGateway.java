@@ -817,12 +817,64 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             if (ctx.getToneGuide() != null) sb.append("**Ton Rehberi:** ").append(ctx.getToneGuide()).append("\n");
         }
 
+        // ═══ ÖNCEKİ STAGE ÇIKTILARI — ZİNCİRLEME BAĞLAM ═══
+        // Bu sayede GPT, önceki adımlarda ürettiği hikâye ve senaryoyu BILEREK
+        // sonraki adımda tutarlı narration üretebilir.
+
+        String previousStory = params != null ? params.getOrDefault("previousStoryOutput", "") : "";
+        String previousScenario = params != null ? params.getOrDefault("previousScenarioOutput", "") : "";
+        String characterSheet = params != null ? params.getOrDefault("characterSheet", "") : "";
+
+        // SCENARIO adımı → hikâyeyi ver
+        if ("SCENARIO".equals(stage) && !previousStory.isBlank()) {
+            sb.append("\n═══════════════════════════════════════════\n");
+            sb.append("## ÖNCEKİ ADIMDA ÜRETİLEN HİKÂYE\n");
+            sb.append("Aşağıdaki hikâyeyi SENARYO'ya dönüştür. Hikâyedeki karakterleri,\n");
+            sb.append("olayları, duyguları ve kronolojik sırayı KORU. Generic cümleler YAZMA.\n");
+            sb.append("═══════════════════════════════════════════\n\n");
+            sb.append(previousStory).append("\n\n");
+
+            if (!characterSheet.isBlank()) {
+                sb.append("## KARAKTER ÇİZELGESİ\n");
+                sb.append(characterSheet).append("\n\n");
+            }
+        }
+
+        // STORYBOARD adımı → hem hikâye hem senaryo ver
+        if ("STORYBOARD".equals(stage)) {
+            if (!previousStory.isBlank()) {
+                sb.append("\n═══════════════════════════════════════════\n");
+                sb.append("## ÖNCEKİ ADIMDA ÜRETİLEN HİKÂYE\n");
+                sb.append("Bu hikâyeyi 35 sahneye bölerken HİKÂYENİN KENDİSİNİ kullan.\n");
+                sb.append("Her sahnenin seslendirmesi hikâyenin O ANINI anlatmalı.\n");
+                sb.append("═══════════════════════════════════════════\n\n");
+                sb.append(previousStory).append("\n\n");
+            }
+
+            if (!characterSheet.isBlank()) {
+                sb.append("## KARAKTER ÇİZELGESİ\n");
+                sb.append(characterSheet).append("\n\n");
+            }
+
+            if (!previousScenario.isBlank()) {
+                sb.append("═══════════════════════════════════════════\n");
+                sb.append("## ÖNCEKİ ADIMDA ÜRETİLEN SENARYO\n");
+                sb.append("Bu senaryo beat'lerini 35 sahneye dağıt. Beat sırasını koru.\n");
+                sb.append("═══════════════════════════════════════════\n\n");
+                sb.append(previousScenario).append("\n\n");
+            }
+        }
+
         // Stage'e göre özel talimat
         sb.append("\n## Görev\n");
         sb.append(switch (stage) {
             case "STORY" -> "Bu türkü hakkında kapsamlı bir hikâye araştırması hazırla.";
-            case "SCENARIO" -> "Bu türkünün hikâyesi için 6-beat YouTube video senaryosu yaz.";
-            case "STORYBOARD" -> "Bu senaryo için detaylı sahne bazlı storyboard planı oluştur.";
+            case "SCENARIO" -> "Yukarıdaki hikâyeyi temel alarak 6-beat YouTube video senaryosu yaz. " +
+                    "Hikâyedeki karakter isimlerini, olayları ve duyguları AYNEN kullan. " +
+                    "Her beat'in seslendirme metni hikâyenin İLGİLİ BÖLÜMÜNÜ anlatmalı — generic olma!";
+            case "STORYBOARD" -> "Yukarıdaki hikâye ve senaryoyu temel alarak 35 sahnelik detaylı storyboard planı oluştur. " +
+                    "Her sahnenin seslendirmesi hikâyenin O ANINI anlatmalı. " +
+                    "Karakter isimleri, mekânlar ve duygular hikâyeye SADIK kalmalı.";
             case "PLANNING_BUNDLE" -> "Bu türkü için tam üretim paketi hazırla: hikâye + senaryo + storyboard.";
             default -> "Bu konu hakkında detaylı içerik üret.";
         });

@@ -249,6 +249,12 @@ public class TurkuProviderDraftPlanningService {
 
     /**
      * Proje meta bilgilerini safeParams'a ekler — OpenAI gateway promptlarda kullanır.
+     *
+     * <p>KRİTİK: Her stage'de önceki stage çıktıları da eklenir!
+     * STORY → hikâye yok (ilk adım)
+     * SCENARIO → storyPackage.storySummary eklenir (GPT hikâyeyi bilmeli)
+     * STORYBOARD → storyPackage.storySummary + scenarioPlan eklenir
+     * PLANNING_BUNDLE → tek çağrı, hepsi system prompt'ta</p>
      */
     private Map<String, String> buildProjectSafeParams(
             TurkuVideoProject project, TurkuProviderGenerationRequest request) {
@@ -262,6 +268,30 @@ public class TurkuProviderDraftPlanningService {
         if (project.getVisualStyle() != null) params.put("visualStyle", project.getVisualStyle());
         if (project.getTargetDurationMinutes() != null)
             params.put("targetDurationMinutes", String.valueOf(project.getTargetDurationMinutes()));
+
+        // ═══ ÖNCEKİ STAGE ÇIKTILARI — ZİNCİRLEME BAĞLAM ═══
+        // Hikâye metni (SCENARIO ve STORYBOARD adımlarında kullanılır)
+        if (project.getStoryPackage() != null && project.getStoryPackage().getStorySummary() != null) {
+            String story = project.getStoryPackage().getStorySummary();
+            // Token limiti aşmamak için max 6000 karakter (GPT-4o'ya uygun)
+            if (story.length() > 6000) story = story.substring(0, 6000) + "\n\n[... hikâye devamı kırpıldı ...]";
+            params.put("previousStoryOutput", story);
+
+            // Karakter çizelgesi varsa ekle
+            if (project.getStoryPackage().getCharacterSheet() != null) {
+                String charSheet = project.getStoryPackage().getCharacterSheet();
+                if (charSheet.length() > 2000) charSheet = charSheet.substring(0, 2000);
+                params.put("characterSheet", charSheet);
+            }
+        }
+
+        // Senaryo metni (STORYBOARD adımında kullanılır)
+        if (project.getScenarioPlan() != null && project.getScenarioPlan().getLogline() != null) {
+            String scenario = project.getScenarioPlan().getLogline();
+            if (scenario.length() > 4000) scenario = scenario.substring(0, 4000) + "\n\n[... senaryo devamı kırpıldı ...]";
+            params.put("previousScenarioOutput", scenario);
+        }
+
         // Request'ten gelen ek parametreler (override)
         if (request != null && request.getSafeParams() != null) {
             params.putAll(request.getSafeParams());
