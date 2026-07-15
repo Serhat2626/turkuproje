@@ -272,13 +272,21 @@ export function getVideoUrl(id: string): string {
 export function generateFullVideo(
   id: string
 ): Promise<ApiResponse<any>> {
-  return request<any>(`${BASE}/${id}/generate-full-video`, { method: 'POST' })
+  // 35 sahne FFmpeg işlemi ~7-10 dakika sürer — 15 dakika timeout
+  return request<any>(`${BASE}/${id}/generate-full-video`, {
+    method: 'POST',
+    timeoutMs: 15 * 60 * 1000,
+  })
 }
 
 export function generateAllImages(
   id: string
 ): Promise<ApiResponse<any>> {
-  return request<any>(`${BASE}/${id}/generate-images`, { method: 'POST' })
+  // 35 sahne görsel üretimi Fal.ai ile uzun sürebilir
+  return request<any>(`${BASE}/${id}/generate-images`, {
+    method: 'POST',
+    timeoutMs: 10 * 60 * 1000,
+  })
 }
 
 // ── Music Upload ──
