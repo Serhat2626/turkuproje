@@ -63,4 +63,4 @@ imagegen:
 # Bu dosyaya gerçek secret YAZILMAZ.
 jwt:
   secret: ${JWT_SECRET:anadolu-atlasi-dev-secret-key-minimum-256-bits-2026-change-in-production}
-  expiration-ms: 86400000  # 24 saat
+  expiration-ms: ${JWT_EXPIRATION_MS:604800000}  # 7 gün (dev), production'da kısaltılmalı

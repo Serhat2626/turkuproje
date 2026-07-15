@@ -75,7 +75,8 @@ public class JwtService {
             extractClaims(token);
             return true;
         } catch (ExpiredJwtException e) {
-            log.warn("JWT token süresi dolmuş: {}", e.getMessage());
+            // Debug seviyesi — expired token normal akış (frontend 401'de login'e yönlendirir)
+            log.debug("JWT token süresi dolmuş: {}", e.getMessage());
         } catch (JwtException e) {
             log.warn("Geçersiz JWT token: {}", e.getMessage());
         }
