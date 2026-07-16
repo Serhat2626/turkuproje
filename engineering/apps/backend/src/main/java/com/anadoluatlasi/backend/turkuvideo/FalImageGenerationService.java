@@ -3,10 +3,11 @@ package com.anadoluatlasi.backend.turkuvideo;
 import com.anadoluatlasi.backend.ai.config.AiProviderProperties;
 import com.anadoluatlasi.backend.config.MinioConfig;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.minio.GetObjectArgs;
 import io.minio.MinioClient;
 import io.minio.PutObjectArgs;
+import io.minio.StatObjectArgs;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -17,18 +18,25 @@ import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
 import java.io.ByteArrayInputStream;
+import java.io.InputStream;
 import java.net.URI;
 import java.time.Duration;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
 /**
- * Fal.ai Flux Pro görsel üretim servisi.
- * Flux Pro v1.1 — son derece yüksek kaliteli, fotorealistik ve sanatsal görseller.
+ * Fal.ai görsel üretim servisi — 2 aşamalı referans tabanlı üretim.
  *
- * <p>API: POST https://fal.run/fal-ai/flux-pro/v1.1
- * Fiyat: ~$0.05/görsel (Flux Pro)</p>
+ * <p>Aşama 1: Karakter referans görseli üret (flux-pro/v1.1, 1 kez)
+ * Aşama 2: Her sahne için flux-pro/kontext kullan (referans ile tutarlı karakter)</p>
+ *
+ * <p>API'ler:
+ * - Referans: POST https://fal.run/fal-ai/flux-pro/v1.1
+ * - Sahne:    POST https://fal.run/fal-ai/flux-pro/kontext
+ * - Upload:   PUT  https://fal.ai/api/storage/upload/v1 (Fal CDN)
+ * Fiyat: ~$0.04/görsel</p>
  */
 @Slf4j
 @Service
@@ -39,10 +47,12 @@ public class FalImageGenerationService {
     private final RestClient downloadClient;
     private final MinioClient minioClient;
     private final MinioConfig minioConfig;
-    private final String model;
+    private final String referenceModel;
+    private final String kontextModel;
     private final String imageSize;
     private final int numInferenceSteps;
     private final double guidanceScale;
+    private final String falApiKey;
 
     public FalImageGenerationService(
             AiProviderProperties properties,
@@ -52,10 +62,12 @@ public class FalImageGenerationService {
         this.minioConfig = minioConfig;
 
         AiProviderProperties.Fal config = properties.getFal();
-        this.model = config.getModel();
+        this.referenceModel = config.getModel();
+        this.kontextModel = config.getKontextModel();
         this.imageSize = config.getImageSize();
         this.numInferenceSteps = config.getNumInferenceSteps();
         this.guidanceScale = config.getGuidanceScale();
+        this.falApiKey = config.getApiKey();
 
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(Duration.ofSeconds(30));
@@ -68,7 +80,6 @@ public class FalImageGenerationService {
                 .requestFactory(factory)
                 .build();
 
-        // Görsel indirmek için ayrı client (timeout uzun)
         SimpleClientHttpRequestFactory dlFactory = new SimpleClientHttpRequestFactory();
         dlFactory.setConnectTimeout(Duration.ofSeconds(15));
         dlFactory.setReadTimeout(Duration.ofSeconds(60));
@@ -76,31 +87,78 @@ public class FalImageGenerationService {
                 .requestFactory(dlFactory)
                 .build();
 
-        log.info("Fal.ai görsel servisi başlatıldı — model={}, size={}", model, imageSize);
+        log.info("Fal.ai görsel servisi başlatıldı — referenceModel={}, kontextModel={}, size={}",
+                referenceModel, kontextModel, imageSize);
     }
 
+    // ═══ AŞAMA 1: Karakter Referans Görseli ═══
+
     /**
-     * Sahne için Flux Pro görsel üretir ve MinIO'ya kaydeder.
+     * Karakter referans görseli üretir (flux-pro/v1.1 ile, 1 kez).
+     * MinIO'ya kaydeder + Fal.ai CDN'e upload eder.
+     *
+     * @return Fal.ai CDN URL (kontext'e geçmek için)
+     */
+    public String generateCharacterReference(UUID projectId, String charPrompt) {
+        log.info("Karakter referans görseli üretiliyor: projectId={}", projectId);
+
+        String minioPath = String.format("turku-video/%s/character_ref.png", projectId);
+
+        // Zaten varsa sadece Fal CDN'e yükle
+        if (existsInMinio(minioPath)) {
+            log.info("Karakter referans görseli zaten mevcut, Fal CDN'e yükleniyor");
+            byte[] existingBytes = downloadFromMinio(minioPath);
+            String cdnUrl = uploadToFalCdn(existingBytes, projectId + "_ref.png");
+            log.info("Mevcut referans Fal CDN'e yüklendi: {}", cdnUrl);
+            return cdnUrl;
+        }
+
+        // Referans prompt: tam boy portre, nötr arka plan
+        String refPrompt = charPrompt
+                + ". Full body portrait, standing pose, facing camera, clear face details, "
+                + "neutral light gray background. "
+                + "Photorealistic, high detail, sharp focus, studio lighting.";
+
+        byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
+        uploadToMinioPath(minioPath, imageBytes);
+
+        String cdnUrl = uploadToFalCdn(imageBytes, projectId + "_ref.png");
+        log.info("Karakter referans görseli üretildi: size={}KB, cdnUrl={}",
+                imageBytes.length / 1024, cdnUrl);
+
+        return cdnUrl;
+    }
+
+    // ═══ AŞAMA 2: Sahne Görseli (Kontext) ═══
+
+    /**
+     * Sahne görseli üretir. Referans URL varsa Kontext, yoksa v1.1 fallback.
      */
     public TurkuImageGenerationResult generateImage(
             TurkuImageGenerationRequest request,
             TurkuGenerationSafetyEnvelope envelope) {
 
-        log.info("Fal.ai Flux Pro görsel üretimi başlatıldı: projectId={}, sceneNo={}",
-                request.getProjectId(), request.getSceneNo());
+        log.info("Fal.ai görsel üretimi: projectId={}, sceneNo={}, hasRef={}",
+                request.getProjectId(), request.getSceneNo(),
+                request.getReferenceImageUrl() != null);
 
         try {
-            // 1. Prompt hazırla
-            String prompt = buildFluxPrompt(request);
+            String prompt;
+            byte[] imageBytes;
 
-            // 2. Fal.ai API çağrısı
-            byte[] imageBytes = callFalApi(prompt, request.getSceneNo());
+            if (request.getReferenceImageUrl() != null && !request.getReferenceImageUrl().isBlank()) {
+                prompt = buildKontextPrompt(request);
+                imageBytes = callFalApi(prompt, kontextModel, request.getReferenceImageUrl());
+            } else {
+                prompt = buildFluxPrompt(request);
+                imageBytes = callFalApi(prompt, referenceModel, null);
+                log.warn("Referans yok, v1.1 fallback: sahne={}", request.getSceneNo());
+            }
 
-            // 3. MinIO'ya kaydet
             String minioPath = uploadToMinio(request.getProjectId(), request.getSceneNo(), imageBytes);
 
-            log.info("Fal.ai görsel üretimi tamamlandı: projectId={}, sceneNo={}, size={}KB",
-                    request.getProjectId(), request.getSceneNo(), imageBytes.length / 1024);
+            log.info("Görsel üretimi tamamlandı: sceneNo={}, size={}KB",
+                    request.getSceneNo(), imageBytes.length / 1024);
 
             return TurkuImageGenerationResult.builder()
                     .projectId(request.getProjectId())
@@ -110,15 +168,15 @@ public class FalImageGenerationService {
                     .traceRef(TurkuProviderTraceReference.builder()
                             .traceId(UUID.randomUUID().toString().substring(0, 8))
                             .generationStage("IMAGE_GENERATION")
-                            .providerAlias("fal-flux-pro")
+                            .providerAlias(request.getReferenceImageUrl() != null ? "fal-kontext" : "fal-flux-pro")
                             .timestamp(java.time.Instant.now().toString())
                             .build())
                     .needsHumanReview(true)
                     .build();
 
         } catch (Exception e) {
-            log.error("Fal.ai görsel üretim hatası: projectId={}, sceneNo={}, error={}",
-                    request.getProjectId(), request.getSceneNo(), e.getMessage());
+            log.error("Görsel üretim hatası: sceneNo={}, error={}",
+                    request.getSceneNo(), e.getMessage());
 
             return TurkuImageGenerationResult.builder()
                     .projectId(request.getProjectId())
@@ -137,23 +195,24 @@ public class FalImageGenerationService {
         }
     }
 
-    /**
-     * Fal.ai Flux Pro API çağrısı.
-     * POST /fal-ai/flux-pro/v1.1
-     * Response: { "images": [{ "url": "...", "content_type": "image/jpeg" }] }
-     */
-    private byte[] callFalApi(String prompt, int sceneNo) {
-        Map<String, Object> body = Map.of(
-                "prompt", prompt,
-                "image_size", imageSize,
-                "num_inference_steps", numInferenceSteps,
-                "guidance_scale", guidanceScale,
-                "num_images", 1,
-                "enable_safety_checker", false,
-                "output_format", "png"
-        );
+    // ═══ API Çağrıları ═══
 
-        log.info("Fal.ai çağrılıyor: model={}, sceneNo={}, promptLen={}", model, sceneNo, prompt.length());
+    private byte[] callFalApi(String prompt, String model, String imageUrl) {
+        Map<String, Object> body = new HashMap<>();
+        body.put("prompt", prompt);
+        body.put("image_size", imageSize);
+        body.put("num_inference_steps", numInferenceSteps);
+        body.put("guidance_scale", guidanceScale);
+        body.put("num_images", 1);
+        body.put("enable_safety_checker", false);
+        body.put("output_format", "png");
+
+        if (imageUrl != null && !imageUrl.isBlank()) {
+            body.put("image_url", imageUrl);
+        }
+
+        log.info("Fal.ai çağrılıyor: model={}, promptLen={}, hasImageUrl={}",
+                model, prompt.length(), imageUrl != null);
 
         FalResponse response = falClient.post()
                 .uri("/" + model)
@@ -163,14 +222,65 @@ public class FalImageGenerationService {
                 .body(FalResponse.class);
 
         if (response == null || response.getImages() == null || response.getImages().isEmpty()) {
-            throw new RuntimeException("Fal.ai boş yanıt döndü");
+            throw new RuntimeException("Fal.ai boş yanıt — model=" + model);
         }
 
-        String imageUrl = response.getImages().get(0).getUrl();
-        log.info("Fal.ai görsel URL alındı: sceneNo={}, url={}", sceneNo, imageUrl.substring(0, Math.min(80, imageUrl.length())));
+        String resultUrl = response.getImages().get(0).getUrl();
+        log.info("Fal.ai görsel URL alındı: {}",
+                resultUrl.substring(0, Math.min(80, resultUrl.length())));
 
-        // URL'den görseli indir
-        return downloadImage(imageUrl);
+        return downloadImage(resultUrl);
+    }
+
+    /**
+     * Görseli Fal.ai CDN'e yükler — Kontext bu URL'i referans olarak kullanır.
+     * Fal.ai'nin localhost MinIO'ya erişimi yok, bu yüzden CDN upload gerekli.
+     */
+    private String uploadToFalCdn(byte[] imageBytes, String fileName) {
+        try {
+            SimpleClientHttpRequestFactory uploadFactory = new SimpleClientHttpRequestFactory();
+            uploadFactory.setConnectTimeout(Duration.ofSeconds(15));
+            uploadFactory.setReadTimeout(Duration.ofSeconds(60));
+
+            RestClient uploadClient = RestClient.builder()
+                    .requestFactory(uploadFactory)
+                    .build();
+
+            String uploadUrl = "https://fal.ai/api/storage/upload/v1/" + fileName;
+
+            String response = uploadClient.put()
+                    .uri(URI.create(uploadUrl))
+                    .header("Authorization", "Key " + falApiKey)
+                    .header("Content-Type", "image/png")
+                    .body(imageBytes)
+                    .retrieve()
+                    .body(String.class);
+
+            if (response != null && response.contains("https://")) {
+                String cdnUrl = extractUrlFromResponse(response);
+                log.info("Fal CDN'e yüklendi: {}", cdnUrl);
+                return cdnUrl;
+            }
+
+            log.info("Fal CDN upload tamamlandı: {}", uploadUrl);
+            return uploadUrl;
+
+        } catch (Exception e) {
+            log.warn("Fal CDN upload hatası: {} — base64 data URI kullanılıyor", e.getMessage());
+            return "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(imageBytes);
+        }
+    }
+
+    private String extractUrlFromResponse(String response) {
+        if (response.contains("\"url\"")) {
+            int start = response.indexOf("\"url\"");
+            int urlStart = response.indexOf("\"", start + 5) + 1;
+            int urlEnd = response.indexOf("\"", urlStart);
+            if (urlStart > 0 && urlEnd > urlStart) {
+                return response.substring(urlStart, urlEnd);
+            }
+        }
+        return response.trim();
     }
 
     private byte[] downloadImage(String url) {
@@ -180,93 +290,94 @@ public class FalImageGenerationService {
                 .body(byte[].class);
 
         if (bytes == null || bytes.length == 0) {
-            throw new RuntimeException("Fal.ai görsel indirilemedi");
+            throw new RuntimeException("Görsel indirilemedi");
         }
 
         log.debug("Görsel indirildi: size={}KB", bytes.length / 1024);
         return bytes;
     }
 
+    // ═══ Prompt Builders ═══
+
     /**
-     * Sahne için sinematik, hikâye-tutarlı Flux Pro prompt'u hazırlar.
-     *
-     * <p>TEMEL İLKELER:
-     * 1. GÖRSEL AÇIKLAMA HER ŞEYİN ÖNÜNDEDİR — Fal.ai promptun başını en çok dikkate alır
-     * 2. Türkçe metin GÖNDERME — Fal.ai İngilizce model, Türkçeyi anlamaz
-     * 3. Her sahne bir AKSİYON göstermeli — portre DEĞİL
-     * 4. TALİMAT METNİ GÖNDERME — "FORBIDDEN", "DO NOT", "CRITICAL" gibi
-     *    metinler modelin kafasını karıştırır ve metin posteri üretmesine neden olur.
-     *    Sadece saf görsel açıklama gönder.</p>
+     * KONTEXT prompt — karakter tanımı YOK (referans görselden geliyor).
+     * Sadece sahne aksiyonu + stil.
+     */
+    private String buildKontextPrompt(TurkuImageGenerationRequest request) {
+        StringBuilder sb = new StringBuilder();
+
+        String visual = request.getSafePromptSummary();
+        if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
+            String cleanVisual = visual
+                    .replaceAll("(?i)\\bguitar\\b", "bağlama")
+                    .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama");
+            sb.append("Place this person in the following scene: ").append(cleanVisual).append(". ");
+        } else {
+            sb.append("Place this person in a 19th century Anatolian village scene. ");
+        }
+
+        sb.append("Keep the character's face, body, and clothing exactly the same. ");
+        sb.append("Photorealistic cinematic film still, 35mm film grain. ");
+        sb.append("19th century Ottoman Anatolian village, warm earth tones. ");
+
+        String cameraDir = request.getCameraDirection();
+        if (cameraDir != null && !cameraDir.isBlank()) {
+            sb.append(cameraDir).append(". ");
+        }
+
+        if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
+            sb.append(request.getSceneMood()).append(" atmosphere. ");
+        }
+
+        return sb.toString().trim();
+    }
+
+    /**
+     * v1.1 fallback prompt (referans yoksa).
      */
     private String buildFluxPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
-
-        // ═══ 1. KARAKTERLERİN FİZİKSEL TANIMI (sahne aksiyonuyla doğal birleştirilmiş) ═══
-        // Flux Pro talimat anlamaz — sadece "şunu görüyorum" formatında saf görsel açıklama.
-        // Karakter tanımını sahne aksiyonuyla tek bir doğal cümle olarak birleştir.
 
         String visual = request.getSafePromptSummary();
         String charDesc = request.getCharacterDescription();
 
         if (charDesc != null && !charDesc.isBlank()) {
-            // Karakter tanımı var — sahne açıklamasıyla birleştir
             if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
-                // Sahne açıklamasındaki "guitar" kelimesini temizle
                 String cleanVisual = visual
                         .replaceAll("(?i)\\bguitar\\b", "bağlama")
-                        .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama")
-                        .replaceAll("(?i)\\belectric guitar\\b", "bağlama");
-                // Karakter tanımı + sahne aksiyonu birlikte
+                        .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama");
                 sb.append(charDesc).append(", ").append(cleanVisual).append(". ");
             } else {
-                // Sadece karakter tanımı
                 sb.append(charDesc).append(". ");
             }
         } else if (visual != null && !visual.isBlank()) {
-            // Karakter tanımı yok — sadece sahne açıklaması
-            String cleanVisual = visual
-                    .replaceAll("(?i)\\bguitar\\b", "bağlama")
-                    .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama");
-            sb.append(cleanVisual).append(". ");
+            sb.append(visual.replaceAll("(?i)\\bguitar\\b", "bağlama")).append(". ");
         }
 
-        // ═══ 2. SİNEMATİK STİL VE DÖNEM ═══
-        sb.append("Photorealistic cinematic film still, 35mm film grain, shallow depth of field. ");
-        sb.append("19th century Ottoman Anatolian village setting, warm earth tones, natural lighting. ");
+        sb.append("Photorealistic cinematic film still, 35mm film grain. ");
+        sb.append("19th century Ottoman Anatolian village, warm earth tones. ");
 
-        // ═══ 3. KAMERA AÇISI (storyboard'dan geliyorsa onu kullan, yoksa değişken) ═══
         String cameraDir = request.getCameraDirection();
         if (cameraDir != null && !cameraDir.isBlank()) {
             sb.append(cameraDir).append(". ");
-        } else {
-            int sceneNo = request.getSceneNo();
-            String cameraAngle = switch (sceneNo % 7) {
-                case 0 -> "Extreme wide establishing shot";
-                case 1 -> "Medium close-up portrait";
-                case 2 -> "Over-the-shoulder shot";
-                case 3 -> "Low angle dramatic shot";
-                case 4 -> "Bird's eye view";
-                case 5 -> "Dynamic diagonal composition";
-                default -> "Wide environmental shot";
-            };
-            sb.append(cameraAngle).append(". ");
         }
 
-        // ═══ 4. MOOD (kısa, doğal) ═══
         if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
             sb.append(request.getSceneMood()).append(" atmosphere. ");
         }
 
-        String prompt = sb.toString().trim();
-
-        log.info("Fal.ai prompt sahne {}: {} chars", request.getSceneNo(), prompt.length());
-        log.info("Fal.ai prompt sahne {} İÇERİK: {}", request.getSceneNo(), prompt);
-        return prompt;
+        return sb.toString().trim();
     }
+
+    // ═══ MinIO İşlemleri ═══
 
     private String uploadToMinio(UUID projectId, int sceneNo, byte[] imageBytes) {
         String objectPath = String.format("turku-video/%s/scenes/%d.png", projectId, sceneNo);
+        uploadToMinioPath(objectPath, imageBytes);
+        return objectPath;
+    }
 
+    private void uploadToMinioPath(String objectPath, byte[] imageBytes) {
         try {
             minioClient.putObject(PutObjectArgs.builder()
                     .bucket(minioConfig.getBucketName())
@@ -274,12 +385,32 @@ public class FalImageGenerationService {
                     .stream(new ByteArrayInputStream(imageBytes), imageBytes.length, -1)
                     .contentType("image/png")
                     .build());
-
             log.info("MinIO'ya yüklendi: path={}", objectPath);
-            return objectPath;
-
         } catch (Exception e) {
             throw new RuntimeException("MinIO yükleme hatası: " + e.getMessage(), e);
+        }
+    }
+
+    private boolean existsInMinio(String objectPath) {
+        try {
+            minioClient.statObject(StatObjectArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .object(objectPath)
+                    .build());
+            return true;
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private byte[] downloadFromMinio(String objectPath) {
+        try (InputStream is = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioConfig.getBucketName())
+                .object(objectPath)
+                .build())) {
+            return is.readAllBytes();
+        } catch (Exception e) {
+            throw new RuntimeException("MinIO indirme hatası: " + e.getMessage(), e);
         }
     }
 

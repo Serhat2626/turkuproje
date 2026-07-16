@@ -122,7 +122,8 @@ public class AiProviderProperties {
 
     /**
      * Fal.ai görsel üretim provider ayarları.
-     * Flux Pro v1.1 — son derece yüksek kaliteli görseller.
+     * Flux Pro v1.1 — referans görseli üretim.
+     * Flux Pro Kontext — referans tabanlı sahne görseli üretim.
      */
     @Data
     public static class Fal {
@@ -130,8 +131,11 @@ public class AiProviderProperties {
         /** Fal.ai API key */
         private String apiKey;
 
-        /** Model endpoint */
+        /** Referans görsel üretim modeli (v1.1) */
         private String model = "fal-ai/flux-pro/v1.1";
+
+        /** Sahne görseli üretim modeli (kontext — referans tabanlı) */
+        private String kontextModel = "fal-ai/flux-pro/kontext";
 
         /** Fal.ai API base URL */
         private String baseUrl = "https://fal.run";

@@ -48,4 +48,7 @@ public class TurkuImageGenerationRequest {
 
     /** Kamera açısı — storyboard'dan gelen kamera yönlendirmesi */
     private String cameraDirection;
+
+    /** Karakter referans görseli URL (Fal CDN) — Kontext modeli için */
+    private String referenceImageUrl;
 }

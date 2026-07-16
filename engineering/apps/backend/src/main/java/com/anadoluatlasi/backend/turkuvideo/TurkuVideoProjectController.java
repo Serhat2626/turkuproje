@@ -832,6 +832,26 @@ public class TurkuVideoProjectController {
                     log.info("TAM VİDEO MODU: {} sahne işlenecek", totalScenes);
                 }
 
+                // ═══ ADIM 1.5: Karakter Referans Görseli (Kontext için, 1 kez) ═══
+                String referenceImageUrl = null;
+                if (falImageService != null && characterDesc != null && !characterDesc.isBlank()) {
+                    try {
+                        referenceImageUrl = falImageService.generateCharacterReference(id, characterDesc);
+                        results.put("step1_5_character_ref", "✅ Karakter referans görseli üretildi");
+                        log.info("✅ Karakter referans görseli hazır: cdnUrl={}", referenceImageUrl);
+
+                        // Referans görseli maliyeti ($0.05)
+                        logAiCost(id, "character_reference", 0, "fal.ai", "flux-pro-v1.1",
+                                new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
+                                com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.COMPLETED,
+                                "Karakter referans görseli");
+                    } catch (Exception e) {
+                        log.error("Karakter referans görseli üretim hatası: {}", e.getMessage());
+                        results.put("step1_5_character_ref", "❌ Hata: " + e.getMessage());
+                        // Referans üretilemezse v1.1 fallback ile devam et
+                    }
+                }
+
                 for (TurkuStoryboardScene scene : scenesToProcess) {
                     String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
                     // MinIO'da zaten varsa atla
@@ -864,21 +884,23 @@ public class TurkuVideoProjectController {
                                 .narrationText(scene.getNarrationSummary())
                                 .sceneTitle(scene.getSceneTitle())
                                 .cameraDirection(scene.getCameraDirection())
+                                .referenceImageUrl(referenceImageUrl)
                                 .build();
 
                         // Fal.ai varsa onu kullan (Flux Pro), yoksa OpenAI (gpt-image-1)
                         if (falImageService != null) {
                             TurkuImageGenerationResult result = falImageService.generateImage(imgReq,
                                     TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
+                            String usedModel = referenceImageUrl != null ? "flux-pro-kontext" : "flux-pro-v1.1";
                             if (result.isSuccess()) {
                                 imgSuccess++;
-                                logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", "flux-pro-v1.1",
+                                logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", usedModel,
                                         new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
                                         com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.COMPLETED,
-                                        "Sahne " + scene.getSceneNo() + " görseli");
+                                        "Sahne " + scene.getSceneNo() + " görseli (" + usedModel + ")");
                             } else {
                                 imgFail++;
-                                logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", "flux-pro-v1.1",
+                                logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", usedModel,
                                         new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
                                         com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.FAILED,
                                         "Hata: " + result.getSafeErrorCode());
