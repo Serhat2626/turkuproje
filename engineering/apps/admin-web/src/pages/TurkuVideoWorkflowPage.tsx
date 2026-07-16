@@ -1233,6 +1233,9 @@ function TurkuVideoWorkflowPage() {
                     if (d.audio?.items) d.audio.items.forEach((i: any) => flat.push({ ...i, type: 'audio' }))
                     setAssetList(flat)
                     setAssetsVisible(true)
+                    // final.mp4 varsa video player'ı otomatik göster
+                    const hasVideo = flat.some((a: any) => a.type === 'video' && a.path?.includes('final'))
+                    if (hasVideo) setVideoReady(true)
                   } catch (e: any) {
                     alert('Asset listesi alınamadı: ' + e.message)
                   } finally {
