@@ -242,10 +242,16 @@ public class FalImageGenerationService {
             sb.append("Visual continuity from previous: ").append(prev).append(". ");
         }
 
-        // ═══ 7. GÜÇLÜ YASAKLAR ═══
-        sb.append("ABSOLUTELY FORBIDDEN: looking directly at camera, static portrait pose, ");
+        // ═══ 7. ANADOLU KÜLTÜREL DOĞRULUK ═══
+        sb.append("CRITICAL CULTURAL ACCURACY: This is an Anatolian/Turkish folk story. ");
+        sb.append("Any musical instrument MUST be a bağlama (Turkish long-necked lute/saz), NEVER a guitar. ");
+        sb.append("The bağlama has a long thin neck with a small pear-shaped body. ");
+        sb.append("Traditional Anatolian clothing: şalvar, yelek, headscarf for women. ");
+
+        // ═══ 8. GÜÇLÜ YASAKLAR ═══
+        sb.append("ABSOLUTELY FORBIDDEN: guitar, acoustic guitar, electric guitar, Western instruments, piano, violin, ");
+        sb.append("looking directly at camera, static portrait pose, ");
         sb.append("two people standing side by side facing camera, symmetrical composition, ");
-        sb.append("old elderly person, gray hair, white beard, turban, ");
         sb.append("Arabic clothing, text, watermark, logo, modern elements, anime, cartoon. ");
         sb.append("Characters must be engaged in ACTION, never posing.");
 

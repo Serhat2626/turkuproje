@@ -393,37 +393,35 @@ public class TurkuVideoAssemblyService {
             cmd.add(seg.toAbsolutePath().toString());
         }
 
-        // xfade chain: [0:v][1:v]xfade → [v01], [v01][2:v]xfade → [v02], ...
+        // xfade chain: [0:v][1:v]xfade → [v1], [v1][2:v]xfade → [v2], ...
+        // SES: acrossfade yerine concat kullan — seslendirme çakışmasını önler
         double offset = durations.get(0) - crossfadeDuration;
         String lastVideoLabel = "[0:v]";
-        String lastAudioLabel = "[0:a]";
 
         for (int i = 1; i < inputCount; i++) {
             String outLabel = "[v" + i + "]";
-            String outAudioLabel = "[a" + i + "]";
 
             filterComplex.append(String.format(java.util.Locale.US,
                     "%s[%d:v]xfade=transition=fade:duration=%.1f:offset=%.1f%s;",
                     lastVideoLabel, i, crossfadeDuration, Math.max(0, offset), outLabel
             ));
 
-            filterComplex.append(String.format(java.util.Locale.US,
-                    "%s[%d:a]acrossfade=d=%.1f%s;",
-                    lastAudioLabel, i, crossfadeDuration, outAudioLabel
-            ));
-
             if (i < inputCount - 1) {
                 offset += durations.get(i) - crossfadeDuration;
             }
             lastVideoLabel = outLabel;
-            lastAudioLabel = outAudioLabel;
         }
 
-        // Son ; kaldır
-        String filter = filterComplex.toString();
-        if (filter.endsWith(";")) {
-            filter = filter.substring(0, filter.length() - 1);
+        // Ses concat: tüm audio stream'lerini birleştir (overlap yok)
+        StringBuilder audioConcat = new StringBuilder();
+        for (int i = 0; i < inputCount; i++) {
+            audioConcat.append("[").append(i).append(":a]");
         }
+        String lastAudioLabel = "[aout]";
+        filterComplex.append(String.format("%sconcat=n=%d:v=0:a=1%s",
+                audioConcat.toString(), inputCount, lastAudioLabel));
+
+        String filter = filterComplex.toString();
 
         cmd.add("-filter_complex");
         cmd.add(filter);

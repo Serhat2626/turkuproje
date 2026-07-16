@@ -1093,17 +1093,17 @@ function TurkuVideoWorkflowPage() {
               {videoAssembling ? '⏳ Preview üretiliyor...' : '🎬 Preview Oluştur (5 sahne, ~$3)'}
             </button>
 
-            {/* TAM VIDEO BUTONU */}
+            {/* TAM VIDEO BUTONU — Kling'siz */}
             <button
               className="btn btn-primary"
               disabled={videoAssembling}
               onClick={async () => {
-                if (!confirm('⚠️ Tam video ~$15 kredi harcar ve ~20dk sürer.\nPreview\'ı beğendiniz mi? Devam etmek istiyor musunuz?')) return
+                if (!confirm('🎬 Tam video (Kling animasyonsuz) üretilecek.\nGörseller + TTS + FFmpeg (~$5, ~10dk).\nDevam?')) return
                 setVideoAssembling(true)
                 setVideoReady(false)
-                setAutoRunProgress('⏳ Tam video üretiliyor (tüm sahneler, ~$15)...')
+                setAutoRunProgress('⏳ Tam video üretiliyor (Kling kapalı)...')
                 try {
-                  const res = await turkuApi.generateFullVideo(project.id, { previewMode: false })
+                  const res = await turkuApi.generateFullVideo(project.id, { previewMode: false, includeKling: false })
                   if (res.data?.success || res.data?.videoUrl) {
                     setVideoReady(true)
                     const steps = [
@@ -1111,11 +1111,10 @@ function TurkuVideoWorkflowPage() {
                       `📜 İçerik: ${res.data.step1_content}`,
                       `🖼️ Görseller: ${res.data.step2_images}`,
                       res.data.step2_5_video ? `🎥 Kling: ${res.data.step2_5_video}` : '',
-                      res.data.step2_5_cost ? `💰 Kling maliyeti: ${res.data.step2_5_cost}` : '',
                       `🎙️ Ses: ${res.data.step3_tts}`,
                       `🎬 Video: ${res.data.step4_video}`,
                     ].filter(Boolean).join('\n')
-                    alert(`🎬 Tam video hazır!\n\n${steps}`)
+                    alert(`🎬 Tam video hazır (Kling kapalı)!\n\n${steps}`)
                     await refreshProject(project.id)
                   } else {
                     alert('Pipeline hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
@@ -1137,9 +1136,48 @@ function TurkuVideoWorkflowPage() {
                   setAutoRunProgress('')
                 }
               }}
+              style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', border: 'none', fontSize: '0.9rem', padding: '8px 18px' }}
+            >
+              {videoAssembling ? '⏳ Video üretiliyor...' : '🎬 Tam Video (Kling kapalı, ~$5)'}
+            </button>
+
+            {/* TAM VIDEO + KLİNG BUTONU */}
+            <button
+              className="btn btn-primary"
+              disabled={videoAssembling}
+              onClick={async () => {
+                if (!confirm('⚠️ Tam video + Kling animasyonlu ~$15 kredi harcar.\nGörselleri ve sesi kontrol ettiniz mi?\nDevam?')) return
+                setVideoAssembling(true)
+                setVideoReady(false)
+                setAutoRunProgress('⏳ Tam video + Kling üretiliyor (~$15)...')
+                try {
+                  const res = await turkuApi.generateFullVideo(project.id, { previewMode: false, includeKling: true })
+                  if (res.data?.success || res.data?.videoUrl) {
+                    setVideoReady(true)
+                    const steps = [
+                      res.data.mode ? `📋 ${res.data.mode}` : '',
+                      `📜 İçerik: ${res.data.step1_content}`,
+                      `🖼️ Görseller: ${res.data.step2_images}`,
+                      res.data.step2_5_video ? `🎥 Kling: ${res.data.step2_5_video}` : '',
+                      res.data.step2_5_cost ? `💰 Kling maliyeti: ${res.data.step2_5_cost}` : '',
+                      `🎙️ Ses: ${res.data.step3_tts}`,
+                      `🎬 Video: ${res.data.step4_video}`,
+                    ].filter(Boolean).join('\n')
+                    alert(`🎬 Tam video + Kling hazır!\n\n${steps}`)
+                    await refreshProject(project.id)
+                  } else {
+                    alert('Pipeline hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
+                  }
+                } catch (e: any) {
+                  alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
+                } finally {
+                  setVideoAssembling(false)
+                  setAutoRunProgress('')
+                }
+              }}
               style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', border: 'none', fontSize: '0.9rem', padding: '8px 18px' }}
             >
-              {videoAssembling ? '⏳ Video üretiliyor...' : '🚀 Tam Video Üret (~$15)'}
+              {videoAssembling ? '⏳ Video üretiliyor...' : '🚀 Tam Video + Kling (~$15)'}
             </button>
 
             {/* Sadece FFmpeg butonu */}
