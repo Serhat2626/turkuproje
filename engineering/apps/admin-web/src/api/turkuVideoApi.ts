@@ -270,12 +270,18 @@ export function getVideoUrl(id: string): string {
 // ── Full Pipeline ──
 
 export function generateFullVideo(
-  id: string
+  id: string,
+  options?: { includeKling?: boolean }
 ): Promise<ApiResponse<any>> {
-  // 35 sahne FFmpeg işlemi ~7-10 dakika sürer — 15 dakika timeout
-  return request<any>(`${BASE}/${id}/generate-full-video`, {
+  const params = new URLSearchParams()
+  // Backend varsayılan: includeKling=true (paralel Kling ~5-7dk)
+  // Sadece kapatmak istendiğinde gönder
+  if (options?.includeKling === false) params.set('includeKling', 'false')
+  const qs = params.toString() ? `?${params.toString()}` : ''
+  // Paralel Kling: ~20dk max (görseller + Kling + TTS + FFmpeg)
+  return request<any>(`${BASE}/${id}/generate-full-video${qs}`, {
     method: 'POST',
-    timeoutMs: 15 * 60 * 1000,
+    timeoutMs: 20 * 60 * 1000,
   })
 }
 

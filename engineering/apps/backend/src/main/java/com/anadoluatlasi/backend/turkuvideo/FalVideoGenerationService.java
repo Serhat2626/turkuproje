@@ -19,6 +19,8 @@ import org.springframework.web.client.RestClient;
 import java.io.ByteArrayInputStream;
 import java.net.URI;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 
@@ -33,6 +35,10 @@ import java.util.UUID;
  * 1. POST /queue/submit → requestId alınır
  * 2. GET /queue/status/{requestId} → tamamlanana kadar polling
  * 3. GET /queue/result/{requestId} → video URL alınır</p>
+ *
+ * <p>PARALEL MOD: submitToQueue ile tüm sahneleri aynı anda gönder,
+ * sonra pollAndDownloadAll ile hepsini birden bekle. Bu 35 sahneyi
+ * ~3 saatten ~5-7 dakikaya indirir.</p>
  */
 @Slf4j
 @Service
@@ -84,22 +90,17 @@ public class FalVideoGenerationService {
         log.info("Kling AI Video servisi başlatıldı — model={}, duration={}s", model, duration);
     }
 
-    /**
-     * Statik görseli hareketli video klibe dönüştürür.
-     *
-     * @param projectId   Proje ID
-     * @param sceneNo     Sahne numarası
-     * @param imageUrl    Görsel URL (MinIO veya public URL)
-     * @param motionPrompt Hareket prompt'u (ör: "Rüzgarda sallanan ağaçlar, yürüyen insanlar")
-     * @return Video üretim sonucu
-     */
-    public VideoGenerationResult generateVideo(UUID projectId, int sceneNo,
-                                                String imageUrl, String motionPrompt) {
-        try {
-            log.info("Kling video üretimi başlıyor — scene={}, prompt={}",
-                    sceneNo, motionPrompt.substring(0, Math.min(80, motionPrompt.length())));
+    // ═══════════════════════════════════════════════════════════════
+    // PARALEL API: Submit → Poll All → Download All
+    // ═══════════════════════════════════════════════════════════════
 
-            // 1. Queue'ya gönder
+    /**
+     * Sahneyi Kling queue'ya gönderir (HEMEN döner, beklemez).
+     * Sonuç: requestId ve URL'ler — polling için kullanılır.
+     */
+    public QueuedJob submitToQueue(UUID projectId, int sceneNo,
+                                    String imageUrl, String motionPrompt) {
+        try {
             String fullPrompt = motionPrompt + ". " + motionSuffix;
 
             KlingRequest request = KlingRequest.builder()
@@ -108,6 +109,8 @@ public class FalVideoGenerationService {
                     .duration(duration)
                     .build();
 
+            log.info("Kling submit: sahne={}, promptLen={}", sceneNo, fullPrompt.length());
+
             KlingQueueResponse queueResponse = falClient.post()
                     .uri("/" + model)
                     .body(request)
@@ -115,112 +118,190 @@ public class FalVideoGenerationService {
                     .body(KlingQueueResponse.class);
 
             if (queueResponse == null || queueResponse.getRequestId() == null) {
-                return VideoGenerationResult.failure("Kling queue yanıtı boş");
+                log.error("Kling submit başarısız: sahne={}, boş yanıt", sceneNo);
+                return QueuedJob.failed(projectId, sceneNo, "Kling queue yanıtı boş");
             }
 
-            String requestId = queueResponse.getRequestId();
-            String statusUrl = queueResponse.getStatusUrl();
-            String responseUrl = queueResponse.getResponseUrl();
-            log.info("Kling queue'ya eklendi ✅ requestId={}, statusUrl={}", requestId, statusUrl);
+            log.info("Kling submit ✅ sahne={}, requestId={}", sceneNo, queueResponse.getRequestId());
 
-            // 2. Polling — Fal.ai'nin döndürdüğü status_url'i kullan (max 5 dakika)
-            String videoUrl = pollForResult(statusUrl, responseUrl);
-            if (videoUrl == null) {
-                return VideoGenerationResult.failure("Kling video üretimi zaman aşımı");
-            }
-
-            // 3. Video'yu indir
-            byte[] videoBytes = downloadVideo(videoUrl);
-            log.info("Kling video indirildi — size={}KB", videoBytes.length / 1024);
-
-            // 4. MinIO'ya yükle
-            String minioPath = String.format("turku-video/%s/scenes/%d_video.mp4", projectId, sceneNo);
-            minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(minioConfig.getBucketName())
-                    .object(minioPath)
-                    .stream(new ByteArrayInputStream(videoBytes), videoBytes.length, -1)
-                    .contentType("video/mp4")
-                    .build());
-
-            log.info("Kling video MinIO'ya yüklendi — path={}, size={}KB",
-                    minioPath, videoBytes.length / 1024);
-
-            return VideoGenerationResult.success(minioPath, videoBytes.length);
+            return QueuedJob.builder()
+                    .projectId(projectId)
+                    .sceneNo(sceneNo)
+                    .requestId(queueResponse.getRequestId())
+                    .statusUrl(queueResponse.getStatusUrl())
+                    .responseUrl(queueResponse.getResponseUrl())
+                    .submitted(true)
+                    .build();
 
         } catch (Exception e) {
-            log.error("Kling video üretim hatası — scene={}: {}", sceneNo, e.getMessage());
-            return VideoGenerationResult.failure(e.getMessage());
+            log.error("Kling submit hatası: sahne={}, error={}", sceneNo, e.getMessage());
+            return QueuedJob.failed(projectId, sceneNo, e.getMessage());
         }
     }
 
     /**
-     * Queue polling — Fal.ai'nin döndürdüğü status_url ile video hazır olana kadar bekle.
-     *
-     * NOT: Fal.ai submit'ten dönen status_url, model path'inden FARKLI olabilir.
-     * Örnek: Submit → /fal-ai/kling-video/v2/master/image-to-video
-     *        Status → /fal-ai/kling-video/requests/{id}/status (v2/master kısaltılmış)
+     * Tüm gönderilmiş işleri paralel olarak bekler, indirir ve MinIO'ya yükler.
+     * Fal.ai bunları paralel işler → toplam süre tek sahne süresi kadar (~5dk).
      */
-    private String pollForResult(String statusUrl, String responseUrl) throws InterruptedException {
-        int maxAttempts = 60;  // 60 * 5sn = 5 dakika max
+    public List<VideoGenerationResult> pollAndDownloadAll(List<QueuedJob> jobs) {
+        List<VideoGenerationResult> results = new ArrayList<>();
 
-        // statusUrl tam URL: https://queue.fal.run/fal-ai/kling-video/requests/{id}/status
-        // RestClient baseUrl olarak queue.fal.run kullanıyor, URI kısmını çıkaralım
-        String statusPath = statusUrl != null ? statusUrl.replace("https://queue.fal.run", "") : null;
-        String responsePath = responseUrl != null ? responseUrl.replace("https://queue.fal.run", "") : null;
+        // Sadece başarılı submit'leri poll et
+        List<QueuedJob> activeJobs = jobs.stream()
+                .filter(QueuedJob::isSubmitted)
+                .toList();
 
-        if (statusPath == null || statusPath.isBlank()) {
-            log.error("Kling status URL boş — polling yapılamaz");
-            return null;
+        // Başarısız submit'leri direkt sonuca ekle
+        jobs.stream()
+                .filter(j -> !j.isSubmitted())
+                .forEach(j -> results.add(VideoGenerationResult.failure(j.getError())));
+
+        if (activeJobs.isEmpty()) {
+            return results;
         }
 
-        log.info("Kling polling başlıyor — statusPath={}", statusPath);
+        log.info("Kling paralel polling başlıyor: {} iş", activeJobs.size());
 
-        for (int i = 0; i < maxAttempts; i++) {
-            Thread.sleep(5000);  // 5 saniye bekle
+        int maxAttempts = 90;  // 90 × 5sn = 7.5 dakika max (paralel olduğu için yeterli)
 
+        // Her iş için tamamlanma durumu
+        boolean[] completed = new boolean[activeJobs.size()];
+        String[] videoUrls = new String[activeJobs.size()];
+        int completedCount = 0;
+
+        for (int attempt = 0; attempt < maxAttempts && completedCount < activeJobs.size(); attempt++) {
             try {
-                KlingStatusResponse status = falClient.get()
-                        .uri(statusPath)
-                        .retrieve()
-                        .body(KlingStatusResponse.class);
+                Thread.sleep(5000);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+                break;
+            }
 
-                if (status == null) continue;
+            for (int i = 0; i < activeJobs.size(); i++) {
+                if (completed[i]) continue;
 
-                String statusStr = status.getStatus();
-                log.debug("Kling polling — attempt={}, status={}", i + 1, statusStr);
-
-                if ("COMPLETED".equalsIgnoreCase(statusStr)) {
-                    // Sonucu response_url'den al
-                    String resultPath = responsePath != null ? responsePath : statusPath.replace("/status", "");
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> result = falClient.get()
-                            .uri(resultPath)
+                QueuedJob job = activeJobs.get(i);
+                try {
+                    String statusPath = job.getStatusUrl().replace("https://queue.fal.run", "");
+                    KlingStatusResponse status = falClient.get()
+                            .uri(statusPath)
                             .retrieve()
-                            .body(Map.class);
+                            .body(KlingStatusResponse.class);
 
-                    if (result != null && result.get("video") instanceof Map videoMap) {
-                        return (String) videoMap.get("url");
-                    }
-                    // Alternatif response yapısı
-                    if (result != null && result.get("data") instanceof Map dataMap) {
-                        if (dataMap.get("video") instanceof Map videoMap2) {
-                            return (String) videoMap2.get("url");
+                    if (status == null) continue;
+
+                    String statusStr = status.getStatus();
+
+                    if ("COMPLETED".equalsIgnoreCase(statusStr)) {
+                        // Video URL'sini al
+                        String responsePath = job.getResponseUrl() != null
+                                ? job.getResponseUrl().replace("https://queue.fal.run", "")
+                                : statusPath.replace("/status", "");
+
+                        @SuppressWarnings("unchecked")
+                        Map<String, Object> result = falClient.get()
+                                .uri(responsePath)
+                                .retrieve()
+                                .body(Map.class);
+
+                        String url = extractVideoUrl(result);
+                        if (url != null) {
+                            videoUrls[i] = url;
                         }
-                    }
-                    log.warn("Kling COMPLETED ama video URL bulunamadı: {}", result);
-                    return null;
-                }
+                        completed[i] = true;
+                        completedCount++;
+                        log.info("Kling ✅ sahne={} tamamlandı ({}/{})",
+                                job.getSceneNo(), completedCount, activeJobs.size());
 
-                if ("FAILED".equalsIgnoreCase(statusStr)) {
-                    log.error("Kling video üretimi başarısız: {}", status);
-                    return null;
+                    } else if ("FAILED".equalsIgnoreCase(statusStr)) {
+                        completed[i] = true;
+                        completedCount++;
+                        log.error("Kling ❌ sahne={} başarısız", job.getSceneNo());
+                    }
+                } catch (Exception e) {
+                    // Polling hatası — devam et, bir sonraki denemede tekrar dene
+                    log.debug("Kling poll hatası sahne={}: {}", job.getSceneNo(), e.getMessage());
                 }
-            } catch (Exception e) {
-                log.debug("Kling polling hatası (devam ediyor): {}", e.getMessage());
+            }
+
+            // İlerleme logu (her 6 denemede = 30sn'de bir)
+            if (attempt % 6 == 5) {
+                log.info("Kling paralel polling: {}/{} tamamlandı, deneme={}/{}",
+                        completedCount, activeJobs.size(), attempt + 1, maxAttempts);
             }
         }
 
-        log.error("Kling video üretimi zaman aşımı — {} deneme yapıldı", maxAttempts);
+        // Sonuçları işle: başarılı olanları indir ve MinIO'ya yükle
+        for (int i = 0; i < activeJobs.size(); i++) {
+            QueuedJob job = activeJobs.get(i);
+            if (videoUrls[i] != null) {
+                try {
+                    byte[] videoBytes = downloadVideo(videoUrls[i]);
+                    String minioPath = String.format("turku-video/%s/scenes/%d_video.mp4",
+                            job.getProjectId(), job.getSceneNo());
+
+                    minioClient.putObject(PutObjectArgs.builder()
+                            .bucket(minioConfig.getBucketName())
+                            .object(minioPath)
+                            .stream(new ByteArrayInputStream(videoBytes), videoBytes.length, -1)
+                            .contentType("video/mp4")
+                            .build());
+
+                    log.info("Kling video MinIO'ya yüklendi: sahne={}, size={}KB",
+                            job.getSceneNo(), videoBytes.length / 1024);
+
+                    results.add(VideoGenerationResult.success(minioPath, videoBytes.length));
+                } catch (Exception e) {
+                    log.error("Kling indirme/yükleme hatası: sahne={}, error={}",
+                            job.getSceneNo(), e.getMessage());
+                    results.add(VideoGenerationResult.failure(e.getMessage()));
+                }
+            } else {
+                results.add(VideoGenerationResult.failure(
+                        completed[i] ? "Video URL bulunamadı" : "Zaman aşımı"));
+            }
+        }
+
+        log.info("Kling paralel tamamlandı: {} başarılı, {} başarısız",
+                results.stream().filter(VideoGenerationResult::isSuccess).count(),
+                results.stream().filter(r -> !r.isSuccess()).count());
+
+        return results;
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // ESKİ TEKLİ API (geriye uyumluluk)
+    // ═══════════════════════════════════════════════════════════════
+
+    /**
+     * Statik görseli hareketli video klibe dönüştürür (SIRALİ — yavaş).
+     * Yeni kod için submitToQueue + pollAndDownloadAll kullanın.
+     */
+    public VideoGenerationResult generateVideo(UUID projectId, int sceneNo,
+                                                String imageUrl, String motionPrompt) {
+        QueuedJob job = submitToQueue(projectId, sceneNo, imageUrl, motionPrompt);
+        if (!job.isSubmitted()) {
+            return VideoGenerationResult.failure(job.getError());
+        }
+        List<VideoGenerationResult> results = pollAndDownloadAll(List.of(job));
+        return results.isEmpty() ? VideoGenerationResult.failure("Sonuç alınamadı") : results.get(0);
+    }
+
+    // ═══════════════════════════════════════════════════════════════
+    // Yardımcı metodlar
+    // ═══════════════════════════════════════════════════════════════
+
+    private String extractVideoUrl(Map<String, Object> result) {
+        if (result == null) return null;
+        if (result.get("video") instanceof Map videoMap) {
+            return (String) videoMap.get("url");
+        }
+        if (result.get("data") instanceof Map dataMap) {
+            if (dataMap.get("video") instanceof Map videoMap2) {
+                return (String) videoMap2.get("url");
+            }
+        }
+        log.warn("Kling COMPLETED ama video URL bulunamadı: {}", result);
         return null;
     }
 
@@ -236,7 +317,30 @@ public class FalVideoGenerationService {
         return bytes;
     }
 
-    // ── DTO'lar ──
+    // ═══════════════════════════════════════════════════════════════
+    // DTO'lar
+    // ═══════════════════════════════════════════════════════════════
+
+    @Data
+    @Builder
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class QueuedJob {
+        private UUID projectId;
+        private int sceneNo;
+        private String requestId;
+        private String statusUrl;
+        private String responseUrl;
+        private boolean submitted;
+        private String error;
+
+        static QueuedJob failed(UUID projectId, int sceneNo, String error) {
+            return QueuedJob.builder()
+                    .projectId(projectId).sceneNo(sceneNo)
+                    .submitted(false).error(error)
+                    .build();
+        }
+    }
 
     @Data
     @Builder

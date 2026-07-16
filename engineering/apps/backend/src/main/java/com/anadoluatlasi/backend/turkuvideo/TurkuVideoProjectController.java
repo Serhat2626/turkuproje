@@ -757,8 +757,11 @@ public class TurkuVideoProjectController {
 
     @PostMapping("/{id}/generate-full-video")
     @Operation(summary = "Tam video pipeline",
-               description = "Tek tıkla: OpenAI hikâye+senaryo+storyboard → DALL-E görseller → TTS ses → FFmpeg video. Zaten hazır olan adımlar atlanır.")
-    public ResponseEntity<ApiResponse<Map<String, Object>>> generateFullVideo(@PathVariable UUID id) {
+               description = "Tek tıkla: hikâye+senaryo+storyboard → görseller → Kling animasyon → TTS ses → FFmpeg video. " +
+                       "Kling paralel çalışır (~5-7 dk). includeKling=false ile kapatılabilir.")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> generateFullVideo(
+            @PathVariable UUID id,
+            @RequestParam(value = "includeKling", defaultValue = "true") boolean includeKling) {
         Map<String, Object> results = new java.util.LinkedHashMap<>();
 
         try {
@@ -875,12 +878,20 @@ public class TurkuVideoProjectController {
             int availableImages = imgSuccess + imgSkipped;
             boolean imagesAvailable = availableImages > 0;
 
-            // ADIM 2.5: Image-to-Video (Kling AI) — GÖRSELLERE BAĞIMLI
-            if (!imagesAvailable) {
+            // ADIM 2.5: Image-to-Video (Kling AI) — PARALEL İŞLEME
+            // Tüm sahneleri Fal.ai'ya AYNI ANDA gönder, sonra hepsini birden bekle
+            // Sıralı: 35 × 5dk = 3 saat → Paralel: ~5-7 dakika
+            if (!includeKling) {
+                results.put("step2_5_video", "⏭️ Kling AI atlandı (varsayılan). ?includeKling=true ile açılabilir");
+            } else if (!imagesAvailable) {
                 log.warn("Kling AI atlanıyor: kullanılabilir görsel yok (0/{} sahne)", storyboard != null && storyboard.getScenes() != null ? storyboard.getScenes().size() : 0);
                 results.put("step2_5_video", "⏭️ Görsel yok — Kling atlandı");
             } else if (falVideoService != null && storyboard != null && storyboard.getScenes() != null) {
-                int vidSuccess = 0, vidFail = 0, vidSkipped = 0;
+                int vidSkipped = 0;
+                java.util.List<FalVideoGenerationService.QueuedJob> klingJobs = new java.util.ArrayList<>();
+
+                // FAZA 1: Tüm sahneleri queue'ya gönder (hızlı — her biri ~1sn)
+                log.info("Kling PARALEL submit başlıyor: {} sahne", storyboard.getScenes().size());
                 for (TurkuStoryboardScene scene : storyboard.getScenes()) {
                     // Video klip zaten varsa atla
                     String videoPath = String.format("turku-video/%s/scenes/%d_video.mp4", id, scene.getSceneNo());
@@ -891,7 +902,7 @@ public class TurkuVideoProjectController {
                         continue;
                     } catch (Exception ignored) {}
 
-                    // Bu sahne için görsel var mı? Yoksa atla (Kling görselsiz çalışamaz)
+                    // Görsel var mı?
                     String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
                     boolean sceneImageExists = false;
                     try {
@@ -901,42 +912,47 @@ public class TurkuVideoProjectController {
                     } catch (Exception ignored) {}
 
                     if (!sceneImageExists) {
-                        vidFail++;
-                        log.debug("Kling atlandı: sahne {} için görsel yok", scene.getSceneNo());
+                        klingJobs.add(FalVideoGenerationService.QueuedJob.failed(id, scene.getSceneNo(), "Görsel yok"));
                         continue;
                     }
 
-                    // Görseli MinIO'dan oku ve base64 data URI'ye çevir
-                    // (Fal.ai/Kling HTTPS URL veya data URI gerektirir, localhost HTTP çalışmaz)
                     try {
+                        // Görseli base64'e çevir (Kling HTTPS veya data URI gerektirir)
                         byte[] imageBytes;
                         try (var stream = minioClient.getObject(io.minio.GetObjectArgs.builder()
-                                .bucket(minioConfig.getBucketName())
-                                .object(imagePath)
-                                .build())) {
+                                .bucket(minioConfig.getBucketName()).object(imagePath).build())) {
                             imageBytes = stream.readAllBytes();
                         }
-                        String base64Image = java.util.Base64.getEncoder().encodeToString(imageBytes);
-                        String imageUrl = "data:image/png;base64," + base64Image;
+                        String imageUrl = "data:image/png;base64," + java.util.Base64.getEncoder().encodeToString(imageBytes);
 
-                        // Hareket prompt'u: sahne mood + görsel açıklama
                         String motionPrompt = "Subtle cinematic motion in scene: " +
                                 scene.getVisualDescription().substring(0, Math.min(150, scene.getVisualDescription().length()));
                         if (scene.getMood() != null) {
                             motionPrompt += ". Mood: " + scene.getMood();
                         }
 
-                        FalVideoGenerationService.VideoGenerationResult vidResult =
-                                falVideoService.generateVideo(id, scene.getSceneNo(), imageUrl, motionPrompt);
-
-                        if (vidResult.isSuccess()) vidSuccess++;
-                        else vidFail++;
+                        // Queue'ya gönder (HEMEN döner)
+                        klingJobs.add(falVideoService.submitToQueue(id, scene.getSceneNo(), imageUrl, motionPrompt));
                     } catch (Exception e) {
-                        vidFail++;
-                        // Hata sayacında zaten izleniyor
+                        klingJobs.add(FalVideoGenerationService.QueuedJob.failed(id, scene.getSceneNo(), e.getMessage()));
                     }
                 }
-                results.put("step2_5_video", "Kling AI: ✅ " + vidSuccess + " video, ⏭️ " + vidSkipped + " mevcut, ❌ " + vidFail + " hata");
+
+                log.info("Kling submit tamamlandı: {} iş gönderildi, {} atlandı",
+                        klingJobs.stream().filter(FalVideoGenerationService.QueuedJob::isSubmitted).count(), vidSkipped);
+
+                // FAZA 2: Tüm işleri PARALEL olarak bekle ve indir
+                if (!klingJobs.isEmpty()) {
+                    java.util.List<FalVideoGenerationService.VideoGenerationResult> vidResults =
+                            falVideoService.pollAndDownloadAll(klingJobs);
+
+                    long vidSuccess = vidResults.stream().filter(FalVideoGenerationService.VideoGenerationResult::isSuccess).count();
+                    long vidFail = vidResults.stream().filter(r -> !r.isSuccess()).count();
+
+                    results.put("step2_5_video", "Kling AI (paralel): ✅ " + vidSuccess + " video, ⏭️ " + vidSkipped + " mevcut, ❌ " + vidFail + " hata");
+                } else {
+                    results.put("step2_5_video", "⏭️ Tüm video klipleri mevcut (" + vidSkipped + " atlandı)");
+                }
             } else if (falVideoService == null) {
                 results.put("step2_5_video", "⏭️ Video hareketlendirme kapalı (ai.video-provider=kling yapın)");
             }
