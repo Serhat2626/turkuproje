@@ -198,7 +198,8 @@ function TurkuVideoWorkflowPage() {
   const [ttsLoading, setTtsLoading] = useState(false)
   const [autoRunning, setAutoRunning] = useState(false)
   const [autoRunProgress, setAutoRunProgress] = useState('')
-  const [videoAssembling, setVideoAssembling] = useState(false)
+  const [activeVideoMode, setActiveVideoMode] = useState<'' | 'preview' | 'full' | 'fullKling' | 'ffmpeg'>('')
+  const videoAssembling = activeVideoMode !== ''
   const [videoReady, setVideoReady] = useState(false)
   const [pipelineSteps, setPipelineSteps] = useState<Record<string, string> | null>(null)
   const [assetList, setAssetList] = useState<any[]>([])
@@ -1053,7 +1054,7 @@ function TurkuVideoWorkflowPage() {
               className="btn btn-primary"
               disabled={videoAssembling}
               onClick={async () => {
-                setVideoAssembling(true)
+                setActiveVideoMode('preview')
                 setVideoReady(false)
                 setAutoRunProgress('⏳ Preview üretiliyor (5 sahne, ~$3)...')
                 try {
@@ -1087,13 +1088,13 @@ function TurkuVideoWorkflowPage() {
                   } catch { /* */ }
                   alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
                 } finally {
-                  setVideoAssembling(false)
+                  setActiveVideoMode('')
                   setAutoRunProgress('')
                 }
               }}
               style={{ background: 'linear-gradient(135deg, #10b981, #3b82f6)', border: 'none', fontSize: '1rem', padding: '10px 24px' }}
             >
-              {videoAssembling ? '⏳ Preview üretiliyor...' : '🎬 Preview Oluştur (5 sahne, ~$3)'}
+              {activeVideoMode === 'preview' ? '⏳ Preview üretiliyor...' : '🎬 Preview Oluştur (5 sahne, ~$3)'}
             </button>
 
             {/* TAM VIDEO BUTONU — Kling'siz */}
@@ -1102,7 +1103,7 @@ function TurkuVideoWorkflowPage() {
               disabled={videoAssembling}
               onClick={async () => {
                 if (!confirm('🎬 Tam video (Kling animasyonsuz) üretilecek.\nGörseller + TTS + FFmpeg (~$5, ~10dk).\nDevam?')) return
-                setVideoAssembling(true)
+                setActiveVideoMode('full')
                 setVideoReady(false)
                 setAutoRunProgress('⏳ Tam video üretiliyor (Kling kapalı)...')
                 try {
@@ -1135,13 +1136,13 @@ function TurkuVideoWorkflowPage() {
                   } catch { /* */ }
                   alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
                 } finally {
-                  setVideoAssembling(false)
+                  setActiveVideoMode('')
                   setAutoRunProgress('')
                 }
               }}
               style={{ background: 'linear-gradient(135deg, #3b82f6, #6366f1)', border: 'none', fontSize: '0.9rem', padding: '8px 18px' }}
             >
-              {videoAssembling ? '⏳ Video üretiliyor...' : '🎬 Tam Video (Kling kapalı, ~$5)'}
+              {activeVideoMode === 'full' ? '⏳ Video üretiliyor...' : '🎬 Tam Video (Kling kapalı, ~$5)'}
             </button>
 
             {/* TAM VIDEO + KLİNG BUTONU */}
@@ -1150,7 +1151,7 @@ function TurkuVideoWorkflowPage() {
               disabled={videoAssembling}
               onClick={async () => {
                 if (!confirm('⚠️ Tam video + Kling animasyonlu ~$15 kredi harcar.\nGörselleri ve sesi kontrol ettiniz mi?\nDevam?')) return
-                setVideoAssembling(true)
+                setActiveVideoMode('fullKling')
                 setVideoReady(false)
                 setAutoRunProgress('⏳ Tam video + Kling üretiliyor (~$15)...')
                 try {
@@ -1174,13 +1175,13 @@ function TurkuVideoWorkflowPage() {
                 } catch (e: any) {
                   alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
                 } finally {
-                  setVideoAssembling(false)
+                  setActiveVideoMode('')
                   setAutoRunProgress('')
                 }
               }}
               style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', border: 'none', fontSize: '0.9rem', padding: '8px 18px' }}
             >
-              {videoAssembling ? '⏳ Video üretiliyor...' : '🚀 Tam Video + Kling (~$15)'}
+              {activeVideoMode === 'fullKling' ? '⏳ Video üretiliyor...' : '🚀 Tam Video + Kling (~$15)'}
             </button>
 
             {/* Sadece FFmpeg butonu */}
@@ -1188,7 +1189,7 @@ function TurkuVideoWorkflowPage() {
               className="btn btn-secondary"
               disabled={videoAssembling}
               onClick={async () => {
-                setVideoAssembling(true)
+                setActiveVideoMode('ffmpeg')
                 setVideoReady(false)
                 try {
                   const res = await turkuApi.assembleVideo(project.id)
@@ -1200,7 +1201,7 @@ function TurkuVideoWorkflowPage() {
                 } catch (e: any) {
                   alert('Video birleştirme hatası: ' + (e.message || 'Bilinmeyen hata'))
                 } finally {
-                  setVideoAssembling(false)
+                  setActiveVideoMode('')
                 }
               }}
               style={{ fontSize: '0.85rem' }}
