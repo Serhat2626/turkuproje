@@ -732,6 +732,7 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    - Genel "güzel manzara" görseli ❌
                    - Aynı sahnenin tekrarı ❌
                    - Karaktersiz boş mekan ❌
+                   - Gitar veya Batı müzik aleti ❌ (SADECE bağlama/saz kullan)
 
                 4. ZORUNLU GÖRSELLER:
                    - Her sahne bir AKSİYON/AN gösterir: yürüme, saz çalma, ağlama,
@@ -741,16 +742,34 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    - Her sahnede FARKLI mekan veya FARKLI an
                    - Yan karakterler (baba, arkadaş, ağa) kendi sahnelerinde görülmeli
 
-                5. GÖRSEL PROMPT ÖRNEKLERİ (bu tarzda yaz):
-                   ✅ "Genç adam tek başına karda yürüyor, sırtında sazı, karşıda sisli dağlar,
-                      akşam güneşi alçak, uzun gölgesi karın üzerinde, yalnızlık hissi"
-                   ✅ "Genç kadın pencerenin önünde oturuyor, elinde yarım örme, dışarıda yağmur,
-                      yüzünde hüzünlü tebessüm, iç mekanda sıcak lamba ışığı"
-                   ✅ "Baba kızına sert bakıyor, avluda, arka planda at arabasına eşya yükleniyor,
-                      dramatik bulutlu gökyüzü, geniş açı"
-                   ❌ "Güzel bir erkek ve kadın yan yana duruyor" ← BU YASAK
+                5. ⚠️ GÖRSEL PROMPT YAZIM KURALLARI (ÇOK ÖNEMLİ):
+                   Görsel prompt'ta karakter FİZİKSEL TANIMI YAZMA!
+                   Saç rengi, sakal, kıyafet detayı, yaş, göz rengi YAZMA!
+                   Bunlar zaten karakter çizelgesinden otomatik eklenecek.
+                   Sadece şunları yaz:
+                   - KARAKTERİN İSMİ (Sümmani, Mihriban vb.)
+                   - AKSİYON (ne yapıyor: walking, playing saz, crying, writing)
+                   - MEKAN (where: village square, mountain path, river bank)
+                   - IŞIK/HAVA (golden sunset, moonlight, misty morning)
+                   - CİNSİYET BELİRT: "man" veya "woman" diye açıkça belirt
 
-                6. HİKÂYE KRONOLOJİSİ:
+                   ✅ DOĞRU: "Sümmani (man) walking alone through snowy mountain path,
+                      carrying a bağlama on his back, misty mountains, low winter sun,
+                      wide establishing shot, deep loneliness"
+                   ✅ DOĞRU: "Sümmani (man) and Mihriban (woman) meeting at the village
+                      fountain, spring flowers blooming, shy first glance, medium shot"
+                   ✅ DOĞRU: "Mihriban (woman) sitting by the window, embroidering,
+                      rain outside, warm oil lamp light inside, melancholic expression"
+                   ❌ YANLIŞ: "Young handsome man with dark curly hair wearing brown vest"
+                   ❌ YANLIŞ: "Beautiful woman with long flowing hair in red dress"
+                   ❌ YANLIŞ: "Two people standing together" (erkek/kadın BELİRT!)
+
+                6. ENSTRÜMAN KURALI:
+                   Müzik aleti = SADECE "bağlama" veya "saz" yaz.
+                   ASLA "guitar", "lute", "oud" yazma.
+                   Bağlama açıklaması: long thin neck, small pear-shaped wooden body.
+
+                7. HİKÂYE KRONOLOJİSİ:
                    Sahne 1-3: Mekan tanıtımı, dönem, köy atmosferi
                    Sahne 4-8: Ana karakterin tanıtımı, günlük yaşam
                    Sahne 9-14: Tanışma, ilk bakış, aşkın doğuşu
@@ -760,22 +779,21 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    Sahne 31-33: Hasret, yalnızlık, türkünün doğuşu
                    Sahne 34-35: Miras, türkünün günümüze ulaşması
 
-                7. SESLENDİRME: Senaryodaki beat'lerin hikâye anlatımını sahnelere dağıt.
+                8. SESLENDİRME: Senaryodaki beat'lerin hikâye anlatımını sahnelere dağıt.
                    Her sahne 40-80 kelime seslendirme. Genel tarihî bilgi DEĞİL,
                    hikâyenin o anını anlat: "O akşam sazını eline aldığında..."
 
                 ### Sahne [N]
                 **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
+                **Karakterler:** [Bu sahnede kimler var? İsim + cinsiyet belirt:
+                "Sümmani (erkek)" veya "Sümmani (erkek) ve Mihriban (kadın)"]
                 **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek metin — 40-80 kelime.
                 Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
-                **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin direkt AI image prompt olacak,
-                Fal.ai modeli Türkçe anlamıyor!
-                Şu formatı kullan: "[Karakter] is [doing action] in [location].
-                [Lighting/weather]. [Camera angle]. [Emotional detail]."
-                Örnek: "Young man walking alone through snowy mountain path,
-                carrying a saz on his back, long shadows on snow,
-                low winter sun, wide establishing shot, deep loneliness"
-                ASLA iki kişi yan yana portre YAZMA. Her sahne bir AN/AKSİYON göstermeli.]
+                **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin direkt AI image prompt olacak.
+                SADECE AKSİYON + MEKAN + IŞIK + KAMERA yaz.
+                Karakter fiziksel tanımı YAZMA (otomatik eklenecek).
+                Karakter isimlerini ve cinsiyetini (man/woman) belirt.
+                Müzik aleti = SADECE "bağlama" yaz, ASLA "guitar" yazma.]
                 **Mood:** [Duygusal atmosfer]
                 **Kamera:** [Kamera açısı — her sahnede DEĞİŞTİR]
                 **Geçiş:** [Sonraki sahneye geçiş efekti]

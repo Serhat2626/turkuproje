@@ -1582,8 +1582,9 @@ public class TurkuVideoProjectController {
     private String buildCharacterDescription(TurkuVideoProject project) {
         StringBuilder chars = new StringBuilder();
 
-        chars.append("CRITICAL CHARACTER SHEET — USE EXACT SAME APPEARANCE IN EVERY SCENE. ");
-        chars.append("DO NOT change age, face, hair, clothes between scenes. ");
+        chars.append("FIXED CHARACTER SHEET — EVERY SCENE MUST USE THESE EXACT PHYSICAL TRAITS. ");
+        chars.append("NEVER change hair, face, age, beard, clothing between scenes. ");
+        chars.append("Male character = ALWAYS male appearance. Female character = ALWAYS female appearance. ");
 
         // GPT-üretimi karakter çizelgesi varsa DOĞRUDAN kullan (en iyi seçenek)
         if (project.getStoryPackage() != null
@@ -1597,17 +1598,24 @@ public class TurkuVideoProjectController {
 
         } else {
             // Fallback: GPT karakter çizelgesi üretmemişse genel tanım
-            chars.append("Main male character: YOUNG Anatolian man, age 25-30, dark hair, ")
-                 .append("short beard or clean-shaven, brown eyes, handsome. ")
-                 .append("Simple 19th century village clothes: white gömlek, dark yelek, şalvar. ")
-                 .append("NO turban, NO gray hair, NOT elderly. ")
-                 .append("Main female character: YOUNG Anatolian woman, age 20-25, ")
-                 .append("long dark hair, beautiful, traditional colorful village dress (entari). ");
+            chars.append("MAIN MALE CHARACTER (Aşık Sümmani): Turkish man, age 25, ")
+                 .append("short dark wavy hair at collar length, light stubble beard, deep brown eyes, ")
+                 .append("wheat-colored skin, strong jawline, athletic build. ")
+                 .append("ALWAYS wears: dark brown wool vest over cream linen shirt, charcoal şalvar, ")
+                 .append("red woven sash at waist, worn leather çarık boots. ")
+                 .append("ALWAYS carries a bağlama (Turkish saz) on his back or in hands. ")
+                 .append("MAIN FEMALE CHARACTER (Mihriban): Turkish woman, age 20, ")
+                 .append("long dark braided hair past waist, olive skin, almond-shaped dark eyes, ")
+                 .append("delicate face, slender build. ")
+                 .append("ALWAYS wears: deep burgundy embroidered entari dress, ")
+                 .append("cream yemeni headscarf loosely draped, silver coin necklace, thin gold bangles. ");
         }
 
         // Genel yasaklar (her zaman ekle)
-        chars.append("FORBIDDEN: turban, sarık, Arabic/Middle-Eastern clothing, ")
-             .append("medieval armor, weapons, modern clothing, text, watermark. ");
+        chars.append("GENDER RULE: When scene has a man and woman together, ")
+             .append("one MUST clearly be male and the other MUST clearly be female. ")
+             .append("FORBIDDEN: turban, sarık, Arabic/Middle-Eastern clothing, ")
+             .append("medieval armor, weapons, modern clothing, guitar, Western instruments. ");
 
         return chars.toString();
     }
