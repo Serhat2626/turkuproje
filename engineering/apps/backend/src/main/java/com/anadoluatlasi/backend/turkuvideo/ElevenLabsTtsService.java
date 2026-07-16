@@ -77,6 +77,14 @@ public class ElevenLabsTtsService {
      * TurkuTtsService ile aynı interface — pipeline'dan şeffaf çağrılır.
      */
     public TurkuTtsService.TurkuTtsResponse generateForProject(UUID projectId) {
+        return generateForProject(projectId, Integer.MAX_VALUE);
+    }
+
+    /**
+     * Proje için TTS ses üretir.
+     * @param maxSceneNo Sadece bu sahne numarasına kadar olan sahneleri üretir (preview modu için)
+     */
+    public TurkuTtsService.TurkuTtsResponse generateForProject(UUID projectId, int maxSceneNo) {
         TurkuVideoProject project = repository.findById(projectId)
                 .orElseThrow(() -> new RuntimeException("Proje bulunamadı: " + projectId));
 
@@ -90,6 +98,9 @@ public class ElevenLabsTtsService {
         int failureCount = 0;
 
         for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+            // Preview modu: sadece maxSceneNo'ya kadar olan sahneleri üret
+            if (scene.getSceneNo() > maxSceneNo) continue;
+
             String narration = scene.getNarrationSummary();
             if (narration == null || narration.isBlank()) {
                 log.warn("Sahne {} için narration boş, atlanıyor", scene.getSceneNo());

@@ -33,6 +33,18 @@ public class AiGenerationLog extends BaseEntity {
     @JoinColumn(name = "prompt_template_id")
     private PromptTemplate promptTemplate;
 
+    // TürküVideo proje ilişkisi (nullable — eski kayıtlarla uyumluluk)
+    @Column(name = "turku_project_id")
+    private java.util.UUID turkuProjectId;
+
+    // Pipeline adım adı: image_generation, kling_video, tts, content_generation
+    @Column(name = "step_name", length = 50)
+    private String stepName;
+
+    // Hangi sahne için (nullable — content_generation gibi sahne-bağımsız adımlar)
+    @Column(name = "scene_no")
+    private Integer sceneNo;
+
     @Column(name = "provider", nullable = false, length = 100)
     private String provider;
 
@@ -47,6 +59,13 @@ public class AiGenerationLog extends BaseEntity {
 
     @Column(name = "cost", precision = 12, scale = 6)
     private BigDecimal cost;
+
+    // Birim bilgisi (megapixels, seconds, characters)
+    @Column(name = "input_units", precision = 12, scale = 4)
+    private BigDecimal inputUnits;
+
+    @Column(name = "unit_type", length = 30)
+    private String unitType;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 50)

@@ -271,17 +271,20 @@ export function getVideoUrl(id: string): string {
 
 export function generateFullVideo(
   id: string,
-  options?: { includeKling?: boolean }
+  options?: { previewMode?: boolean; includeKling?: boolean }
 ): Promise<ApiResponse<any>> {
   const params = new URLSearchParams()
-  // Backend varsayılan: includeKling=true (paralel Kling ~5-7dk)
-  // Sadece kapatmak istendiğinde gönder
+  // Backend varsayılan: previewMode=true (ilk 5 sahne, ~$3)
+  // Tam video için previewMode=false gönder
+  if (options?.previewMode === false) params.set('previewMode', 'false')
+  // Backend varsayılan: includeKling=true (paralel Kling)
   if (options?.includeKling === false) params.set('includeKling', 'false')
   const qs = params.toString() ? `?${params.toString()}` : ''
-  // Paralel Kling: ~20dk max (görseller + Kling + TTS + FFmpeg)
+  // Preview: ~5dk, Tam video: ~20dk
+  const timeoutMs = options?.previewMode === false ? 20 * 60 * 1000 : 8 * 60 * 1000
   return request<any>(`${BASE}/${id}/generate-full-video${qs}`, {
     method: 'POST',
-    timeoutMs: 20 * 60 * 1000,
+    timeoutMs,
   })
 }
 
@@ -293,6 +296,45 @@ export function generateAllImages(
     method: 'POST',
     timeoutMs: 10 * 60 * 1000,
   })
+}
+
+// ── MinIO Asset Management ──
+
+export function listAssets(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/assets`)
+}
+
+export function deleteAssets(
+  id: string,
+  type: 'all' | 'images' | 'videos' | 'audio' = 'all',
+  sceneNos?: number[]
+): Promise<ApiResponse<any>> {
+  const params = new URLSearchParams()
+  params.set('type', type)
+  if (sceneNos && sceneNos.length > 0) {
+    sceneNos.forEach(n => params.append('sceneNos', n.toString()))
+  }
+  return request<any>(`${BASE}/${id}/assets?${params.toString()}`, {
+    method: 'DELETE',
+  })
+}
+
+export function getAssetPreviewUrl(
+  id: string,
+  type: 'image' | 'video' | 'audio',
+  sceneNo: number
+): string {
+  return `/api/admin/turku-video-projects/${id}/assets/preview/${type}/${sceneNo}`
+}
+
+// ── Cost Tracking ──
+
+export function getProjectCosts(
+  id: string
+): Promise<ApiResponse<any>> {
+  return request<any>(`${BASE}/${id}/costs`)
 }
 
 // ── Music Upload ──

@@ -395,20 +395,22 @@ function TurkuVideoWorkflowPage() {
       }
 
       // ── ADIM 3: Görseller + TTS Ses + FFmpeg Video ──
-      setAutoRunProgress('⏳ 3/3: Görseller + TTS ses + FFmpeg video üretiliyor... (bu adım uzun sürebilir)')
-      setActiveAction('Tam Video Pipeline')
+      setAutoRunProgress('⏳ 3/3: Preview üretiliyor (5 sahne, görseller + TTS + FFmpeg)...')
+      setActiveAction('Preview Pipeline')
       setPipelineSteps(null)
       let pipelineResult: any = null
       try {
-        const fullRes = await turkuApi.generateFullVideo(currentId)
+        const fullRes = await turkuApi.generateFullVideo(currentId, { previewMode: true })
         pipelineResult = fullRes.data
 
         // Adım sonuçlarını çıkar ve göster
         if (pipelineResult) {
           const steps: Record<string, string> = {}
+          if (pipelineResult.mode) steps['📋 Mod'] = pipelineResult.mode
           if (pipelineResult.step1_content) steps['📝 İçerik (Hikâye+Senaryo+Storyboard)'] = pipelineResult.step1_content
           if (pipelineResult.step2_images) steps['🎨 Görseller'] = pipelineResult.step2_images
           if (pipelineResult.step2_5_video) steps['🎬 Video Klip (Kling AI)'] = pipelineResult.step2_5_video
+          if (pipelineResult.step2_5_cost) steps['💰 Kling Maliyeti'] = pipelineResult.step2_5_cost
           if (pipelineResult.step3_tts) steps['🎙️ Seslendirme (TTS)'] = pipelineResult.step3_tts
           if (pipelineResult.step4_video) steps['🎞️ FFmpeg Video Birleştirme'] = pipelineResult.step4_video
           setPipelineSteps(steps)
@@ -1043,38 +1045,39 @@ function TurkuVideoWorkflowPage() {
           </h2>
 
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center', marginBottom: '16px', flexWrap: 'wrap' }}>
-            {/* TAM PIPELINE BUTONU */}
+            {/* PREVIEW BUTONU — varsayılan, ucuz, hızlı */}
             <button
               className="btn btn-primary"
               disabled={videoAssembling}
               onClick={async () => {
                 setVideoAssembling(true)
                 setVideoReady(false)
-                setAutoRunProgress('⏳ Tam video pipeline başlatılıyor...')
+                setAutoRunProgress('⏳ Preview üretiliyor (5 sahne, ~$3)...')
                 try {
-                  const res = await turkuApi.generateFullVideo(project.id)
+                  const res = await turkuApi.generateFullVideo(project.id, { previewMode: true })
                   if (res.data?.success || res.data?.videoUrl) {
                     setVideoReady(true)
                     const steps = [
+                      res.data.mode ? `📋 ${res.data.mode}` : '',
                       `📜 İçerik: ${res.data.step1_content}`,
                       `🖼️ Görseller: ${res.data.step2_images}`,
                       res.data.step2_5_video ? `🎥 Kling: ${res.data.step2_5_video}` : '',
+                      res.data.step2_5_cost ? `💰 Kling maliyeti: ${res.data.step2_5_cost}` : '',
                       `🎙️ Ses: ${res.data.step3_tts}`,
                       `🎬 Video: ${res.data.step4_video}`,
                     ].filter(Boolean).join('\n')
-                    alert(`🎬 Video hazır!\n\n${steps}`)
+                    alert(`🎬 Preview hazır!\n\n${steps}\n\nBeğendiyseniz "Tam Video" ile devam edin.`)
                     await refreshProject(project.id)
                   } else {
                     alert('Pipeline hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
                   }
                 } catch (e: any) {
-                  // Timeout olsa bile video oluşmuş olabilir
                   try {
                     const videoUrl = turkuApi.getVideoUrl(project.id)
                     const checkRes = await fetch(videoUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } })
                     if (checkRes.ok || checkRes.status === 206) {
                       setVideoReady(true)
-                      alert('🎬 Video hazır! (Pipeline yanıt zaman aşımına uğradı ama video oluşturuldu)')
+                      alert('🎬 Preview hazır! (timeout ama video oluştu)')
                       await refreshProject(project.id)
                       return
                     }
@@ -1085,9 +1088,58 @@ function TurkuVideoWorkflowPage() {
                   setAutoRunProgress('')
                 }
               }}
-              style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444, #8b5cf6)', border: 'none', fontSize: '1rem', padding: '10px 24px' }}
+              style={{ background: 'linear-gradient(135deg, #10b981, #3b82f6)', border: 'none', fontSize: '1rem', padding: '10px 24px' }}
             >
-              {videoAssembling ? '⏳ Video üretiliyor (GPT-4o → DALL-E → TTS → FFmpeg)...' : '🚀 Tam Video Üret'}
+              {videoAssembling ? '⏳ Preview üretiliyor...' : '🎬 Preview Oluştur (5 sahne, ~$3)'}
+            </button>
+
+            {/* TAM VIDEO BUTONU */}
+            <button
+              className="btn btn-primary"
+              disabled={videoAssembling}
+              onClick={async () => {
+                if (!confirm('⚠️ Tam video ~$15 kredi harcar ve ~20dk sürer.\nPreview\'ı beğendiniz mi? Devam etmek istiyor musunuz?')) return
+                setVideoAssembling(true)
+                setVideoReady(false)
+                setAutoRunProgress('⏳ Tam video üretiliyor (tüm sahneler, ~$15)...')
+                try {
+                  const res = await turkuApi.generateFullVideo(project.id, { previewMode: false })
+                  if (res.data?.success || res.data?.videoUrl) {
+                    setVideoReady(true)
+                    const steps = [
+                      res.data.mode ? `📋 ${res.data.mode}` : '',
+                      `📜 İçerik: ${res.data.step1_content}`,
+                      `🖼️ Görseller: ${res.data.step2_images}`,
+                      res.data.step2_5_video ? `🎥 Kling: ${res.data.step2_5_video}` : '',
+                      res.data.step2_5_cost ? `💰 Kling maliyeti: ${res.data.step2_5_cost}` : '',
+                      `🎙️ Ses: ${res.data.step3_tts}`,
+                      `🎬 Video: ${res.data.step4_video}`,
+                    ].filter(Boolean).join('\n')
+                    alert(`🎬 Tam video hazır!\n\n${steps}`)
+                    await refreshProject(project.id)
+                  } else {
+                    alert('Pipeline hatası: ' + (res.data?.error || 'Bilinmeyen hata'))
+                  }
+                } catch (e: any) {
+                  try {
+                    const videoUrl = turkuApi.getVideoUrl(project.id)
+                    const checkRes = await fetch(videoUrl, { method: 'GET', headers: { Range: 'bytes=0-0' } })
+                    if (checkRes.ok || checkRes.status === 206) {
+                      setVideoReady(true)
+                      alert('🎬 Video hazır! (timeout ama video oluştu)')
+                      await refreshProject(project.id)
+                      return
+                    }
+                  } catch { /* */ }
+                  alert('Pipeline hatası: ' + (e.message || 'Bilinmeyen hata'))
+                } finally {
+                  setVideoAssembling(false)
+                  setAutoRunProgress('')
+                }
+              }}
+              style={{ background: 'linear-gradient(135deg, #f59e0b, #ef4444)', border: 'none', fontSize: '0.9rem', padding: '8px 18px' }}
+            >
+              {videoAssembling ? '⏳ Video üretiliyor...' : '🚀 Tam Video Üret (~$15)'}
             </button>
 
             {/* Sadece FFmpeg butonu */}

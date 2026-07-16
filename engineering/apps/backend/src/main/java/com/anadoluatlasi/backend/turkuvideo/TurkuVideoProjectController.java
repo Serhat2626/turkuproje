@@ -12,6 +12,9 @@ import com.anadoluatlasi.backend.review.AdminActorResolver;
 import com.anadoluatlasi.backend.review.ResolvedAdminActor;
 import com.anadoluatlasi.backend.review.ReviewActorRole;
 import io.minio.GetObjectArgs;
+import io.minio.ListObjectsArgs;
+import io.minio.RemoveObjectArgs;
+import io.minio.Result;
 import io.minio.MinioClient;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -20,6 +23,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -78,6 +82,9 @@ public class TurkuVideoProjectController {
 
     @Autowired(required = false)
     private FalVideoGenerationService falVideoService;
+
+    @Autowired
+    private com.anadoluatlasi.backend.ai.repository.AiGenerationLogRepository aiLogRepository;
 
     private final TurkuVideoAssemblyService videoAssemblyService;
 
@@ -756,11 +763,12 @@ public class TurkuVideoProjectController {
     // ── Full Pipeline: Content → Images → TTS → Video ──
 
     @PostMapping("/{id}/generate-full-video")
-    @Operation(summary = "Tam video pipeline",
-               description = "Tek tıkla: hikâye+senaryo+storyboard → görseller → Kling animasyon → TTS ses → FFmpeg video. " +
-                       "Kling paralel çalışır (~5-7 dk). includeKling=false ile kapatılabilir.")
+    @Operation(summary = "Video pipeline (preview veya tam)",
+               description = "previewMode=true (varsayılan): sadece ilk 5 sahne işlenir (~$3). " +
+                       "previewMode=false: tüm sahneler (~$15). Kling paralel çalışır.")
     public ResponseEntity<ApiResponse<Map<String, Object>>> generateFullVideo(
             @PathVariable UUID id,
+            @RequestParam(value = "previewMode", defaultValue = "true") boolean previewMode,
             @RequestParam(value = "includeKling", defaultValue = "true") boolean includeKling) {
         Map<String, Object> results = new java.util.LinkedHashMap<>();
 
@@ -806,11 +814,25 @@ public class TurkuVideoProjectController {
             characterDesc = buildCharacterDescription(project);
 
             int imgSuccess = 0, imgFail = 0, imgSkipped = 0;
+            // Preview modu: sadece ilk 5 sahne işlenir (Kling/TTS/FFmpeg dahil)
+            int previewLimit = previewMode ? 5 : (storyboard != null && storyboard.getScenes() != null ? storyboard.getScenes().size() : 0);
+            java.util.List<TurkuStoryboardScene> scenesToProcess = (storyboard != null && storyboard.getScenes() != null)
+                    ? storyboard.getScenes().stream().filter(s -> s.getSceneNo() <= previewLimit).toList()
+                    : java.util.List.of();
+
             if (storyboard != null && storyboard.getScenes() != null) {
                 int totalScenes = storyboard.getScenes().size();
                 String previousVisual = null;
 
-                for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                if (previewMode) {
+                    results.put("mode", "🎬 PREVIEW (ilk " + previewLimit + " sahne / " + totalScenes + " toplam)");
+                    log.info("PREVIEW MODU: ilk {} sahne işlenecek (toplam {})", previewLimit, totalScenes);
+                } else {
+                    results.put("mode", "🎬 TAM VİDEO (" + totalScenes + " sahne)");
+                    log.info("TAM VİDEO MODU: {} sahne işlenecek", totalScenes);
+                }
+
+                for (TurkuStoryboardScene scene : scenesToProcess) {
                     String imagePath = String.format("turku-video/%s/scenes/%d.png", id, scene.getSceneNo());
                     // MinIO'da zaten varsa atla
                     boolean exists = false;
@@ -847,15 +869,28 @@ public class TurkuVideoProjectController {
                         if (falImageService != null) {
                             TurkuImageGenerationResult result = falImageService.generateImage(imgReq,
                                     TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
-                            if (result.isSuccess()) imgSuccess++;
-                            else {
+                            if (result.isSuccess()) {
+                                imgSuccess++;
+                                logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", "flux-pro-v1.1",
+                                        new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
+                                        com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.COMPLETED,
+                                        "Sahne " + scene.getSceneNo() + " görseli");
+                            } else {
                                 imgFail++;
+                                logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", "flux-pro-v1.1",
+                                        new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
+                                        com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.FAILED,
+                                        "Hata: " + result.getSafeErrorCode());
                                 log.error("Görsel üretim hatası: sahne={}, errorCode={}", scene.getSceneNo(), result.getSafeErrorCode());
                             }
                         } else if (providerDraftService.getGateway() instanceof OpenAiTurkuGenerationProviderGateway openAiGateway) {
                             openAiGateway.generateImage(imgReq,
                             TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
                             imgSuccess++;
+                            logAiCost(id, "image_generation", scene.getSceneNo(), "openai", "gpt-image-1",
+                                    new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
+                                    com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.COMPLETED,
+                                    "Sahne " + scene.getSceneNo() + " görseli (OpenAI)");
                         }
 
                         // Önceki sahne görselini güncelle (sonraki sahne için)
@@ -899,28 +934,37 @@ public class TurkuVideoProjectController {
                 java.util.List<FalVideoGenerationService.QueuedJob> klingJobs = new java.util.ArrayList<>();
 
                 // ═══ HERO SAHNE SEÇİMİ ═══
-                // Hero sahneler: ilk sahne (hook), son sahne (kapanış),
-                // her 5. sahne (ritim), ve duygusal zirve sahneleri
                 int totalSceneCount = storyboard.getScenes().size();
                 java.util.Set<Integer> heroScenes = new java.util.HashSet<>();
-                heroScenes.add(1);  // Hook/açılış
-                heroScenes.add(totalSceneCount);  // Kapanış
-                // Her 5. sahne (ritim noktaları)
-                for (int s = 5; s < totalSceneCount; s += 5) heroScenes.add(s);
-                // Duygusal zirve sahneleri (mood analizi)
-                for (TurkuStoryboardScene sc : storyboard.getScenes()) {
-                    String m = sc.getMood() != null ? sc.getMood().toLowerCase() : "";
-                    if (m.contains("climax") || m.contains("emotional") || m.contains("dramatic")
-                            || m.contains("intense") || m.contains("peak") || m.contains("doruk")
-                            || m.contains("hüzün") || m.contains("aşk") || m.contains("kavuşma")) {
-                        heroScenes.add(sc.getSceneNo());
+
+                if (previewMode) {
+                    // Preview: sadece sahne 1 ve son preview sahnesi (max 2 Kling = ~$2.80)
+                    heroScenes.add(1);
+                    heroScenes.add(Math.min(5, totalSceneCount));
+                    log.info("Kling PREVIEW: sadece sahne {} (max 2 animasyon, ~$2.80)", heroScenes);
+                } else {
+                    // Tam video: ilk, son, her 5., duygusal doruklar
+                    heroScenes.add(1);
+                    heroScenes.add(totalSceneCount);
+                    for (int s = 5; s < totalSceneCount; s += 5) heroScenes.add(s);
+                    for (TurkuStoryboardScene sc : storyboard.getScenes()) {
+                        String m = sc.getMood() != null ? sc.getMood().toLowerCase() : "";
+                        if (m.contains("climax") || m.contains("emotional") || m.contains("dramatic")
+                                || m.contains("intense") || m.contains("peak") || m.contains("doruk")
+                                || m.contains("hüzün") || m.contains("aşk") || m.contains("kavuşma")) {
+                            heroScenes.add(sc.getSceneNo());
+                        }
                     }
+                    log.info("Kling TAM: {} hero sahne / {} toplam (tahmini maliyet: ~${})",
+                            heroScenes.size(), totalSceneCount, String.format("%.2f", heroScenes.size() * 1.40));
                 }
 
-                log.info("Kling hero sahneler: {} / {} (tahmini maliyet: ~${})",
-                        heroScenes.size(), totalSceneCount, String.format("%.2f", heroScenes.size() * 1.40));
+                // Preview modunda sadece preview sahnelerini işle
+                java.util.List<TurkuStoryboardScene> klingScenesToProcess = previewMode
+                        ? scenesToProcess
+                        : storyboard.getScenes();
 
-                for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                for (TurkuStoryboardScene scene : klingScenesToProcess) {
                     // Hero sahne değilse → Ken Burns (ücretsiz)
                     if (!heroScenes.contains(scene.getSceneNo())) {
                         vidKenBurns++;
@@ -999,8 +1043,13 @@ public class TurkuVideoProjectController {
             String ttsLabel = elevenLabsTtsService != null ? "ElevenLabs" : "OpenAI";
             if (hasTtsProvider) {
                 if (storyboard != null && storyboard.getScenes() != null) {
+                    // Preview modunda sadece preview sahnelerinin sesini kontrol et
+                    java.util.List<TurkuStoryboardScene> ttsScenes = previewMode
+                            ? scenesToProcess
+                            : storyboard.getScenes();
+
                     boolean allAudioExists = true;
-                    for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                    for (TurkuStoryboardScene scene : ttsScenes) {
                         String audioPath = String.format("turku-video/%s/audio/%d.mp3", id, scene.getSceneNo());
                         try {
                             minioClient.statObject(io.minio.StatObjectArgs.builder()
@@ -1015,9 +1064,10 @@ public class TurkuVideoProjectController {
                         results.put("step3_tts", "⏭️ Tüm ses dosyaları mevcut (atlandı)");
                     } else {
                         // ElevenLabs varsa onu kullan, yoksa OpenAI
+                        // Preview modunda sadece previewLimit kadar sahne üretilir
                         TurkuTtsService.TurkuTtsResponse ttsResult;
                         if (elevenLabsTtsService != null) {
-                            ttsResult = elevenLabsTtsService.generateForProject(id);
+                            ttsResult = elevenLabsTtsService.generateForProject(id, previewLimit);
                         } else {
                             ttsResult = ttsService.generateForProject(id);
                         }
@@ -1228,6 +1278,193 @@ public class TurkuVideoProjectController {
         return ResponseEntity.ok(ApiResponse.success(status));
     }
 
+    // ── MinIO Asset Management ──
+
+    @GetMapping("/{id}/assets")
+    @Operation(summary = "Proje varlıklarını listele",
+               description = "MinIO'daki tüm proje varlıklarını kategorize ederek döndürür.")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> listAssets(@PathVariable UUID id) {
+        String prefix = String.format("turku-video/%s/", id);
+        java.util.List<Map<String, Object>> images = new java.util.ArrayList<>();
+        java.util.List<Map<String, Object>> videos = new java.util.ArrayList<>();
+        java.util.List<Map<String, Object>> audio = new java.util.ArrayList<>();
+        long totalSize = 0;
+
+        try {
+            var results = minioClient.listObjects(ListObjectsArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .prefix(prefix)
+                    .recursive(true)
+                    .build());
+
+            for (Result<io.minio.messages.Item> result : results) {
+                io.minio.messages.Item item = result.get();
+                String objectName = item.objectName();
+                long size = item.size();
+                totalSize += size;
+
+                // Sahne numarasını çıkar
+                Integer sceneNo = extractSceneNo(objectName);
+
+                Map<String, Object> assetInfo = new java.util.LinkedHashMap<>();
+                assetInfo.put("path", objectName);
+                assetInfo.put("size", size);
+                assetInfo.put("sizeHuman", humanReadableSize(size));
+                if (sceneNo != null) assetInfo.put("sceneNo", sceneNo);
+                assetInfo.put("lastModified", item.lastModified() != null ? item.lastModified().toString() : null);
+
+                if (objectName.endsWith(".png") || objectName.endsWith(".jpg") || objectName.endsWith(".jpeg")) {
+                    images.add(assetInfo);
+                } else if (objectName.endsWith(".mp4")) {
+                    videos.add(assetInfo);
+                } else if (objectName.endsWith(".mp3") || objectName.endsWith(".wav")) {
+                    audio.add(assetInfo);
+                }
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("MinIO listeleme hatası: " + e.getMessage()));
+        }
+
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("projectId", id);
+        response.put("totalAssets", images.size() + videos.size() + audio.size());
+        response.put("totalSize", totalSize);
+        response.put("totalSizeHuman", humanReadableSize(totalSize));
+        response.put("images", Map.of("count", images.size(), "items", images));
+        response.put("videos", Map.of("count", videos.size(), "items", videos));
+        response.put("audio", Map.of("count", audio.size(), "items", audio));
+
+        return ResponseEntity.ok(ApiResponse.success(response));
+    }
+
+    @DeleteMapping("/{id}/assets")
+    @Operation(summary = "Proje varlıklarını sil",
+               description = "Belirtilen tipteki varlıkları siler. type: all/images/videos/audio. sceneNos ile filtrelenebilir.")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> deleteAssets(
+            @PathVariable UUID id,
+            @RequestParam(defaultValue = "all") String type,
+            @RequestParam(required = false) List<Integer> sceneNos) {
+
+        String prefix = String.format("turku-video/%s/", id);
+        java.util.List<String> deleted = new java.util.ArrayList<>();
+        java.util.List<String> errors = new java.util.ArrayList<>();
+
+        try {
+            var results = minioClient.listObjects(ListObjectsArgs.builder()
+                    .bucket(minioConfig.getBucketName())
+                    .prefix(prefix)
+                    .recursive(true)
+                    .build());
+
+            for (Result<io.minio.messages.Item> result : results) {
+                io.minio.messages.Item item = result.get();
+                String objectName = item.objectName();
+
+                // Tip filtreleme
+                boolean matches = switch (type.toLowerCase()) {
+                    case "all" -> true;
+                    case "images" -> objectName.endsWith(".png") || objectName.endsWith(".jpg") || objectName.endsWith(".jpeg");
+                    case "videos" -> objectName.endsWith(".mp4");
+                    case "audio" -> objectName.endsWith(".mp3") || objectName.endsWith(".wav");
+                    default -> false;
+                };
+
+                if (!matches) continue;
+
+                // Sahne numarası filtreleme
+                if (sceneNos != null && !sceneNos.isEmpty()) {
+                    Integer sceneNo = extractSceneNo(objectName);
+                    if (sceneNo == null || !sceneNos.contains(sceneNo)) continue;
+                }
+
+                try {
+                    minioClient.removeObject(RemoveObjectArgs.builder()
+                            .bucket(minioConfig.getBucketName())
+                            .object(objectName)
+                            .build());
+                    deleted.add(objectName);
+                } catch (Exception e) {
+                    errors.add(objectName + ": " + e.getMessage());
+                }
+            }
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body(ApiResponse.error("MinIO silme hatası: " + e.getMessage()));
+        }
+
+        Map<String, Object> response = new java.util.LinkedHashMap<>();
+        response.put("projectId", id);
+        response.put("deletedCount", deleted.size());
+        response.put("deletedFiles", deleted);
+        if (!errors.isEmpty()) response.put("errors", errors);
+
+        return ResponseEntity.ok(ApiResponse.success(response,
+                deleted.size() + " varlık silindi"));
+    }
+
+    @GetMapping("/{id}/assets/preview/{type}/{sceneNo}")
+    @Operation(summary = "Varlık önizleme/stream",
+               description = "MinIO'dan varlığı doğru Content-Type ile stream eder. type: image/video/audio")
+    public ResponseEntity<byte[]> previewAsset(
+            @PathVariable UUID id,
+            @PathVariable String type,
+            @PathVariable int sceneNo) {
+
+        String path;
+        MediaType contentType;
+
+        switch (type.toLowerCase()) {
+            case "image" -> {
+                path = String.format("turku-video/%s/scenes/%d.png", id, sceneNo);
+                contentType = MediaType.IMAGE_PNG;
+            }
+            case "video" -> {
+                path = String.format("turku-video/%s/scenes/%d_video.mp4", id, sceneNo);
+                contentType = MediaType.parseMediaType("video/mp4");
+            }
+            case "audio" -> {
+                path = String.format("turku-video/%s/audio/%d.mp3", id, sceneNo);
+                contentType = MediaType.parseMediaType("audio/mpeg");
+            }
+            default -> {
+                return ResponseEntity.badRequest().build();
+            }
+        }
+
+        try (var stream = minioClient.getObject(GetObjectArgs.builder()
+                .bucket(minioConfig.getBucketName()).object(path).build())) {
+            byte[] bytes = stream.readAllBytes();
+            return ResponseEntity.ok()
+                    .contentType(contentType)
+                    .contentLength(bytes.length)
+                    .body(bytes);
+        } catch (Exception e) {
+            return ResponseEntity.notFound().build();
+        }
+    }
+
+    private Integer extractSceneNo(String objectName) {
+        // turku-video/{id}/scenes/3.png → 3
+        // turku-video/{id}/scenes/3_video.mp4 → 3
+        // turku-video/{id}/audio/3.mp3 → 3
+        try {
+            String fileName = objectName.substring(objectName.lastIndexOf('/') + 1);
+            String baseName = fileName.split("\\.")[0]; // "3" or "3_video"
+            String numPart = baseName.split("_")[0]; // "3"
+            return Integer.parseInt(numPart);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String humanReadableSize(long bytes) {
+        if (bytes < 1024) return bytes + " B";
+        if (bytes < 1024 * 1024) return String.format("%.1f KB", bytes / 1024.0);
+        if (bytes < 1024 * 1024 * 1024) return String.format("%.1f MB", bytes / (1024.0 * 1024));
+        return String.format("%.2f GB", bytes / (1024.0 * 1024 * 1024));
+    }
+
     private boolean checkMinioExists(String path) {
         try {
             minioClient.statObject(io.minio.StatObjectArgs.builder()
@@ -1266,6 +1503,74 @@ public class TurkuVideoProjectController {
     }
 
     // ── Karakter Tanımı Builder ──────────────────────────────────────────
+
+    // ── Cost Tracking ──
+
+    @GetMapping("/{id}/costs")
+    @Operation(summary = "Proje maliyet analizi", description = "Bu proje için tüm AI çağrı maliyetlerini döner")
+    public ResponseEntity<ApiResponse<Map<String, Object>>> getProjectCosts(@PathVariable UUID id) {
+        bootstrapService.getById(id);
+
+        Map<String, Object> costData = new java.util.LinkedHashMap<>();
+        java.math.BigDecimal totalCost = aiLogRepository.sumCostByTurkuProjectId(id);
+        costData.put("totalCost", totalCost);
+
+        java.util.List<Object[]> breakdown = aiLogRepository.costBreakdownByTurkuProjectId(id);
+        java.util.List<Map<String, Object>> breakdownList = new java.util.ArrayList<>();
+        for (Object[] row : breakdown) {
+            Map<String, Object> step = new java.util.LinkedHashMap<>();
+            step.put("step", row[0]);
+            step.put("count", row[1]);
+            step.put("cost", row[2]);
+            breakdownList.add(step);
+        }
+        costData.put("breakdown", breakdownList);
+
+        java.util.List<com.anadoluatlasi.backend.ai.entity.AiGenerationLog> logs =
+                aiLogRepository.findByTurkuProjectIdOrderByCreatedAtDesc(id);
+        java.util.List<Map<String, Object>> logList = new java.util.ArrayList<>();
+        for (var logEntry : logs.stream().limit(50).toList()) {
+            Map<String, Object> entry = new java.util.LinkedHashMap<>();
+            entry.put("step", logEntry.getStepName());
+            entry.put("sceneNo", logEntry.getSceneNo());
+            entry.put("model", logEntry.getModel());
+            entry.put("cost", logEntry.getCost());
+            entry.put("status", logEntry.getStatus());
+            entry.put("createdAt", logEntry.getCreatedAt());
+            logList.add(entry);
+        }
+        costData.put("logs", logList);
+
+        return ResponseEntity.ok(ApiResponse.success(costData));
+    }
+
+    /**
+     * AI maliyet logunu DB'ye kaydeder.
+     */
+    private void logAiCost(UUID projectId, String stepName, Integer sceneNo,
+                           String provider, String model,
+                           java.math.BigDecimal cost, java.math.BigDecimal inputUnits, String unitType,
+                           com.anadoluatlasi.backend.ai.entity.AiGenerationStatus status,
+                           String inputSummary) {
+        try {
+            com.anadoluatlasi.backend.ai.entity.AiGenerationLog logEntry =
+                    com.anadoluatlasi.backend.ai.entity.AiGenerationLog.builder()
+                            .turkuProjectId(projectId)
+                            .stepName(stepName)
+                            .sceneNo(sceneNo)
+                            .provider(provider)
+                            .model(model)
+                            .cost(cost)
+                            .inputUnits(inputUnits)
+                            .unitType(unitType)
+                            .status(status)
+                            .inputSummary(inputSummary)
+                            .build();
+            aiLogRepository.save(logEntry);
+        } catch (Exception e) {
+            log.warn("AI maliyet logu kaydedilemedi: {}", e.getMessage());
+        }
+    }
 
     /**
      * Hikâye ve senaryo içeriğinden tutarlı karakter tanımı oluşturur.
