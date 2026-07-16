@@ -201,6 +201,9 @@ function TurkuVideoWorkflowPage() {
   const [videoAssembling, setVideoAssembling] = useState(false)
   const [videoReady, setVideoReady] = useState(false)
   const [pipelineSteps, setPipelineSteps] = useState<Record<string, string> | null>(null)
+  const [assetList, setAssetList] = useState<any[]>([])
+  const [assetsLoading, setAssetsLoading] = useState(false)
+  const [assetsVisible, setAssetsVisible] = useState(false)
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
@@ -1204,6 +1207,192 @@ function TurkuVideoWorkflowPage() {
             >
               🎬 Sadece FFmpeg Birleştir
             </button>
+          </div>
+
+          {/* ═══ ASSET YÖNETİMİ PANELİ ═══ */}
+          <div style={{ marginTop: 16, padding: 16, background: '#1e293b', borderRadius: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+              <h4 style={{ margin: 0, color: '#e2e8f0' }}>📦 Asset Yönetimi</h4>
+              <button
+                className="btn btn-sm"
+                disabled={assetsLoading}
+                onClick={async () => {
+                  if (assetsVisible && assetList.length > 0) {
+                    setAssetsVisible(false)
+                    return
+                  }
+                  setAssetsLoading(true)
+                  try {
+                    const res = await turkuApi.listAssets(project.id)
+                    setAssetList(res.data || [])
+                    setAssetsVisible(true)
+                  } catch (e: any) {
+                    alert('Asset listesi alınamadı: ' + e.message)
+                  } finally {
+                    setAssetsLoading(false)
+                  }
+                }}
+                style={{ background: '#334155', color: '#94a3b8', border: '1px solid #475569', fontSize: '0.8rem' }}
+              >
+                {assetsLoading ? '⏳ Yükleniyor...' : assetsVisible ? '🔽 Gizle' : '📂 Görselleri Görüntüle'}
+              </button>
+
+              <button
+                className="btn btn-sm"
+                onClick={async () => {
+                  if (!confirm('⚠️ TÜM görselleri silmek istediğinize emin misiniz?\nPipeline sonraki çalıştırmada yeniden üretecek.')) return
+                  try {
+                    await turkuApi.deleteAssets(project.id, 'images')
+                    alert('✅ Tüm görseller silindi. Yeniden üretim için pipeline\'ı çalıştırın.')
+                    setAssetList([])
+                    setAssetsVisible(false)
+                  } catch (e: any) {
+                    alert('Silme hatası: ' + e.message)
+                  }
+                }}
+                style={{ background: '#7f1d1d', color: '#fca5a5', border: '1px solid #991b1b', fontSize: '0.8rem' }}
+              >
+                🗑️ Tüm Görselleri Sil
+              </button>
+
+              <button
+                className="btn btn-sm"
+                onClick={async () => {
+                  if (!confirm('⚠️ TÜM ses dosyalarını silmek istediğinize emin misiniz?')) return
+                  try {
+                    await turkuApi.deleteAssets(project.id, 'audio')
+                    alert('✅ Tüm ses dosyaları silindi.')
+                    setAssetList([])
+                  } catch (e: any) {
+                    alert('Silme hatası: ' + e.message)
+                  }
+                }}
+                style={{ background: '#713f12', color: '#fde68a', border: '1px solid #92400e', fontSize: '0.8rem' }}
+              >
+                🗑️ Tüm Sesleri Sil
+              </button>
+            </div>
+
+            {assetsVisible && (
+              <div>
+                {assetList.length === 0 ? (
+                  <p style={{ color: '#64748b', fontStyle: 'italic' }}>Henüz asset yok veya yükleniyor...</p>
+                ) : (
+                  <>
+                    {/* Görseller Grid */}
+                    {(() => {
+                      const images = assetList.filter((a: any) => a.type === 'image')
+                      if (images.length === 0) return null
+                      return (
+                        <div style={{ marginBottom: 16 }}>
+                          <h5 style={{ color: '#94a3b8', marginBottom: 8 }}>🖼️ Görseller ({images.length})</h5>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
+                            {images.sort((a: any, b: any) => (a.sceneNo || 0) - (b.sceneNo || 0)).map((asset: any) => (
+                              <div key={asset.path} style={{ background: '#0f172a', borderRadius: 8, overflow: 'hidden', border: '1px solid #334155' }}>
+                                <img
+                                  src={turkuApi.getAssetPreviewUrl(project.id, 'image', asset.sceneNo)}
+                                  alt={`Sahne ${asset.sceneNo}`}
+                                  style={{ width: '100%', height: 130, objectFit: 'cover' }}
+                                  onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+                                />
+                                <div style={{ padding: '6px 10px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                  <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>
+                                    Sahne {asset.sceneNo} ({Math.round((asset.size || 0) / 1024)}KB)
+                                  </span>
+                                  <button
+                                    onClick={async () => {
+                                      if (!confirm(`Sahne ${asset.sceneNo} görselini silmek istiyor musunuz?`)) return
+                                      try {
+                                        await turkuApi.deleteAssets(project.id, 'images', [asset.sceneNo])
+                                        setAssetList(prev => prev.filter(a => !(a.type === 'image' && a.sceneNo === asset.sceneNo)))
+                                      } catch (e: any) {
+                                        alert('Silme hatası: ' + e.message)
+                                      }
+                                    }}
+                                    style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '1rem', padding: '2px 6px' }}
+                                    title="Bu görseli sil"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Ses Dosyaları */}
+                    {(() => {
+                      const audios = assetList.filter((a: any) => a.type === 'audio')
+                      if (audios.length === 0) return null
+                      return (
+                        <div style={{ marginBottom: 16 }}>
+                          <h5 style={{ color: '#94a3b8', marginBottom: 8 }}>🎙️ Ses Dosyaları ({audios.length})</h5>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {audios.sort((a: any, b: any) => (a.sceneNo || 0) - (b.sceneNo || 0)).map((asset: any) => (
+                              <div key={asset.path} style={{ background: '#0f172a', borderRadius: 8, padding: '8px 12px', border: '1px solid #334155', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>
+                                  🎙️ Sahne {asset.sceneNo} ({Math.round((asset.size || 0) / 1024)}KB)
+                                </span>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm(`Sahne ${asset.sceneNo} sesini silmek istiyor musunuz?`)) return
+                                    try {
+                                      await turkuApi.deleteAssets(project.id, 'audio', [asset.sceneNo])
+                                      setAssetList(prev => prev.filter(a => !(a.type === 'audio' && a.sceneNo === asset.sceneNo)))
+                                    } catch (e: any) {
+                                      alert('Silme hatası: ' + e.message)
+                                    }
+                                  }}
+                                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                    {/* Video Klipleri */}
+                    {(() => {
+                      const videos = assetList.filter((a: any) => a.type === 'video')
+                      if (videos.length === 0) return null
+                      return (
+                        <div>
+                          <h5 style={{ color: '#94a3b8', marginBottom: 8 }}>🎬 Video Klipleri ({videos.length})</h5>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                            {videos.sort((a: any, b: any) => (a.sceneNo || 0) - (b.sceneNo || 0)).map((asset: any) => (
+                              <div key={asset.path} style={{ background: '#0f172a', borderRadius: 8, padding: '8px 12px', border: '1px solid #334155', display: 'flex', alignItems: 'center', gap: 8 }}>
+                                <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>
+                                  🎬 Sahne {asset.sceneNo} ({Math.round((asset.size || 0) / 1024)}KB)
+                                </span>
+                                <button
+                                  onClick={async () => {
+                                    if (!confirm(`Sahne ${asset.sceneNo} videosunu silmek istiyor musunuz?`)) return
+                                    try {
+                                      await turkuApi.deleteAssets(project.id, 'videos', [asset.sceneNo])
+                                      setAssetList(prev => prev.filter(a => !(a.type === 'video' && a.sceneNo === asset.sceneNo)))
+                                    } catch (e: any) {
+                                      alert('Silme hatası: ' + e.message)
+                                    }
+                                  }}
+                                  style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: '0.9rem' }}
+                                >
+                                  🗑️
+                                </button>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      )
+                    })()}
+                  </>
+                )}
+              </div>
+            )}
           </div>
 
           {/* Video Player */}
