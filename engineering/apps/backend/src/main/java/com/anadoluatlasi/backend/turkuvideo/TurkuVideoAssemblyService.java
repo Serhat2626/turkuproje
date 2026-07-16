@@ -222,7 +222,9 @@ public class TurkuVideoAssemblyService {
                     "-c:v", "libx264",
                     "-preset", "medium",
                     "-crf", "23",
+                    "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1",
                     "-c:a", "aac", "-b:a", "192k",
+                    "-r", "24",
                     "-pix_fmt", "yuv420p",
                     "-movflags", "+faststart",
                     outputFile.toString()
@@ -241,7 +243,9 @@ public class TurkuVideoAssemblyService {
                     "-c:v", "libx264",
                     "-preset", "medium",
                     "-crf", "23",
+                    "-vf", "scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1",
                     "-c:a", "aac", "-b:a", "192k",
+                    "-r", "24",
                     "-pix_fmt", "yuv420p",
                     "-movflags", "+faststart",
                     "-shortest",
@@ -393,16 +397,23 @@ public class TurkuVideoAssemblyService {
             cmd.add(seg.toAbsolutePath().toString());
         }
 
-        // xfade chain: [0:v][1:v]xfade → [v1], [v1][2:v]xfade → [v2], ...
-        // SES: acrossfade yerine concat kullan — seslendirme çakışmasını önler
+        // xfade chain: normalize each input to 1920x1080 first, then crossfade
+        // Bu sayede Kling video (farklı çözünürlük) ile Ken Burns (1920x1080) sorunsuz birleşir
+        StringBuilder scaleFilters = new StringBuilder();
+        for (int i = 0; i < inputCount; i++) {
+            scaleFilters.append(String.format(
+                    "[%d:v]scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=24,format=yuv420p[sv%d];", i, i));
+        }
+        filterComplex.append(scaleFilters);
+
         double offset = durations.get(0) - crossfadeDuration;
-        String lastVideoLabel = "[0:v]";
+        String lastVideoLabel = "[sv0]";
 
         for (int i = 1; i < inputCount; i++) {
             String outLabel = "[v" + i + "]";
 
             filterComplex.append(String.format(java.util.Locale.US,
-                    "%s[%d:v]xfade=transition=fade:duration=%.1f:offset=%.1f%s;",
+                    "%s[sv%d]xfade=transition=fade:duration=%.1f:offset=%.1f%s;",
                     lastVideoLabel, i, crossfadeDuration, Math.max(0, offset), outLabel
             ));
 
