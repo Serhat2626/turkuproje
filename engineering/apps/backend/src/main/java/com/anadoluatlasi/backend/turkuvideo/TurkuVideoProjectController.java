@@ -878,21 +878,55 @@ public class TurkuVideoProjectController {
             int availableImages = imgSuccess + imgSkipped;
             boolean imagesAvailable = availableImages > 0;
 
-            // ADIM 2.5: Image-to-Video (Kling AI) — PARALEL İŞLEME
-            // Tüm sahneleri Fal.ai'ya AYNI ANDA gönder, sonra hepsini birden bekle
-            // Sıralı: 35 × 5dk = 3 saat → Paralel: ~5-7 dakika
+            // ═══ MALİYET TAHMİNİ ═══
+            // Sadece YENİ üretilen öğeleri say (skip edilenler maliyet oluşturmaz)
+            double imgCost = imgSuccess * 0.05;  // Flux Pro ~$0.05/resim
+            log.info("💰 Görsel maliyeti: {} yeni × $0.05 = ${}, {} atlandı (ücretsiz)",
+                    imgSuccess, String.format("%.2f", imgCost), imgSkipped);
+
+            // ADIM 2.5: Image-to-Video (Kling AI) — PARALEL, SADECE HERO SAHNELER
+            // Kling maliyeti: $1.40/klip × 35 = $49/proje → çok pahalı!
+            // Çözüm: Sadece "hero" sahneleri canlandır (~6-8 sahne = $8-11)
+            // Geri kalan sahneler FFmpeg Ken Burns (zoom/pan) ile — ücretsiz
             if (!includeKling) {
-                results.put("step2_5_video", "⏭️ Kling AI atlandı (varsayılan). ?includeKling=true ile açılabilir");
+                results.put("step2_5_video", "⏭️ Kling AI atlandı. ?includeKling=true ile açılabilir");
             } else if (!imagesAvailable) {
-                log.warn("Kling AI atlanıyor: kullanılabilir görsel yok (0/{} sahne)", storyboard != null && storyboard.getScenes() != null ? storyboard.getScenes().size() : 0);
+                log.warn("Kling AI atlanıyor: kullanılabilir görsel yok");
                 results.put("step2_5_video", "⏭️ Görsel yok — Kling atlandı");
             } else if (falVideoService != null && storyboard != null && storyboard.getScenes() != null) {
                 int vidSkipped = 0;
+                int vidKenBurns = 0;  // Hero olmayan sahneler — FFmpeg Ken Burns ile
                 java.util.List<FalVideoGenerationService.QueuedJob> klingJobs = new java.util.ArrayList<>();
 
-                // FAZA 1: Tüm sahneleri queue'ya gönder (hızlı — her biri ~1sn)
-                log.info("Kling PARALEL submit başlıyor: {} sahne", storyboard.getScenes().size());
+                // ═══ HERO SAHNE SEÇİMİ ═══
+                // Hero sahneler: ilk sahne (hook), son sahne (kapanış),
+                // her 5. sahne (ritim), ve duygusal zirve sahneleri
+                int totalSceneCount = storyboard.getScenes().size();
+                java.util.Set<Integer> heroScenes = new java.util.HashSet<>();
+                heroScenes.add(1);  // Hook/açılış
+                heroScenes.add(totalSceneCount);  // Kapanış
+                // Her 5. sahne (ritim noktaları)
+                for (int s = 5; s < totalSceneCount; s += 5) heroScenes.add(s);
+                // Duygusal zirve sahneleri (mood analizi)
+                for (TurkuStoryboardScene sc : storyboard.getScenes()) {
+                    String m = sc.getMood() != null ? sc.getMood().toLowerCase() : "";
+                    if (m.contains("climax") || m.contains("emotional") || m.contains("dramatic")
+                            || m.contains("intense") || m.contains("peak") || m.contains("doruk")
+                            || m.contains("hüzün") || m.contains("aşk") || m.contains("kavuşma")) {
+                        heroScenes.add(sc.getSceneNo());
+                    }
+                }
+
+                log.info("Kling hero sahneler: {} / {} (tahmini maliyet: ~${})",
+                        heroScenes.size(), totalSceneCount, String.format("%.2f", heroScenes.size() * 1.40));
+
                 for (TurkuStoryboardScene scene : storyboard.getScenes()) {
+                    // Hero sahne değilse → Ken Burns (ücretsiz)
+                    if (!heroScenes.contains(scene.getSceneNo())) {
+                        vidKenBurns++;
+                        continue;
+                    }
+
                     // Video klip zaten varsa atla
                     String videoPath = String.format("turku-video/%s/scenes/%d_video.mp4", id, scene.getSceneNo());
                     try {
@@ -917,7 +951,6 @@ public class TurkuVideoProjectController {
                     }
 
                     try {
-                        // Görseli base64'e çevir (Kling HTTPS veya data URI gerektirir)
                         byte[] imageBytes;
                         try (var stream = minioClient.getObject(io.minio.GetObjectArgs.builder()
                                 .bucket(minioConfig.getBucketName()).object(imagePath).build())) {
@@ -931,15 +964,16 @@ public class TurkuVideoProjectController {
                             motionPrompt += ". Mood: " + scene.getMood();
                         }
 
-                        // Queue'ya gönder (HEMEN döner)
                         klingJobs.add(falVideoService.submitToQueue(id, scene.getSceneNo(), imageUrl, motionPrompt));
                     } catch (Exception e) {
                         klingJobs.add(FalVideoGenerationService.QueuedJob.failed(id, scene.getSceneNo(), e.getMessage()));
                     }
                 }
 
-                log.info("Kling submit tamamlandı: {} iş gönderildi, {} atlandı",
-                        klingJobs.stream().filter(FalVideoGenerationService.QueuedJob::isSubmitted).count(), vidSkipped);
+                double klingCost = klingJobs.stream().filter(FalVideoGenerationService.QueuedJob::isSubmitted).count() * 1.40;
+                log.info("💰 Kling tahmini maliyet: {} hero sahne × $1.40 = ${}, {} Ken Burns (ücretsiz), {} mevcut (atlandı)",
+                        klingJobs.stream().filter(FalVideoGenerationService.QueuedJob::isSubmitted).count(),
+                        String.format("%.2f", klingCost), vidKenBurns, vidSkipped);
 
                 // FAZA 2: Tüm işleri PARALEL olarak bekle ve indir
                 if (!klingJobs.isEmpty()) {
@@ -949,9 +983,12 @@ public class TurkuVideoProjectController {
                     long vidSuccess = vidResults.stream().filter(FalVideoGenerationService.VideoGenerationResult::isSuccess).count();
                     long vidFail = vidResults.stream().filter(r -> !r.isSuccess()).count();
 
-                    results.put("step2_5_video", "Kling AI (paralel): ✅ " + vidSuccess + " video, ⏭️ " + vidSkipped + " mevcut, ❌ " + vidFail + " hata");
+                    results.put("step2_5_video", "Kling (hero): ✅ " + vidSuccess + " animasyon, 🎞️ " + vidKenBurns + " Ken Burns, ⏭️ " + vidSkipped + " mevcut, ❌ " + vidFail + " hata");
+                    results.put("step2_5_cost", String.format("~$%.2f (sadece hero sahneler)", vidSuccess * 1.40));
+                } else if (vidSkipped > 0) {
+                    results.put("step2_5_video", "⏭️ Tüm hero video klipleri mevcut (" + vidSkipped + " atlandı, " + vidKenBurns + " Ken Burns)");
                 } else {
-                    results.put("step2_5_video", "⏭️ Tüm video klipleri mevcut (" + vidSkipped + " atlandı)");
+                    results.put("step2_5_video", "🎞️ " + vidKenBurns + " sahne Ken Burns ile (Kling hero sahne yok)");
                 }
             } else if (falVideoService == null) {
                 results.put("step2_5_video", "⏭️ Video hareketlendirme kapalı (ai.video-provider=kling yapın)");
