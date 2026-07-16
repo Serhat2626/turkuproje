@@ -113,7 +113,10 @@ public class ElevenLabsTtsService {
                 log.info("ElevenLabs TTS üretiliyor: projectId={}, sahne={}, textLength={}, voice={}",
                         projectId, scene.getSceneNo(), narration.length(), voiceId);
 
-                byte[] audioData = callElevenLabsApi(narration);
+                // TTS telaffuz düzeltmesi — sayıları ve kısaltmaları düz metne çevir
+                String processedNarration = preprocessForTts(narration);
+
+                byte[] audioData = callElevenLabsApi(processedNarration);
                 uploadToMinio(path, audioData, "audio/mpeg");
 
                 audioFiles.add(new TurkuTtsService.TurkuTtsResponse.AudioFile(
@@ -190,5 +193,56 @@ public class ElevenLabsTtsService {
         } catch (Exception e) {
             throw new RuntimeException("MinIO yükleme hatası: " + path, e);
         }
+    }
+
+    /**
+     * TTS'e gönderilecek metni ön-işlemden geçir.
+     * GPT bazen kurallara rağmen "19. yüzyıl" gibi sayılar yazabilir.
+     * Bu metod güvenlik ağı olarak yaygın sayı/kısaltma kalıplarını
+     * Türkçe düz metne çevirir.
+     */
+    private String preprocessForTts(String text) {
+        if (text == null) return "";
+        String result = text;
+
+        // Yüzyıl kalıpları: "19. yüzyıl" → "on dokuzuncu yüzyıl"
+        result = result.replace("19. yüzyıl", "on dokuzuncu yüzyıl");
+        result = result.replace("19.yüzyıl", "on dokuzuncu yüzyıl");
+        result = result.replace("20. yüzyıl", "yirminci yüzyıl");
+        result = result.replace("18. yüzyıl", "on sekizinci yüzyıl");
+        result = result.replace("17. yüzyıl", "on yedinci yüzyıl");
+        result = result.replace("16. yüzyıl", "on altıncı yüzyıl");
+        result = result.replace("15. yüzyıl", "on beşinci yüzyıl");
+
+        // Yaygın yıllar
+        result = result.replaceAll("\\b1860\\b", "bin sekiz yüz altmış");
+        result = result.replaceAll("\\b1861\\b", "bin sekiz yüz altmış bir");
+        result = result.replaceAll("\\b1862\\b", "bin sekiz yüz altmış iki");
+        result = result.replaceAll("\\b1863\\b", "bin sekiz yüz altmış üç");
+        result = result.replaceAll("\\b1864\\b", "bin sekiz yüz altmış dört");
+        result = result.replaceAll("\\b1865\\b", "bin sekiz yüz altmış beş");
+        result = result.replaceAll("\\b1866\\b", "bin sekiz yüz altmış altı");
+        result = result.replaceAll("\\b1867\\b", "bin sekiz yüz altmış yedi");
+        result = result.replaceAll("\\b1868\\b", "bin sekiz yüz altmış sekiz");
+        result = result.replaceAll("\\b1869\\b", "bin sekiz yüz altmış dokuz");
+        result = result.replaceAll("\\b1870\\b", "bin sekiz yüz yetmiş");
+        result = result.replaceAll("\\b1880\\b", "bin sekiz yüz seksen");
+        result = result.replaceAll("\\b1890\\b", "bin sekiz yüz doksan");
+        result = result.replaceAll("\\b1900\\b", "bin dokuz yüz");
+        result = result.replaceAll("\\b1915\\b", "bin dokuz yüz on beş");
+        result = result.replaceAll("\\b1920\\b", "bin dokuz yüz yirmi");
+        result = result.replaceAll("\\b1923\\b", "bin dokuz yüz yirmi üç");
+
+        // Sıra sayıları: "1.", "2.", ... "35." — seslendirmede "birinci, ikinci..." olmalı
+        // Ancak cümle içinde "Sahne 1." gibi kalıplar olabilir, dikkatli ol
+        // Sadece küçük sayıları çevir (gün, yaş vb.)
+        result = result.replaceAll("(?<=\\s)1\\. ", "birinci ");
+        result = result.replaceAll("(?<=\\s)2\\. ", "ikinci ");
+        result = result.replaceAll("(?<=\\s)3\\. ", "üçüncü ");
+        result = result.replaceAll("(?<=\\s)4\\. ", "dördüncü ");
+        result = result.replaceAll("(?<=\\s)5\\. ", "beşinci ");
+
+        log.debug("TTS metin ön-işleme: orijinal={} chars, işlenmiş={} chars", text.length(), result.length());
+        return result;
     }
 }

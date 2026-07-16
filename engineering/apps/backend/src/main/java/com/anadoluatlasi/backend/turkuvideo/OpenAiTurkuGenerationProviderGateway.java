@@ -783,12 +783,22 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    Her sahne 40-80 kelime seslendirme. Genel tarihî bilgi DEĞİL,
                    hikâyenin o anını anlat: "O akşam sazını eline aldığında..."
 
+                9. ⚠️ SAYI KURALI (ÇOK ÖNEMLİ — TTS İÇİN):
+                   Seslendirme metninde RAKAM KULLANMA! Tüm sayıları YAZIYYLA yaz.
+                   Bu metin TTS (text-to-speech) ile seslendirilecek, rakamlar yanlış okunur.
+                   ✅ DOĞRU: "on dokuzuncu yüzyıl", "bin sekiz yüz altmış yedi"
+                   ❌ YANLIŞ: "19. yüzyıl", "1867"
+                   ✅ DOĞRU: "yirmi beş yaşında", "üç gün sonra", "beş yıl boyunca"
+                   ❌ YANLIŞ: "25 yaşında", "3 gün sonra", "5 yıl boyunca"
+                   Bu kural HİKÂYE ve SENARYO bölümlerindeki tüm metinler için de geçerlidir.
+
                 ### Sahne [N]
                 **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
                 **Karakterler:** [Bu sahnede kimler var? İsim + cinsiyet belirt:
                 "Sümmani (erkek)" veya "Sümmani (erkek) ve Mihriban (kadın)"]
                 **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek metin — 40-80 kelime.
-                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
+                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.
+                ⚠️ RAKAM KULLANMA — sayıları yazıyla yaz: "on dokuzuncu yüzyıl" gibi.]
                 **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin direkt AI image prompt olacak.
                 SADECE AKSİYON + MEKAN + IŞIK + KAMERA yaz.
                 Karakter fiziksel tanımı YAZMA (otomatik eklenecek).
