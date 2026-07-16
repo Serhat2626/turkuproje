@@ -194,112 +194,74 @@ public class FalImageGenerationService {
      * 1. GÖRSEL AÇIKLAMA HER ŞEYİN ÖNÜNDEDİR — Fal.ai promptun başını en çok dikkate alır
      * 2. Türkçe metin GÖNDERME — Fal.ai İngilizce model, Türkçeyi anlamaz
      * 3. Her sahne bir AKSİYON göstermeli — portre DEĞİL
-     * 4. Karakter tanımı sadece gerektiğinde ve KISA</p>
+     * 4. TALİMAT METNİ GÖNDERME — "FORBIDDEN", "DO NOT", "CRITICAL" gibi
+     *    metinler modelin kafasını karıştırır ve metin posteri üretmesine neden olur.
+     *    Sadece saf görsel açıklama gönder.</p>
      */
     private String buildFluxPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
 
-        // ═══ 1. KARAKTER KİMLİK KARTI (EN BAŞTA — EN ÖNEMLİ) ═══
-        // AI modeli prompt'un başındaki tanımı en güçlü şekilde uygular.
-        // Karakter tanımı her sahnede aynı olmalı → tutarlılık.
-        if (request.getCharacterDescription() != null && !request.getCharacterDescription().isBlank()) {
-            String charDesc = request.getCharacterDescription();
-            // Karakter kimlik kartı yeterince uzun olmalı — 800 char'a kadar izin ver
-            if (charDesc.length() > 800) charDesc = charDesc.substring(0, 800);
-            sb.append("EXACT CHARACTER IDENTITY — DO NOT DEVIATE FROM THIS DESCRIPTION: ");
-            sb.append(charDesc).append(". ");
-        }
+        // ═══ 1. KARAKTERLERİN FİZİKSEL TANIMI (sahne aksiyonuyla doğal birleştirilmiş) ═══
+        // Flux Pro talimat anlamaz — sadece "şunu görüyorum" formatında saf görsel açıklama.
+        // Karakter tanımını sahne aksiyonuyla tek bir doğal cümle olarak birleştir.
 
-        // ═══ 2. SAHNE AKSİYONU (karakter fiziksel tanımları TEMİZLENMİŞ) ═══
-        // safePromptSummary'den karakter fiziksel tanımlarını çıkar,
-        // sadece aksiyon/mekan/duygu bırak → karakter tanımı 1. bölümden gelsin.
         String visual = request.getSafePromptSummary();
-        if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
-            String cleanedVisual = cleanCharacterDescriptionsFromVisual(visual);
-            sb.append("SCENE ACTION: ").append(cleanedVisual).append(". ");
+        String charDesc = request.getCharacterDescription();
+
+        if (charDesc != null && !charDesc.isBlank()) {
+            // Karakter tanımı var — sahne açıklamasıyla birleştir
+            if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
+                // Sahne açıklamasındaki "guitar" kelimesini temizle
+                String cleanVisual = visual
+                        .replaceAll("(?i)\\bguitar\\b", "bağlama")
+                        .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama")
+                        .replaceAll("(?i)\\belectric guitar\\b", "bağlama");
+                // Karakter tanımı + sahne aksiyonu birlikte
+                sb.append(charDesc).append(", ").append(cleanVisual).append(". ");
+            } else {
+                // Sadece karakter tanımı
+                sb.append(charDesc).append(". ");
+            }
+        } else if (visual != null && !visual.isBlank()) {
+            // Karakter tanımı yok — sadece sahne açıklaması
+            String cleanVisual = visual
+                    .replaceAll("(?i)\\bguitar\\b", "bağlama")
+                    .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama");
+            sb.append(cleanVisual).append(". ");
         }
 
-        // ═══ 3. SİNEMATİK STİL ═══
+        // ═══ 2. SİNEMATİK STİL VE DÖNEM ═══
         sb.append("Photorealistic cinematic film still, 35mm film grain, shallow depth of field. ");
-        sb.append("Natural golden hour lighting, warm earth tones, 19th century Ottoman Anatolia. ");
+        sb.append("19th century Ottoman Anatolian village setting, warm earth tones, natural lighting. ");
 
-        // ═══ 4. KAMERA AÇISI (sahne numarasına göre değişken) ═══
-        int sceneNo = request.getSceneNo();
-        String cameraAngle = switch (sceneNo % 7) {
-            case 0 -> "Extreme wide establishing shot, vast Anatolian landscape";
-            case 1 -> "Medium close-up, face partially visible, emotional expression";
-            case 2 -> "Over-the-shoulder shot, looking at something in the distance";
-            case 3 -> "Low angle dramatic shot, silhouette against sky";
-            case 4 -> "Bird's eye view, figure small in vast landscape";
-            case 5 -> "Dutch angle, dynamic tension, movement blur";
-            default -> "Wide shot, full body in environment, environmental storytelling";
-        };
-        sb.append(cameraAngle).append(". ");
-
-        // ═══ 5. MOOD/ATMOSFER ═══
-        if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
-            sb.append("Emotional atmosphere: ").append(request.getSceneMood()).append(". ");
+        // ═══ 3. KAMERA AÇISI (storyboard'dan geliyorsa onu kullan, yoksa değişken) ═══
+        String cameraDir = request.getCameraDirection();
+        if (cameraDir != null && !cameraDir.isBlank()) {
+            sb.append(cameraDir).append(". ");
+        } else {
+            int sceneNo = request.getSceneNo();
+            String cameraAngle = switch (sceneNo % 7) {
+                case 0 -> "Extreme wide establishing shot";
+                case 1 -> "Medium close-up portrait";
+                case 2 -> "Over-the-shoulder shot";
+                case 3 -> "Low angle dramatic shot";
+                case 4 -> "Bird's eye view";
+                case 5 -> "Dynamic diagonal composition";
+                default -> "Wide environmental shot";
+            };
+            sb.append(cameraAngle).append(". ");
         }
 
-        // ═══ 6. KÜLTÜREL DOĞRULUK (bağlama vs gitar) ═══
-        sb.append("CULTURAL RULES: 19th century rural Anatolia. ");
-        sb.append("Musical instrument = bağlama (Turkish saz with long thin neck, small pear-shaped wooden body). ");
-        sb.append("Men wear: şalvar, yelek (vest), gömlek (shirt), çarık boots. ");
-        sb.append("Women wear: entari dress, yaşmak headscarf, silver jewelry. ");
+        // ═══ 4. MOOD (kısa, doğal) ═══
+        if (request.getSceneMood() != null && !request.getSceneMood().isBlank()) {
+            sb.append(request.getSceneMood()).append(" atmosphere. ");
+        }
 
-        // ═══ 7. GÜÇLÜ YASAKLAR ═══
-        sb.append("ABSOLUTELY FORBIDDEN: guitar, acoustic guitar, any Western instrument, piano, violin, ");
-        sb.append("modern framed photographs, glass bottles, modern furniture, ");
-        sb.append("two men shown when scene describes a man and woman together, ");
-        sb.append("changing character appearance between scenes, ");
-        sb.append("Arabic/Middle-Eastern clothing, turban, ");
-        sb.append("text, watermark, logo, modern elements, anime, cartoon, illustration.");
+        String prompt = sb.toString().trim();
 
-        String prompt = sb.toString();
-        log.info("Fal.ai prompt sahne {}: karakter={} chars, toplam={} chars",
-                sceneNo,
-                request.getCharacterDescription() != null ? request.getCharacterDescription().length() : 0,
-                prompt.length());
-        log.debug("Fal.ai prompt sahne {} DETAY: {}", sceneNo, prompt);
+        log.info("Fal.ai prompt sahne {}: {} chars", request.getSceneNo(), prompt.length());
+        log.info("Fal.ai prompt sahne {} İÇERİK: {}", request.getSceneNo(), prompt);
         return prompt;
-    }
-
-    /**
-     * safePromptSummary'den karakter fiziksel tanımlarını temizler.
-     * GPT'nin ürettiği görsel açıklamada "young man with long dark hair" gibi
-     * fiziksel tanımlar var — bunları çıkarıyoruz çünkü karakter tanımı
-     * prompt'un en başında zaten sabit olarak duruyor.
-     *
-     * Temizlenen: yaş, saç, sakal, göz rengi, vücut tipi, kıyafet tanımları
-     * Kalan: aksiyon, mekan, ışık, duygu, hava durumu, obje
-     */
-    private String cleanCharacterDescriptionsFromVisual(String visual) {
-        if (visual == null) return "";
-
-        String cleaned = visual;
-
-        // Karakter fiziksel tanımlarını temizle (İngilizce — GPT İngilizce yazar)
-        // "Young man with dark hair" → "man" (aksiyon kalır)
-        cleaned = cleaned.replaceAll("(?i)\\byoung (handsome |beautiful |attractive )?", "");
-        cleaned = cleaned.replaceAll("(?i)\\bwith (long |short |dark |curly |wavy |black |brown |blonde )+(hair|beard|stubble)\\b", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(long|short|dark|curly|wavy|messy|flowing|braided) (dark |black |brown )?(hair|beard|locks|curls)\\b", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(clean-shaven|bearded|stubbled|light stubble|thick beard)\\b", "");
-        cleaned = cleaned.replaceAll("(?i)\\bwearing [^,.]+(vest|shirt|dress|robe|cloak|coat|tunic|şalvar|entari)[^,.]*[,.]?", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(olive|wheat-colored|fair|dark|pale|tanned) skin\\b", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(brown|green|blue|hazel|dark|deep) eyes\\b", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(slender|athletic|muscular|petite|tall|strong) build\\b", "");
-        cleaned = cleaned.replaceAll("(?i)\\b(handsome|beautiful|pretty|gorgeous) (man|woman|guy|girl|figure)\\b", "$2");
-
-        // Gitar → bağlama zorla
-        cleaned = cleaned.replaceAll("(?i)\\bguitar\\b", "bağlama (Turkish saz)");
-        cleaned = cleaned.replaceAll("(?i)\\bacoustic guitar\\b", "bağlama (Turkish saz)");
-
-        // Çift boşlukları temizle
-        cleaned = cleaned.replaceAll("\\s{2,}", " ").trim();
-        // Baştaki virgül/nokta temizle
-        cleaned = cleaned.replaceAll("^[,. ]+", "").trim();
-
-        return cleaned;
     }
 
     private String uploadToMinio(UUID projectId, int sceneNo, byte[] imageBytes) {

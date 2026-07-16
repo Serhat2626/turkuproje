@@ -863,6 +863,7 @@ public class TurkuVideoProjectController {
                                 .sceneMood(scene.getMood())
                                 .narrationText(scene.getNarrationSummary())
                                 .sceneTitle(scene.getSceneTitle())
+                                .cameraDirection(scene.getCameraDirection())
                                 .build();
 
                         // Fal.ai varsa onu kullan (Flux Pro), yoksa OpenAI (gpt-image-1)
@@ -1579,45 +1580,55 @@ public class TurkuVideoProjectController {
      * <p>Strateji: Hikâye metninden karakter isimlerini ve fiziksel betimlemelerini çıkar,
      * bunları sabit bir "character sheet" formatında prompt'a ekle.</p>
      */
+    /**
+     * Karakter fiziksel tanımını SAF GÖRSEL AÇIKLAMA olarak üretir.
+     * TALİMAT METNİ İÇERMEZ — "FORBIDDEN", "MUST", "NEVER" gibi kelimeler YOK.
+     * Flux Pro bir görsel model — talimat değil, açıklama bekler.
+     *
+     * Örnek çıktı:
+     * "A Turkish man, age 25, short dark wavy hair at collar length, light stubble,
+     *  brown eyes, wheat-colored skin, wearing dark brown wool vest over cream linen shirt,
+     *  charcoal şalvar trousers, red sash, leather çarık boots, carrying a bağlama"
+     */
     private String buildCharacterDescription(TurkuVideoProject project) {
-        StringBuilder chars = new StringBuilder();
-
-        chars.append("FIXED CHARACTER SHEET — EVERY SCENE MUST USE THESE EXACT PHYSICAL TRAITS. ");
-        chars.append("NEVER change hair, face, age, beard, clothing between scenes. ");
-        chars.append("Male character = ALWAYS male appearance. Female character = ALWAYS female appearance. ");
-
         // GPT-üretimi karakter çizelgesi varsa DOĞRUDAN kullan (en iyi seçenek)
         if (project.getStoryPackage() != null
                 && project.getStoryPackage().getCharacterSheet() != null
                 && project.getStoryPackage().getCharacterSheet().length() > 100) {
 
             String sheet = project.getStoryPackage().getCharacterSheet();
-            // Markdown formatını düz İngilizce prompt'a çevir
+            // Markdown formatını düz İngilizce görsel açıklamaya çevir
             String englishSheet = convertCharacterSheetToPrompt(sheet);
-            chars.append(englishSheet);
-
-        } else {
-            // Fallback: GPT karakter çizelgesi üretmemişse genel tanım
-            chars.append("MAIN MALE CHARACTER (Aşık Sümmani): Turkish man, age 25, ")
-                 .append("short dark wavy hair at collar length, light stubble beard, deep brown eyes, ")
-                 .append("wheat-colored skin, strong jawline, athletic build. ")
-                 .append("ALWAYS wears: dark brown wool vest over cream linen shirt, charcoal şalvar, ")
-                 .append("red woven sash at waist, worn leather çarık boots. ")
-                 .append("ALWAYS carries a bağlama (Turkish saz) on his back or in hands. ")
-                 .append("MAIN FEMALE CHARACTER (Mihriban): Turkish woman, age 20, ")
-                 .append("long dark braided hair past waist, olive skin, almond-shaped dark eyes, ")
-                 .append("delicate face, slender build. ")
-                 .append("ALWAYS wears: deep burgundy embroidered entari dress, ")
-                 .append("cream yemeni headscarf loosely draped, silver coin necklace, thin gold bangles. ");
+            // Talimat metinlerini temizle (GPT bazen ekleyebilir)
+            englishSheet = cleanInstructionText(englishSheet);
+            return englishSheet;
         }
 
-        // Genel yasaklar (her zaman ekle)
-        chars.append("GENDER RULE: When scene has a man and woman together, ")
-             .append("one MUST clearly be male and the other MUST clearly be female. ")
-             .append("FORBIDDEN: turban, sarık, Arabic/Middle-Eastern clothing, ")
-             .append("medieval armor, weapons, modern clothing, guitar, Western instruments. ");
+        // Fallback: GPT karakter çizelgesi üretmemişse genel tanım
+        // SAF FİZİKSEL TANIM — talimat yok
+        return "A Turkish man, age 25, short dark wavy hair at collar length, "
+                + "light stubble beard, deep brown eyes, wheat-colored skin, strong jawline, "
+                + "wearing dark brown wool vest over cream linen shirt, charcoal şalvar trousers, "
+                + "red woven sash at waist, worn leather çarık boots, "
+                + "carrying a bağlama (Turkish long-necked lute with small pear-shaped body)";
+    }
 
-        return chars.toString();
+    /**
+     * Prompt'tan talimat metinlerini temizler.
+     * "FORBIDDEN", "MUST", "NEVER", "DO NOT" gibi kelimeler
+     * Flux Pro'nun kafasını karıştırır — metin posteri üretir.
+     */
+    private String cleanInstructionText(String text) {
+        if (text == null) return "";
+        return text
+                .replaceAll("(?i)\\b(FORBIDDEN|ABSOLUTELY FORBIDDEN|CRITICAL|DO NOT|MUST NOT|NEVER|ALWAYS|RULE|WARNING)[:\\s]*", "")
+                .replaceAll("(?i)\\bFIXED CHARACTER SHEET[^.]*\\.", "")
+                .replaceAll("(?i)\\bEXACT CHARACTER IDENTITY[^.]*\\.", "")
+                .replaceAll("(?i)\\bGENDER RULE[^.]*\\.", "")
+                .replaceAll("(?i)\\bDO NOT DEVIATE[^.]*\\.", "")
+                .replaceAll("(?i)\\bEVERY SCENE MUST[^.]*\\.", "")
+                .replaceAll("\\s{2,}", " ")
+                .trim();
     }
 
     /**

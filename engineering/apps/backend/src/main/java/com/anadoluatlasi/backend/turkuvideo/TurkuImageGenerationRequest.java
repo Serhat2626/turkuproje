@@ -45,4 +45,7 @@ public class TurkuImageGenerationRequest {
 
     /** Sahne başlığı — sahnenin kısa adı */
     private String sceneTitle;
+
+    /** Kamera açısı — storyboard'dan gelen kamera yönlendirmesi */
+    private String cameraDirection;
 }
