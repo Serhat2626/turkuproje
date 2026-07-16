@@ -423,36 +423,84 @@ public class TurkuVideoAssemblyService {
             lastVideoLabel = outLabel;
         }
 
-        // Ses concat: tüm audio stream'lerini birleştir (overlap yok)
-        StringBuilder audioConcat = new StringBuilder();
-        for (int i = 0; i < inputCount; i++) {
-            audioConcat.append("[").append(i).append(":a]");
+        // Ses kontrolü: ffprobe ile ilk segmentte audio stream var mı?
+        boolean hasAudioStreams = hasAudioStream(segments.get(0));
+        log.info("Crossfade concat: {} segment, hasAudio={}", inputCount, hasAudioStreams);
+
+        if (hasAudioStreams) {
+            // Ses concat: tüm audio stream'lerini birleştir (overlap yok)
+            StringBuilder audioConcat = new StringBuilder();
+            for (int i = 0; i < inputCount; i++) {
+                audioConcat.append("[").append(i).append(":a]");
+            }
+            String lastAudioLabel = "[aout]";
+            filterComplex.append(String.format("%sconcat=n=%d:v=0:a=1%s",
+                    audioConcat.toString(), inputCount, lastAudioLabel));
+
+            String filter = filterComplex.toString();
+
+            cmd.add("-filter_complex");
+            cmd.add(filter);
+            cmd.add("-map");
+            cmd.add(lastVideoLabel);
+            cmd.add("-map");
+            cmd.add(lastAudioLabel);
+            cmd.add("-c:v");
+            cmd.add("libx264");
+            cmd.add("-preset");
+            cmd.add("medium");
+            cmd.add("-c:a");
+            cmd.add("aac");
+            cmd.add("-b:a");
+            cmd.add("192k");
+            cmd.add("-pix_fmt");
+            cmd.add("yuv420p");
+            cmd.add(outputFile.toAbsolutePath().toString());
+        } else {
+            // Audio yok — sadece video concat
+            String filter = filterComplex.toString();
+            // Son noktalı virgülü kaldır (audio filter eklenmediği için)
+            if (filter.endsWith(";")) {
+                filter = filter.substring(0, filter.length() - 1);
+            }
+
+            cmd.add("-filter_complex");
+            cmd.add(filter);
+            cmd.add("-map");
+            cmd.add(lastVideoLabel);
+            cmd.add("-an");
+            cmd.add("-c:v");
+            cmd.add("libx264");
+            cmd.add("-preset");
+            cmd.add("medium");
+            cmd.add("-pix_fmt");
+            cmd.add("yuv420p");
+            cmd.add(outputFile.toAbsolutePath().toString());
         }
-        String lastAudioLabel = "[aout]";
-        filterComplex.append(String.format("%sconcat=n=%d:v=0:a=1%s",
-                audioConcat.toString(), inputCount, lastAudioLabel));
-
-        String filter = filterComplex.toString();
-
-        cmd.add("-filter_complex");
-        cmd.add(filter);
-        cmd.add("-map");
-        cmd.add(lastVideoLabel);
-        cmd.add("-map");
-        cmd.add(lastAudioLabel);
-        cmd.add("-c:v");
-        cmd.add("libx264");
-        cmd.add("-preset");
-        cmd.add("medium");
-        cmd.add("-c:a");
-        cmd.add("aac");
-        cmd.add("-b:a");
-        cmd.add("192k");
-        cmd.add("-pix_fmt");
-        cmd.add("yuv420p");
-        cmd.add(outputFile.toAbsolutePath().toString());
 
         runFFmpeg(cmd, "crossfade concat");
+    }
+
+    /**
+     * FFprobe ile video dosyasında audio stream var mı kontrol et
+     */
+    private boolean hasAudioStream(Path videoFile) {
+        try {
+            ProcessBuilder pb = new ProcessBuilder(
+                    "ffprobe", "-v", "quiet", "-select_streams", "a",
+                    "-show_entries", "stream=codec_type",
+                    "-of", "csv=p=0",
+                    videoFile.toAbsolutePath().toString()
+            );
+            pb.redirectErrorStream(true);
+            Process p = pb.start();
+            String output = new String(p.getInputStream().readAllBytes()).trim();
+            p.waitFor();
+            return output.contains("audio");
+        } catch (Exception e) {
+            log.warn("FFprobe audio check hatası: {}", e.getMessage());
+            return false;
+        }
     }
 
     /**
