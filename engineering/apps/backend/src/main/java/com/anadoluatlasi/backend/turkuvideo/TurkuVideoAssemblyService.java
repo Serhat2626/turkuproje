@@ -402,12 +402,12 @@ public class TurkuVideoAssemblyService {
             String outLabel = "[v" + i + "]";
             String outAudioLabel = "[a" + i + "]";
 
-            filterComplex.append(String.format(
+            filterComplex.append(String.format(java.util.Locale.US,
                     "%s[%d:v]xfade=transition=fade:duration=%.1f:offset=%.1f%s;",
                     lastVideoLabel, i, crossfadeDuration, Math.max(0, offset), outLabel
             ));
 
-            filterComplex.append(String.format(
+            filterComplex.append(String.format(java.util.Locale.US,
                     "%s[%d:a]acrossfade=d=%.1f%s;",
                     lastAudioLabel, i, crossfadeDuration, outAudioLabel
             ));
