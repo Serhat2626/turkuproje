@@ -108,10 +108,27 @@ public class GlobalExceptionHandler {
     }
 
     /**
+     * Client bağlantıyı kesti (tarayıcı yenileme, navigasyon) → sessizce yoksay
+     * Bu hatalar büyük dosya streaming sırasında normaldir.
+     */
+    @ExceptionHandler(org.springframework.web.context.request.async.AsyncRequestNotUsableException.class)
+    public void handleAsyncNotUsable(org.springframework.web.context.request.async.AsyncRequestNotUsableException ex) {
+        log.debug("Client bağlantıyı kesti (async): {}", ex.getMessage());
+        // Response zaten yazılamaz — hiçbir şey döndürme
+    }
+
+    /**
      * Beklenmeyen hatalar → 500
      */
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ApiResponse<Void>> handleGenericException(Exception ex) {
+        // Connection reset by peer — client bağlantıyı kesti, loglamaya gerek yok
+        String msg = ex.getMessage();
+        if (msg != null && (msg.contains("Connection reset") || msg.contains("Broken pipe") || msg.contains("connection was aborted"))) {
+            log.debug("Client bağlantıyı kesti: {}", msg);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+
         log.error("Beklenmeyen hata oluştu", ex);
         return ResponseEntity
                 .status(HttpStatus.INTERNAL_SERVER_ERROR)
