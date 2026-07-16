@@ -1224,7 +1224,13 @@ function TurkuVideoWorkflowPage() {
                   setAssetsLoading(true)
                   try {
                     const res = await turkuApi.listAssets(project.id)
-                    setAssetList(res.data || [])
+                    const d = res.data || {}
+                    // Backend nested döndürür: {images:{items:[]}, videos:{items:[]}, audio:{items:[]}}
+                    const flat: any[] = []
+                    if (d.images?.items) d.images.items.forEach((i: any) => flat.push({ ...i, type: 'image' }))
+                    if (d.videos?.items) d.videos.items.forEach((i: any) => flat.push({ ...i, type: 'video' }))
+                    if (d.audio?.items) d.audio.items.forEach((i: any) => flat.push({ ...i, type: 'audio' }))
+                    setAssetList(flat)
                     setAssetsVisible(true)
                   } catch (e: any) {
                     alert('Asset listesi alınamadı: ' + e.message)
