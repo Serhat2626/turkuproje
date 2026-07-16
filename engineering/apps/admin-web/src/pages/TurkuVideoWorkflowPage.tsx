@@ -1373,14 +1373,20 @@ function TurkuVideoWorkflowPage() {
                             {videos.sort((a: any, b: any) => (a.sceneNo || 0) - (b.sceneNo || 0)).map((asset: any) => (
                               <div key={asset.path} style={{ background: '#0f172a', borderRadius: 8, padding: '8px 12px', border: '1px solid #334155', display: 'flex', alignItems: 'center', gap: 8 }}>
                                 <span style={{ color: '#cbd5e1', fontSize: '0.8rem' }}>
-                                  🎬 Sahne {asset.sceneNo} ({Math.round((asset.size || 0) / 1024)}KB)
+                                  🎬 {asset.sceneNo ? `Sahne ${asset.sceneNo}` : asset.path?.split('/').pop() || 'Video'} ({Math.round((asset.size || 0) / 1024)}KB)
                                 </span>
                                 <button
                                   onClick={async () => {
-                                    if (!confirm(`Sahne ${asset.sceneNo} videosunu silmek istiyor musunuz?`)) return
+                                    const label = asset.sceneNo ? `Sahne ${asset.sceneNo} videosunu` : 'Bu videoyu'
+                                    if (!confirm(`${label} silmek istiyor musunuz?`)) return
                                     try {
-                                      await turkuApi.deleteAssets(project.id, 'videos', [asset.sceneNo])
-                                      setAssetList(prev => prev.filter(a => !(a.type === 'video' && a.sceneNo === asset.sceneNo)))
+                                      if (asset.sceneNo) {
+                                        await turkuApi.deleteAssets(project.id, 'videos', [asset.sceneNo])
+                                      } else {
+                                        // final.mp4 gibi sceneNo olmayan videolar — tüm videoları sil
+                                        await turkuApi.deleteAssets(project.id, 'videos')
+                                      }
+                                      setAssetList(prev => prev.filter(a => a !== asset))
                                     } catch (e: any) {
                                       alert('Silme hatası: ' + e.message)
                                     }
