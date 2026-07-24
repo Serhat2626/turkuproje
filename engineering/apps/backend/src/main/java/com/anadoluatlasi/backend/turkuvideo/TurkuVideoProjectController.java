@@ -1432,22 +1432,31 @@ public class TurkuVideoProjectController {
     public ResponseEntity<byte[]> previewAsset(
             @PathVariable UUID id,
             @PathVariable String type,
-            @PathVariable int sceneNo) {
+            @PathVariable String sceneNo) {
+
+        // "undefined" veya geçersiz değer kontrolü
+        int sceneNumber;
+        try {
+            sceneNumber = Integer.parseInt(sceneNo);
+        } catch (NumberFormatException e) {
+            log.warn("Geçersiz sceneNo: '{}' — 400 döndürülüyor", sceneNo);
+            return ResponseEntity.badRequest().build();
+        }
 
         String path;
         MediaType contentType;
 
         switch (type.toLowerCase()) {
             case "image" -> {
-                path = String.format("turku-video/%s/scenes/%d.png", id, sceneNo);
+                path = String.format("turku-video/%s/scenes/%d.png", id, sceneNumber);
                 contentType = MediaType.IMAGE_PNG;
             }
             case "video" -> {
-                path = String.format("turku-video/%s/scenes/%d_video.mp4", id, sceneNo);
+                path = String.format("turku-video/%s/scenes/%d_video.mp4", id, sceneNumber);
                 contentType = MediaType.parseMediaType("video/mp4");
             }
             case "audio" -> {
-                path = String.format("turku-video/%s/audio/%d.mp3", id, sceneNo);
+                path = String.format("turku-video/%s/audio/%d.mp3", id, sceneNumber);
                 contentType = MediaType.parseMediaType("audio/mpeg");
             }
             default -> {

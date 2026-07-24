@@ -1,6 +1,6 @@
 spring:
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:anadolu_atlasi}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5432}/${POSTGRES_DB:anadolu_atlasi}?sslmode=disable
     username: ${POSTGRES_USER:anadolu}
     password: ${POSTGRES_PASSWORD:anadolu_dev}
   jpa:

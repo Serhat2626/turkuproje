@@ -208,9 +208,9 @@ function TurkuVideoWorkflowPage() {
 
   // ── Stage actions ──
   const stageActions: StageAction[] = [
-    { label: 'Hikâye Hazırla', enabledAt: 'DRAFT_CREATED', action: (id) => turkuApi.prepareTurkuStory(id) },
-    { label: 'Senaryo Hazırla', enabledAt: 'STORY_CONTEXT_PREPARED', action: (id) => turkuApi.prepareTurkuScenario(id) },
-    { label: 'Storyboard Hazırla', enabledAt: 'SCENARIO_PREPARED', action: (id) => turkuApi.prepareTurkuStoryboard(id) },
+    { label: '📝 Hikâye Üret (AI)', enabledAt: 'DRAFT_CREATED', action: (id) => turkuApi.generateTurkuStory(id) },
+    { label: '🎬 Senaryo Üret (AI)', enabledAt: 'STORY_CONTEXT_PREPARED', action: (id) => turkuApi.generateTurkuScenario(id) },
+    { label: '🎨 Storyboard Üret (AI)', enabledAt: 'SCENARIO_PREPARED', action: (id) => turkuApi.generateTurkuStoryboard(id) },
     { label: 'Varlık Planı Hazırla', enabledAt: 'STORYBOARD_PREPARED', action: (id) => turkuApi.prepareTurkuSceneAssets(id) },
     { label: 'Görsel Batch Hazırla', enabledAt: 'SCENE_ASSET_PLAN_PREPARED', action: (id) => turkuApi.prepareTurkuImageBatch(id) },
     { label: 'Batch Tamamla', enabledAt: 'IMAGE_BATCH_PREPARED', action: (id) => turkuApi.completeTurkuImageBatch(id) },
@@ -940,13 +940,72 @@ function TurkuVideoWorkflowPage() {
                   Güvenilirlik: {content.story.sourceConfidence}
                 </span>
               </div>
-              <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem' }}>
-                {content.story.storySummary}
+
+              {/* Hikâye Özeti */}
+              <div style={{ marginBottom: '20px' }}>
+                <h4 style={{ color: '#fbbf24', fontSize: '0.9rem', marginBottom: '8px' }}>📖 Hikâye Özeti</h4>
+                <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.8, color: 'rgba(255,255,255,0.85)', fontSize: '0.95rem' }}>
+                  {content.story.storySummary}
+                </div>
               </div>
+
+              {/* Köken / Orijin */}
+              {content.story.originSummary && (
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '8px', background: 'rgba(59,130,246,0.06)', border: '1px solid rgba(59,130,246,0.12)' }}>
+                  <h4 style={{ color: '#3b82f6', fontSize: '0.9rem', marginTop: 0, marginBottom: '8px' }}>🏔️ Köken ve Tarihçe</h4>
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
+                    {content.story.originSummary}
+                  </div>
+                </div>
+              )}
+
+              {/* Kültürel Önem */}
+              {content.story.culturalSignificance && (
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '8px', background: 'rgba(168,85,247,0.06)', border: '1px solid rgba(168,85,247,0.12)' }}>
+                  <h4 style={{ color: '#a855f7', fontSize: '0.9rem', marginTop: 0, marginBottom: '8px' }}>🏛️ Kültürel Önem</h4>
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
+                    {content.story.culturalSignificance}
+                  </div>
+                </div>
+              )}
+
+              {/* Anlatı Açısı */}
+              {content.story.narrativeAngle && (
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '8px', background: 'rgba(16,185,129,0.06)', border: '1px solid rgba(16,185,129,0.12)' }}>
+                  <h4 style={{ color: '#10b981', fontSize: '0.9rem', marginTop: 0, marginBottom: '8px' }}>🎯 Anlatı Açısı</h4>
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
+                    {content.story.narrativeAngle}
+                  </div>
+                </div>
+              )}
+
+              {/* Yöre / Bölge */}
+              {content.story.regionContext && (
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '8px', background: 'rgba(234,179,8,0.06)', border: '1px solid rgba(234,179,8,0.12)' }}>
+                  <h4 style={{ color: '#eab308', fontSize: '0.9rem', marginTop: 0, marginBottom: '8px' }}>📍 Yöre / Bölge Bağlamı</h4>
+                  <div style={{ whiteSpace: 'pre-wrap', lineHeight: 1.7, color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>
+                    {content.story.regionContext}
+                  </div>
+                </div>
+              )}
+
+              {/* Duygusal Tema */}
               {content.story.emotionalTheme && (
-                <div style={{ marginTop: '16px', padding: '12px', borderRadius: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
-                  <strong style={{ color: '#ef4444' }}>🎭 Duygusal Tema:</strong>
-                  <span style={{ marginLeft: '8px', color: 'rgba(255,255,255,0.7)' }}>{content.story.emotionalTheme}</span>
+                <div style={{ marginBottom: '16px', padding: '14px', borderRadius: '8px', background: 'rgba(239,68,68,0.08)', border: '1px solid rgba(239,68,68,0.15)' }}>
+                  <h4 style={{ color: '#ef4444', fontSize: '0.9rem', marginTop: 0, marginBottom: '8px' }}>🎭 Duygusal Tema</h4>
+                  <span style={{ color: 'rgba(255,255,255,0.75)', fontSize: '0.9rem' }}>{content.story.emotionalTheme}</span>
+                </div>
+              )}
+
+              {/* İnceleme Notları */}
+              {content.story.reviewFlags && content.story.reviewFlags.length > 0 && (
+                <div style={{ padding: '14px', borderRadius: '8px', background: 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.12)' }}>
+                  <h4 style={{ color: '#fb923c', fontSize: '0.9rem', marginTop: 0, marginBottom: '8px' }}>⚠️ İnceleme Notları</h4>
+                  {content.story.reviewFlags.map((flag: string, i: number) => (
+                    <div key={i} style={{ padding: '6px 10px', marginBottom: '4px', borderRadius: '6px', background: 'rgba(251,146,60,0.08)', color: 'rgba(255,255,255,0.7)', fontSize: '0.85rem' }}>
+                      • {flag}
+                    </div>
+                  ))}
                 </div>
               )}
             </div>
@@ -1297,7 +1356,7 @@ function TurkuVideoWorkflowPage() {
                         <div style={{ marginBottom: 16 }}>
                           <h5 style={{ color: '#94a3b8', marginBottom: 8 }}>🖼️ Görseller ({images.length})</h5>
                           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 12 }}>
-                            {images.sort((a: any, b: any) => (a.sceneNo || 0) - (b.sceneNo || 0)).map((asset: any) => (
+                            {images.filter((a: any) => a.sceneNo != null).sort((a: any, b: any) => (a.sceneNo || 0) - (b.sceneNo || 0)).map((asset: any) => (
                               <div key={asset.path} style={{ background: '#0f172a', borderRadius: 8, overflow: 'hidden', border: '1px solid #334155' }}>
                                 <img
                                   src={turkuApi.getAssetPreviewUrl(project.id, 'image', asset.sceneNo)}
