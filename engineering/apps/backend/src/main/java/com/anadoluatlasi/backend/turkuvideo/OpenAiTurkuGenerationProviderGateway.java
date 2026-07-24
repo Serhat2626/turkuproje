@@ -769,15 +769,40 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    ASLA "guitar", "lute", "oud" yazma.
                    Bağlama açıklaması: long thin neck, small pear-shaped wooden body.
 
-                7. HİKÂYE KRONOLOJİSİ:
-                   Sahne 1-3: Mekan tanıtımı, dönem, köy atmosferi
-                   Sahne 4-8: Ana karakterin tanıtımı, günlük yaşam
-                   Sahne 9-14: Tanışma, ilk bakış, aşkın doğuşu
-                   Sahne 15-20: Mutlu anlar, gizli buluşmalar
-                   Sahne 21-26: Engeller, baba/ağa karşı çıkma, acı
-                   Sahne 27-30: Ayrılık, göç, veda
-                   Sahne 31-33: Hasret, yalnızlık, türkünün doğuşu
-                   Sahne 34-35: Miras, türkünün günümüze ulaşması
+                7. HİKÂYE KRONOLOJİSİ (⚠️ EN KRİTİK KURAL):
+                   35 sahneden EN AZ 30 TANESİ hikâyenin kendisini anlatmalı!
+                   Genel tarih, kültür, miras gibi dolgu sahne YASAK.
+
+                   Sahne 1-2: ATMOSFER — Mekan tanıtımı (köy, dağ, ırmak).
+                     Seslendirme: dönemin ve coğrafyanın kısa betimlemesi.
+                   Sahne 3-7: TANIŞMA — Ana karakterin tanıtımı, günlük yaşamı,
+                     ailesi, çevresi, hayalleri. Her sahne farklı bir detay.
+                   Sahne 8-12: KARŞILAŞMA — İlk bakış, ilk söz, ilk heyecan.
+                     Aşkın filizlenmesi. Utangaç anlar, çarpan kalpler.
+                   Sahne 13-17: MUTLULUK — Gizli buluşmalar, mektuplar, bakışmalar.
+                     Birlikte geçen anlar. Doğa ile paralel: bahar, çiçek.
+                   Sahne 18-22: ENGELLER — Baba/ağa karşı çıkıyor. Toplumsal baskı.
+                     Zorla evlendirme tehdidi. Gurbet zorunluluğu.
+                     Her sahnede farklı bir engel veya çatışma anı.
+                   Sahne 23-27: AYRILIK VE ACI — Veda anı, göç yolu, yalnızlık.
+                     Geride kalanın acısı, gidenin hasreti.
+                     İç monologlar, sessiz gözyaşları, uykusuz geceler.
+                   Sahne 28-30: DUYGUSAL DORUK — En yoğun sahneler.
+                     Son mektup, son hayal kırıklığı veya ebedi ayrılık.
+                     Türkünün doğduğu AN — saz elde, acı sözlere dönüşüyor.
+                   Sahne 31-32: MİRAS — Türkü köyden köye yayılıyor.
+                     Nesiller boyu aktarılıyor.
+                   Sahne 33-35: KAPANIŞ — Türkü bugün hâlâ söyleniyor.
+                     Evrensel duygu, izleyiciye son mesaj, CTA.
+
+                   ⚠️ YASAK: Sahne 12'den sonra "tarihsel bağlam", "kültürel önem",
+                   "Anadolu geleneği" gibi GENEL BİLGİ sahnesi yazmak!
+                   Her sahne MUTLAKA hikâyenin bir OLAYINI, bir ANINI göstermeli.
+                   "Gelenekler", "toplumsal yapı" gibi bilgiler hikâye İÇİNDE
+                   karakter diyalogları ve aksiyonlarla verilmeli.
+
+                   ⚠️ TEKRAR YASAĞI: Hiçbir iki sahne aynı eylemi, aynı mekanı
+                   ve aynı duyguyu TEKRAR EDEMEZ. Her sahne BENZERSİZ olmalı.
 
                 8. SESLENDİRME: Senaryodaki beat'lerin hikâye anlatımını sahnelere dağıt.
                    Her sahne 40-80 kelime seslendirme. Genel tarihî bilgi DEĞİL,
