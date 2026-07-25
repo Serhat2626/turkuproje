@@ -34,6 +34,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 import java.util.Map;
+import java.util.LinkedHashMap;
 import java.util.UUID;
 
 /**
@@ -832,23 +833,25 @@ public class TurkuVideoProjectController {
                     log.info("TAM VİDEO MODU: {} sahne işlenecek", totalScenes);
                 }
 
-                // ═══ ADIM 1.5: Karakter Referans Görseli (Kontext için, 1 kez) ═══
-                String referenceImageUrl = null;
-                if (falImageService != null && characterDesc != null && !characterDesc.isBlank()) {
+                // ═══ ADIM 1.5: Çoklu Karakter Referans Görselleri ═══
+                Map<String, String> characterReferenceUrls = new LinkedHashMap<>();
+                Map<String, String> characterDescriptions = parseCharacterDescriptions(project);
+                if (falImageService != null && !characterDescriptions.isEmpty()) {
                     try {
-                        referenceImageUrl = falImageService.generateCharacterReference(id, characterDesc);
-                        results.put("step1_5_character_ref", "✅ Karakter referans görseli üretildi");
-                        log.info("✅ Karakter referans görseli hazır: cdnUrl={}", referenceImageUrl);
-
-                        // Referans görseli maliyeti ($0.05)
-                        logAiCost(id, "character_reference", 0, "fal.ai", "flux-pro-v1.1",
-                                new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
-                                com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.COMPLETED,
-                                "Karakter referans görseli");
+                        characterReferenceUrls = falImageService.generateAllCharacterReferences(id, characterDescriptions);
+                        results.put("step1_5_character_refs", 
+                                "✅ " + characterReferenceUrls.size() + " karakter referansı üretildi: " + String.join(", ", characterReferenceUrls.keySet()));
+                        log.info("✅ {} karakter referansı hazır: {}", characterReferenceUrls.size(), characterReferenceUrls.keySet());
+                        
+                        for (Map.Entry<String, String> ref : characterReferenceUrls.entrySet()) {
+                            logAiCost(id, "character_reference", 0, "fal.ai", "flux-pro-v1.1",
+                                    new java.math.BigDecimal("0.04"), java.math.BigDecimal.ONE, "megapixels",
+                                    com.anadoluatlasi.backend.ai.entity.AiGenerationStatus.COMPLETED,
+                                    "Karakter referans: " + ref.getKey());
+                        }
                     } catch (Exception e) {
-                        log.error("Karakter referans görseli üretim hatası: {}", e.getMessage());
-                        results.put("step1_5_character_ref", "❌ Hata: " + e.getMessage());
-                        // Referans üretilemezse v1.1 fallback ile devam et
+                        log.error("Çoklu karakter referans hatası: {}", e.getMessage());
+                        results.put("step1_5_character_refs", "❌ Hata: " + e.getMessage());
                     }
                 }
 
@@ -869,6 +872,10 @@ public class TurkuVideoProjectController {
                     }
 
                     try {
+                        // Sahne için en uygun karakter referansını seç
+                        String sceneRefUrl = selectBestReference(scene, characterReferenceUrls);
+                        log.info("Sahne {} model seçimi: {} (ref={})", scene.getSceneNo(), sceneRefUrl != null ? "KONTEXT" : "FLUX-PRO", sceneRefUrl != null ? "var" : "yok");
+
                         TurkuImageGenerationRequest imgReq = TurkuImageGenerationRequest.builder()
                                 .projectId(id)
                                 .sceneNo(scene.getSceneNo())
@@ -884,14 +891,15 @@ public class TurkuVideoProjectController {
                                 .narrationText(scene.getNarrationSummary())
                                 .sceneTitle(scene.getSceneTitle())
                                 .cameraDirection(scene.getCameraDirection())
-                                .referenceImageUrl(referenceImageUrl)
+                                .referenceImageUrl(sceneRefUrl)
+                                .characterReferenceUrls(characterReferenceUrls)
                                 .build();
 
                         // Fal.ai varsa onu kullan (Flux Pro), yoksa OpenAI (gpt-image-1)
                         if (falImageService != null) {
                             TurkuImageGenerationResult result = falImageService.generateImage(imgReq,
                                     TurkuGenerationSafetyEnvelope.createDefault(id, "IMAGE_GENERATION", TurkuProviderMode.DETERMINISTIC_STUB));
-                            String usedModel = referenceImageUrl != null ? "flux-pro-kontext" : "flux-pro-v1.1";
+                            String usedModel = sceneRefUrl != null ? "flux-pro-kontext" : "flux-pro-v1.1";
                             if (result.isSuccess()) {
                                 imgSuccess++;
                                 logAiCost(id, "image_generation", scene.getSceneNo(), "fal.ai", usedModel,
@@ -1621,6 +1629,106 @@ public class TurkuVideoProjectController {
      *  brown eyes, wheat-colored skin, wearing dark brown wool vest over cream linen shirt,
      *  charcoal şalvar trousers, red sash, leather çarık boots, carrying a bağlama"
      */
+    private String selectBestReference(TurkuStoryboardScene scene, Map<String, String> characterReferenceUrls) {
+        if (characterReferenceUrls == null || characterReferenceUrls.isEmpty()) return null;
+        
+        // Sahne karakter bilgisi varsa eşle
+        String sceneChars = scene.getCharacters();
+        // Also check scene title and visual description for character names
+        if (sceneChars == null || sceneChars.isBlank()) {
+            sceneChars = (scene.getSceneTitle() != null ? scene.getSceneTitle() : "") + " " +
+                         (scene.getVisualDescription() != null ? scene.getVisualDescription() : "");
+        }
+        
+        String sceneText = sceneChars.toLowerCase();
+        
+        // Karakter isimlerini sahne metninde ara
+        for (Map.Entry<String, String> entry : characterReferenceUrls.entrySet()) {
+            String charName = entry.getKey().toLowerCase();
+            // İsmin ilk kelimesini de kontrol et ("Sümmani (erkek)" → "sümmani")
+            String firstName = charName.split("[\\s(]+")[0];
+            if (sceneText.contains(firstName)) {
+                return entry.getValue();
+            }
+        }
+        
+        // Eşleşme yoksa referans KULLANMA — sahne Flux Pro v1.1 ile üretilecek
+        log.info("Sahne '{}' için karakter eşleşmesi bulunamadı → referanssız Flux Pro kullanılacak", scene.getSceneTitle());
+        return null;
+    }
+
+    /**
+     * Karakter çizelgesini ayrı ayrı karakterlere ayırır.
+     * Her karakter adıyla eşlenmiş fiziksel tanım döner.
+     */
+    private Map<String, String> parseCharacterDescriptions(TurkuVideoProject project) {
+        Map<String, String> characters = new LinkedHashMap<>();
+        
+        if (project.getStoryPackage() == null || project.getStoryPackage().getCharacterSheet() == null 
+                || project.getStoryPackage().getCharacterSheet().length() < 100) {
+            characters.put("default", buildCharacterDescription(project));
+            return characters;
+        }
+        
+        String sheet = project.getStoryPackage().getCharacterSheet();
+        String[] sections = sheet.split("(?=###\\s)");
+        
+        for (String section : sections) {
+            String trimmed = section.trim();
+            if (trimmed.isEmpty()) continue;
+            
+            // Karakter adını çıkar
+            String firstLine = trimmed.split("\\n")[0].replaceAll("^#+\\s*", "").trim();
+            
+            // Setting/Period/Mekan bölümlerini atla
+            if (firstLine.toLowerCase().contains("setting") || firstLine.toLowerCase().contains("mekan")
+                    || firstLine.toLowerCase().contains("period") || firstLine.toLowerCase().contains("dönem")
+                    || firstLine.toLowerCase().contains("supporting")) continue;
+            
+            // İsmi çıkar (Name: veya **Name:** satırından)
+            String charName = extractCharacterName(trimmed);
+            if (charName == null || charName.isBlank()) charName = firstLine;
+            
+            // Fiziksel tanımı prompt'a çevir
+            String charPrompt = convertSingleCharacterToPrompt(trimmed);
+            charPrompt = cleanInstructionText(charPrompt);
+            
+            if (!charPrompt.isBlank() && charPrompt.length() > 20) {
+                characters.put(charName, charPrompt);
+            }
+        }
+        
+        if (characters.isEmpty()) {
+            characters.put("default", buildCharacterDescription(project));
+        }
+        
+        return characters;
+    }
+
+    private String extractCharacterName(String section) {
+        for (String line : section.split("\\n")) {
+            String t = line.trim();
+            if (t.matches("(?i)\\*\\*Name:\\*\\*.*") || t.matches("(?i)\\*\\*İsim:\\*\\*.*") || t.matches("(?i)\\*\\*Isim:\\*\\*.*")) {
+                return t.replaceAll("\\*\\*[^*]+:\\*\\*\\s*", "").trim();
+            }
+        }
+        return null;
+    }
+
+    private String convertSingleCharacterToPrompt(String section) {
+        StringBuilder sb = new StringBuilder();
+        for (String line : section.split("\\n")) {
+            String t = line.trim();
+            if (t.startsWith("**") && t.contains(":**")) {
+                String value = t.replaceAll("\\*\\*[^*]+:\\*\\*\\s*", "").trim();
+                if (!value.isBlank() && !value.startsWith("[")) {
+                    sb.append(value).append(", ");
+                }
+            }
+        }
+        return sb.toString().trim();
+    }
+
     private String buildCharacterDescription(TurkuVideoProject project) {
         // GPT-üretimi karakter çizelgesi varsa DOĞRUDAN kullan (en iyi seçenek)
         if (project.getStoryPackage() != null

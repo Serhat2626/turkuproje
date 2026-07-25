@@ -346,11 +346,22 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             case "STORY" -> """
                 Sen ödüllü bir belgesel film yönetmeni, Anadolu kültürü profesörü ve
                 en iyi hikâye yazarısın. Görevin: verilen türkü hakkında bir SİNEMA FİLMİ
-                tadında, baştan sona izleyiciyi içine çeken, gözyaşlarına boğan, derin
+                tadında, baştan sona izleyiciyi içine çeken, derinden etkileyen, derin
                 ve geniş bir hikâye paketi hazırlamak.
 
                 Bu hikâye 10 dakikalık profesyonel bir YouTube belgesel videosu için
                 kullanılacak. Video görselleri bu hikâyeye göre üretilecek.
+
+                ⚠️ ÖNEMLİ: Türküler farklı temalarda olabilir. Önce türkünün temasını belirle:
+                - AŞK HİKÂYESİ (kavuşamama, hasret, platonik aşk)
+                - SAVAŞ / KAHRAMANLIK (Çanakkale, cephe, şehitlik)
+                - GURBET (göç, memleket hasreti, gurbetçi acısı)
+                - AĞIT (ölüm, yas, kayıp acısı)
+                - DOĞA / YÖRE (dağlar, ovalar, mevsimler, köy hayatı)
+                - İSYAN / DİRENİŞ (eşkıyalık, zulme karşı durma)
+                - ANNELİK / AİLE (evlat hasreti, ana-baba sevgisi)
+                - TARİHSEL OLAY (deprem, kıtlık, göç, sürgün)
+                Hikâye yapısını TEMAYA GÖRE uyarla. Her türküyü aşk hikâyesi gibi yazma!
 
                 ARAŞTIRMA KURALLARI:
                 - Türkünün gerçek hikâyesini KAYNAKLARDAN araştır
@@ -367,70 +378,80 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 - Hikâye bölümü EN AZ 2500 KELİME — bu videonun KALBİ ve CAN DAMARI
                 - Her sahneyi bir film yönetmeni gibi anlat: kamera açıları, ışık, renkler
                 - Karakterleri CANLANDIR: fiziksel tasvirler, kişilik özellikleri, alışkanlıklar
-                - İç monologlar ve diyaloglar kullan: "O an kalbi durdu..."
+                - İç monologlar ve diyaloglar kullan
                 - Beş duyuya hitap et: rüzgarın uğultusu, toprağın kokusu, sazın tınısı,
                   gözyaşının sıcaklığı, ekmeğin kokusu
-                - Mekan betimlemelerini sinematik yap: "Güneş dağların ardından yükselirken,
-                  sis çayırlardan usulca kalkıyordu..."
-                - Okuyucu/izleyici AĞLAMALI — duygusal zirve çok güçlü olmalı
-                - Dramatik yapı: TANIŞMA → UMUT → ENGEL → ÇATIŞMA → DORUK → VEDA → MİRAS
+                - Mekan betimlemelerini sinematik yap
+                - İzleyici derinden ETKİLENMELİ — duygusal zirve çok güçlü olmalı
 
                 FORMAT:
                 ## Türkü Hakkında
                 [Çarpıcı, etkileyici tanıtım — 200-300 kelime.
                 İlk cümle izleyiciyi ANINDA yakalamalı.
-                Bu türkü neden önemli? Neden yüzyıllardır söyleniyor?]
+                Bu türkü neden önemli? Neden yüzyıllardır söyleniyor?
+                Teması ne: aşk mı, savaş mı, gurbet mi, ağıt mı?]
 
                 ## Tarihsel Bağlam
                 [Dönem, coğrafya, sosyal ortam — 400-500 kelime.
                 O dönemde Anadolu nasıl bir yerdi? İnsanlar nasıl yaşıyordu?
-                Köy hayatı, gelenekler, aile yapısı, toplumsal kurallar.
+                Türkünün temasına göre bağlam kur:
+                - Aşk türküsü → köy hayatı, gelenekler, aile yapısı
+                - Savaş türküsü → cephe koşulları, askere uğurlama, vatan sevgisi
+                - Gurbet türküsü → göç nedenleri, geride bırakılanlar, yol zorluğu
+                - Ağıt → ölüm koşulları, yas gelenekleri, toplumsal acı
                 Okuyucu kendini O DÖNEME IŞINLANMIŞ gibi hissetmeli.]
 
                 ## Hikâye
                 [═══ ANA HİKÂYE — EN AZ 2500 KELİME ═══
                 Bu bir FİLM SENARYOSUdur. Baştan sona olay örgüsü ile devam eder.
 
-                7 BÖLÜMLÜ YAPI:
+                7 BÖLÜMLÜ EVRENSEL YAPI (temaya göre uyarla):
                 1. PROLOGUE (200 kelime): Atmosfer kurulumu. Mekan, zaman, hava.
-                   "Bir sonbahar akşamı, dağlardan esen rüzgar..."
+                   Hikâyenin geçtiği dünyayı gözler önüne ser.
 
-                2. TANIŞMA (400 kelime): Kahramanı tanıt.
-                   Fiziksel tasvir, günlük hayatı, çevresi, hayalleri.
+                2. TANIŞMA (400 kelime): Ana kahramanı tanıt.
+                   Fiziksel tasvir, günlük hayatı, çevresi, hayalleri/korkuları.
                    Nereli, ne iş yapıyor, ailesi nasıl?
                    Küçük detaylar: alışkanlıkları, sevdiği şeyler.
 
-                3. KADER ANI (400 kelime): Hayatını değiştirecek an.
-                   İlk karşılaşma veya olayın başlangıcı.
+                3. KADER ANI (400 kelime): Hayatını değiştirecek olay/kişi/an.
+                   Bu AN temaya göre değişir:
+                   - Aşk → ilk karşılaşma, ilk bakış
+                   - Savaş → seferberlik haberi, veda günü
+                   - Gurbet → göç kararı, yola çıkış
+                   - Ağıt → kaybın gerçekleştiği an
+                   - İsyan → zulmün doruk noktası
                    Zaman yavaşlasın, her detay büyüteçle anlatılsın.
-                   Kalp çarpıntısı, titreme, dünya duruyor.
 
-                4. UMUT ve MUTLULUK (300 kelime): Kısa ama yoğun mutlu dönem.
-                   Gizli buluşmalar, mektuplar, bakışmalar.
-                   Doğa ile paralel: bahar, çiçek açması.
+                4. UMUT veya DİRENİŞ (300 kelime): Kısa ama yoğun olumlu dönem.
+                   - Aşk → gizli buluşmalar, mutlu anlar
+                   - Savaş → zafer umudu, silah arkadaşlığı
+                   - Gurbet → yeni diyarda tutunma çabası
+                   - İsyan → halk desteği, küçük zaferler
 
-                5. ENGELLER ve ÇATIŞMA (400 kelime): Acı başlıyor.
-                   Ailevi, toplumsal, coğrafi engeller.
-                   Zorla evlendirme, gurbet, savaş, hastalık...
+                5. ENGELLER ve ÇATIŞMA (400 kelime): Acı/zorluk başlıyor.
+                   Temaya göre: ailevi engeller, düşman baskısı, hastalık,
+                   yalnızlık, ihanet, doğa felaketleri...
                    İç dünya: çaresizlik, isyan, kabullenememe.
 
                 6. DUYGUSAL DORUK (500 kelime): EN YOĞUN AN.
-                   Son karşılaşma veya ebedi ayrılık.
-                   Gözyaşları, vedalaşma, sessiz çığlık.
-                   "Bir daha asla göremeyecekti..." gibi satırlar.
-                   Bu bölüm izleyiciyi AĞLATMALI.
+                   - Aşk → ebedi ayrılık, son veda
+                   - Savaş → şehitlik, son mektup, zafer/yenilgi anı
+                   - Gurbet → memlekete dönememe, geride kalanın ölüm haberi
+                   - Ağıt → kabulleniş, son bakış, toprak kokusu
+                   Bu bölüm izleyiciyi DERİNDEN ETKİLEMELİ.
 
-                7. MİRAS ve SONSÖZ (300 kelime): Acı, müziğe dönüşüyor.
+                7. MİRAS ve SONSÖZ (300 kelime): Acı/deneyim, müziğe dönüşüyor.
                    Türkü nasıl doğdu? Kim söyledi ilk?
                    Nesiller boyu nasıl aktarıldı?
-                   Bugün bile dinleyenlerin gözlerini nemlendiren evrensel duygu.
+                   Bugün bile dinleyenleri etkileyen evrensel duygu.
 
                 Her paragraf SİNEMATİK olsun. Kamera açılarını hayal et.
                 Mevsimler, günün saatleri, doğa olayları hikâyeyle paralel akmalı.]
 
                 ## Duygusal Katman
                 [Bu türkü neden evrensel? — 300-400 kelime.
-                Aşk, kayıp, özlem, gurbet — herkesin duyguları.
+                Hangi temel insani duyguya dokunuyor?
                 Dinleyici neden kendini bu hikâyede buluyor?
                 Modern dünyada bile geçerliliği.]
 
@@ -451,32 +472,40 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 Fal.ai modeli Türkçe ANLAMIYOR. Tüm fiziksel tanımları İNGİLİZCE yaz.
                 Sadece isimler Türkçe kalabilir.
 
-                ### Main Male Character
-                **Name:** [hikâyedeki gerçek isim]
-                **Age:** [age range fitting the story]
-                **Physical:** [DETAILED — hair color/type, skin tone, facial features,
-                build, facial hair. Example: "Dark wavy hair, wheat-colored skin,
-                sharp nose, slightly furrowed brows, thin mustache, athletic build"]
-                **Clothing:** [period-accurate Anatolian — vest, şalvar, sash, çarık.
-                Example: "Dark brown wool vest over white linen shirt, loose gray
-                şalvar pants, leather belt with small pouch, worn leather çarık boots"]
-                **Distinctive:** [saz on back, ring, prayer beads, scar, etc.]
+                ⚠️ Karakter sayısı ve türü TEMAYA GÖRE DEĞİŞİR:
+                - Aşk → erkek + kadın + aile/toplum karakterleri
+                - Savaş → asker(ler) + komutan + geride kalan aile
+                - Gurbet → gurbetçi + geride bıraktıkları
+                - Ağıt → kaybedilen kişi + yasını tutan(lar)
+                - İsyan → isyancı + zalim + halk
 
-                ### Main Female Character
+                ### Main Character 1
                 **Name:** [hikâyedeki gerçek isim]
+                **Role:** [kahramanın rolü: âşık, asker, gurbetçi, ana, eşkıya vs.]
+                **Age:** [age range fitting the story]
+                **Gender:** [male/female]
+                **Physical:** [DETAILED — hair color/type, skin tone, facial features,
+                build. Period and role appropriate.]
+                **Clothing:** [period-accurate Anatolian clothing, role appropriate.
+                Asker ise: üniforma/cephe kıyafeti. Köylü ise: şalvar, yelek, çarık.]
+                **Distinctive:** [defining object: saz, tüfek, orak, tespih, mektup vs.]
+
+                ### Main Character 2 (if applicable)
+                **Name:** [hikâyedeki gerçek isim]
+                **Role:** [sevgili, eş, anne, silah arkadaşı vs.]
                 **Age:** [age range]
-                **Physical:** [DETAILED English description — hair, skin, eyes, face]
-                **Clothing:** [period-accurate — entari, yemeni, jewelry.
-                Example: "Burgundy embroidered entari dress, white yemeni headscarf
-                loosely draped, silver coin necklace, henna on hands"]
+                **Gender:** [male/female]
+                **Physical:** [DETAILED English description]
+                **Clothing:** [period-accurate, role appropriate]
                 **Distinctive:** [defining object/accessory]
 
                 ### Supporting Characters (minimum 2-3)
                 For each:
-                **Name/Role:** [e.g. Father, village ağa, best friend]
+                **Name/Role:** [e.g. Father, commander, village elder, friend]
                 **Age:** [estimated]
+                **Gender:** [male/female]
                 **Physical:** [short but clear ENGLISH description]
-                **Clothing:** [period and status appropriate]
+                **Clothing:** [period, status and role appropriate]
                 **Story role:** [why this character matters]
                 """;
 
@@ -577,35 +606,38 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 [═══ ANA HİKÂYE — EN AZ 1500 KELİME ═══
                 Bu bölüm videonun KALBİDİR. Bir kısa roman gibi yazılmalı.
 
+                ⚠️ Türkünün temasını belirle (aşk, savaş, gurbet, ağıt, isyan,
+                doğa, annelik, tarihsel olay) ve yapıyı TEMAYA GÖRE uyarla.
+
                 YAPI:
                 1. TANIŞMA (300 kelime): Kahramanı tanıt. Nereli, nasıl biri?
-                   Günlük hayatını, çevresini, rüyalarını anlat.
+                   Günlük hayatını, çevresini, hayallerini/korkularını anlat.
                    Mekanı betimleme: kokular, renkler, sesler.
 
-                2. AŞKIN DOĞUŞU (300 kelime): İlk karşılaşma anı.
-                   Kalp çarpıntısı, utangaçlık, umut.
+                2. KADER ANI (300 kelime): Hayatı değiştiren olay/kişi/an.
+                   Temaya göre: ilk karşılaşma / savaş haberi / göç kararı /
+                   kaybın başlangıcı / zulmün doruk noktası.
                    Diyaloglar ve iç monologlar kullan.
-                   "O an dünya durdu" gibi anları detaylandır.
 
-                3. ENGELLER (300 kelime): Neden kavuşamıyorlar?
-                   Ailevi, toplumsal, coğrafi engeller.
-                   Acı, özlem, bekleyiş.
-                   Mektuplar, haberler, dedikodular.
+                3. ENGELLER (300 kelime): Zorluklar derinleşiyor.
+                   Temaya göre: ailevi engeller / düşman baskısı / gurbet
+                   yalnızlığı / hastalık / ihanet.
+                   Acı, özlem, bekleyiş, mücadele.
 
                 4. DUYGUSAL DORUK (300 kelime): En yoğun an.
-                   Son karşılaşma veya hiç kavuşamama.
-                   Gözyaşları, vedalaşma, kabulleniş.
-                   İç dünya: "Sensiz bu dünya neye yarar?"
+                   Temaya göre: ebedi ayrılık / şehitlik / dönememe /
+                   kabulleniş / son direniş.
+                   Bu bölüm izleyiciyi DERİNDEN ETKİLEMELİ.
 
-                5. MİRAS (300 kelime): Türkü nasıl doğdu?
-                   Acıyı saza, sözlere dökmek.
+                5. MİRAS (300 kelime): Acı/deneyim müziğe dönüşüyor.
+                   Türkü nasıl doğdu? Kim söyledi ilk?
                    Türkünün yayılışı, nesiller boyu aktarılması.
-                   Bugün bile dinleyenleri ağlatan evrensel duygu.
+                   Bugün bile dinleyenleri etkileyen evrensel duygu.
 
                 Her paragraf sinematik olsun — kamera açılarını hayal et.
                 Beş duyuya hitap et: rüzgarın sesi, toprağın kokusu,
                 gözyaşının sıcaklığı, sazın tınısı.
-                Okuyucu AĞLAMALI.]
+                İzleyici DERİNDEN ETKİLENMELİ.]
 
                 ## Duygusal Katman
                 [Bu türkü neden evrensel? — 250-300 kelime.
@@ -769,44 +801,63 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    ASLA "guitar", "lute", "oud" yazma.
                    Bağlama açıklaması: long thin neck, small pear-shaped wooden body.
 
-                7. HİKÂYE KRONOLOJİSİ (⚠️ EN KRİTİK KURAL):
-                   35 sahneden EN AZ 30 TANESİ hikâyenin kendisini anlatmalı!
-                   Genel tarih, kültür, miras gibi dolgu sahne YASAK.
+                7. HİKÂYE KRONOLOJİSİ (⚠️ EN KRİTİK KURAL — FİLM ROMANI YAKLAŞIMI):
+                   Bu storyboard bir FİLM ROMANI adaptasyonudur!
+                   Senaryodaki HER PARAGRAF, HER CÜMLE storyboard'da karşılık bulmalı.
+                   Senaryo metnini baştan sona oku ve 35 sahneye TAMAMEN dağıt.
+                   Hiçbir paragraf atlanmamalı, hiçbir olay özetlenmemeli.
 
-                   Sahne 1-2: ATMOSFER — Mekan tanıtımı (köy, dağ, ırmak).
-                     Seslendirme: dönemin ve coğrafyanın kısa betimlemesi.
-                   Sahne 3-7: TANIŞMA — Ana karakterin tanıtımı, günlük yaşamı,
-                     ailesi, çevresi, hayalleri. Her sahne farklı bir detay.
-                   Sahne 8-12: KARŞILAŞMA — İlk bakış, ilk söz, ilk heyecan.
-                     Aşkın filizlenmesi. Utangaç anlar, çarpan kalpler.
-                   Sahne 13-17: MUTLULUK — Gizli buluşmalar, mektuplar, bakışmalar.
-                     Birlikte geçen anlar. Doğa ile paralel: bahar, çiçek.
-                   Sahne 18-22: ENGELLER — Baba/ağa karşı çıkıyor. Toplumsal baskı.
-                     Zorla evlendirme tehdidi. Gurbet zorunluluğu.
+                   ⛔ MUTLAK YASAK: Senaryoda anlatılan hikâye sahne 18'de bitmez!
+                   Senaryonun SON paragrafı sahne 30-32'de anlatılmalı.
+                   Sahne 18'den sonra "tarihsel bağlam", "kültürel miras", "gelenekler"
+                   gibi DOLGU SAHNE YAZMAK KESİNLİKLE YASAKTIR.
+
+                   SAHNE DAĞILIMI:
+                   Sahne 1-3: GİRİŞ/ATMOSFER — Mekan tanıtımı, dönemin havası.
+                     Temaya göre: köy, cephe, gurbet yolu, şehir, dağ...
+                     SADECE 3 sahne! Giriş kısa tutulmalı.
+                   Sahne 4-8: TANIŞMA — Ana karakterin dünyası.
+                     Günlük yaşamı, ailesi, çevresi, hayalleri veya korkuları.
+                     Her sahne farklı bir detay: ev, iş, arkadaş, aile.
+                   Sahne 9-14: KADER ANI — Hayatı değiştiren olay/kişi başlıyor.
+                     Temaya göre: ilk karşılaşma / savaş haberi / göç kararı /
+                     kaybın başlangıcı / zulmün doruk noktası.
+                     Her sahne bir OLAY göstermeli. 6 sahne boyunca detaylı anlat.
+                   Sahne 15-20: GELİŞME — Olaylar derinleşiyor.
+                     Temaya göre: mutlu anlar / cephe mücadelesi / gurbette
+                     tutunma / hastalık seyri / direniş örgütlenmesi.
+                     Senaryodaki ilgili paragrafları BİRER BİRER sahneye dönüştür.
+                   Sahne 21-26: ENGELLER VE ÇATIŞMA — Zorluklar başlıyor.
+                     Temaya göre: aile engeli / düşman saldırısı / yalnızlık /
+                     kayıp haberi / ihanet / doğa felaketi.
                      Her sahnede farklı bir engel veya çatışma anı.
-                   Sahne 23-27: AYRILIK VE ACI — Veda anı, göç yolu, yalnızlık.
-                     Geride kalanın acısı, gidenin hasreti.
-                     İç monologlar, sessiz gözyaşları, uykusuz geceler.
-                   Sahne 28-30: DUYGUSAL DORUK — En yoğun sahneler.
-                     Son mektup, son hayal kırıklığı veya ebedi ayrılık.
-                     Türkünün doğduğu AN — saz elde, acı sözlere dönüşüyor.
-                   Sahne 31-32: MİRAS — Türkü köyden köye yayılıyor.
-                     Nesiller boyu aktarılıyor.
-                   Sahne 33-35: KAPANIŞ — Türkü bugün hâlâ söyleniyor.
-                     Evrensel duygu, izleyiciye son mesaj, CTA.
+                   Sahne 27-30: DUYGUSAL DORUK — En yoğun sahneler.
+                     Hikâyenin zirvesi. Türkünün doğduğu AN.
+                     Acı/deneyim müziğe dönüşüyor.
+                     4 sahne boyunca YAVAŞ ve DERİN anlat.
+                   Sahne 31-32: MİRAS — Türkü yayılıyor, nesillere aktarılıyor.
+                   Sahne 33-35: KAPANIŞ — Son mesaj + CTA.
+                     SADECE 3 sahne! Kapanış kısa tutulmalı.
 
-                   ⚠️ YASAK: Sahne 12'den sonra "tarihsel bağlam", "kültürel önem",
-                   "Anadolu geleneği" gibi GENEL BİLGİ sahnesi yazmak!
-                   Her sahne MUTLAKA hikâyenin bir OLAYINI, bir ANINI göstermeli.
-                   "Gelenekler", "toplumsal yapı" gibi bilgiler hikâye İÇİNDE
-                   karakter diyalogları ve aksiyonlarla verilmeli.
+                   ⚠️ KENDİNİ KONTROL ET:
+                   - Sahne 20'de hikâye bitmiş mi? BİTMEMELİ! Sahne 30'a kadar devam et.
+                   - Sahne 19'dan sonra "gelenekler", "toplumsal yapı", "Anadolu kültürü"
+                     gibi genel bilgi sahnesi var mı? VARSA SİL, yerine hikâye sahnesi koy.
+                   - Her sahnede yeni bir OLAY mı var, yoksa önceki sahneyi tekrar mı?
+                     Tekrar varsa, farklı bir sahne yaz.
+                   - Senaryodaki son bölüm (veda, düğün, ayrılık, ölüm) storyboard'da
+                     kaç sahneyle anlatılıyor? EN AZ 4 sahne olmalı!
 
                    ⚠️ TEKRAR YASAĞI: Hiçbir iki sahne aynı eylemi, aynı mekanı
                    ve aynı duyguyu TEKRAR EDEMEZ. Her sahne BENZERSİZ olmalı.
 
-                8. SESLENDİRME: Senaryodaki beat'lerin hikâye anlatımını sahnelere dağıt.
-                   Her sahne 40-80 kelime seslendirme. Genel tarihî bilgi DEĞİL,
-                   hikâyenin o anını anlat: "O akşam sazını eline aldığında..."
+                8. SESLENDİRME (⚠️ FİLM ROMANI KURALI):
+                   Senaryodaki HİKÂYE METNİNİ sahnelere paragraf paragraf dağıt.
+                   Her sahne 40-80 kelime seslendirme. Senaryo metnindeki cümleleri
+                   AYNEN veya hafifçe uyarlayarak kullan.
+                   ⛔ YASAK: "Bu türkü yıllardır söylenir" gibi GENEL ifadeler.
+                   ✅ DOĞRU: Senaryodaki spesifik cümleyi sahneye yerleştir:
+                   "O akşam sazını eline aldığında, gözlerinden yaşlar süzüldü..."
 
                 9. ⚠️ SAYI KURALI (ÇOK ÖNEMLİ — TTS İÇİN):
                    Seslendirme metninde RAKAM KULLANMA! Tüm sayıları YAZIYYLA yaz.

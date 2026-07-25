@@ -558,6 +558,7 @@ public class TurkuProviderDraftPlanningService {
             String camera = extractField(section, "\\*{0,2}Kamera:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
             String transition = extractField(section, "\\*{0,2}Geçiş:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
             String duration = extractField(section, "\\*{0,2}Süre:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
+            String characters = extractField(section, "\\*{0,2}Karakterler:?\\*{0,2}\\s*(.+?)(?:\\n|$)");
 
             // Süreyi saniyeye çevir (ör: "0:00 - 0:30" → 30 veya "15 saniye" → 15)
             int durationSec = parseDurationToSeconds(duration, 17); // 35 sahne × 17sn ≈ 600sn
@@ -585,7 +586,8 @@ public class TurkuProviderDraftPlanningService {
                     durationSec,
                     camera != null ? camera : "Orta plan",
                     transition != null ? transition : (i == 1 ? "Fade in" : "Çapraz geçiş"),
-                    music != null ? music : "Bağlama ve keman"
+                    music != null ? music : "Bağlama ve keman",
+                    characters != null ? characters : ""
             ));
         }
 
@@ -596,7 +598,7 @@ public class TurkuProviderDraftPlanningService {
                     "Belgesel görünümü",
                     text.length() > 500 ? text.substring(0, 500) : text,
                     project.getMood() != null ? project.getMood() : "Hüzünlü",
-                    60, "Geniş açı", "Fade in", "Arka plan müziği"));
+                    60, "Geniş açı", "Fade in", "Arka plan müziği", null));
         }
 
         return scenes;

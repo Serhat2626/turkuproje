@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.Map;
 import java.util.UUID;
 
 /**
@@ -51,4 +52,7 @@ public class TurkuImageGenerationRequest {
 
     /** Karakter referans görseli URL (Fal CDN) — Kontext modeli için */
     private String referenceImageUrl;
+    
+    /** Tüm karakter referans görselleri (Ad -> Fal CDN URL) */
+    private Map<String, String> characterReferenceUrls;
 }

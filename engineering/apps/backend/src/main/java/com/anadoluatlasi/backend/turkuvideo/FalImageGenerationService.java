@@ -129,6 +129,40 @@ public class FalImageGenerationService {
         return cdnUrl;
     }
 
+    /**
+     * Tüm karakterler için ayrı referans görselleri üretir.
+     * Her karakter adıyla eşlenmiş CDN URL döner.
+     * Anahtar: karakter adı (lowercase, trimmed), Değer: Fal CDN URL
+     */
+    public Map<String, String> generateAllCharacterReferences(UUID projectId, Map<String, String> characterPrompts) {
+        Map<String, String> references = new java.util.LinkedHashMap<>();
+        for (Map.Entry<String, String> entry : characterPrompts.entrySet()) {
+            String charName = entry.getKey();
+            String charPrompt = entry.getValue();
+            String minioPath = String.format("turku-video/%s/character_ref_%s.png", projectId, charName.toLowerCase().replaceAll("\\s+", "_"));
+            
+            try {
+                if (existsInMinio(minioPath)) {
+                    log.info("Karakter referansı zaten mevcut: {}", charName);
+                    byte[] existingBytes = downloadFromMinio(minioPath);
+                    String cdnUrl = uploadToFalCdn(existingBytes, projectId + "_ref_" + charName.toLowerCase().replaceAll("\\s+", "_") + ".png");
+                    references.put(charName, cdnUrl);
+                    continue;
+                }
+                
+                String refPrompt = charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral light gray background. Photorealistic, high detail, sharp focus, studio lighting.";
+                byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
+                uploadToMinioPath(minioPath, imageBytes);
+                String cdnUrl = uploadToFalCdn(imageBytes, projectId + "_ref_" + charName.toLowerCase().replaceAll("\\s+", "_") + ".png");
+                references.put(charName, cdnUrl);
+                log.info("✅ Karakter referansı üretildi: {} → {}", charName, cdnUrl.substring(0, Math.min(60, cdnUrl.length())));
+            } catch (Exception e) {
+                log.error("Karakter referans hatası: {} → {}", charName, e.getMessage());
+            }
+        }
+        return references;
+    }
+
     // ═══ AŞAMA 2: Sahne Görseli (Kontext) ═══
 
     /**
@@ -308,15 +342,15 @@ public class FalImageGenerationService {
 
         String visual = request.getSafePromptSummary();
         if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
-            String cleanVisual = visual
-                    .replaceAll("(?i)\\bguitar\\b", "bağlama")
-                    .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama");
-            sb.append("Place this person in the following scene: ").append(cleanVisual).append(". ");
+            String cleanVisual = sanitizeVisualPrompt(visual);
+            sb.append("Transform the person in this image into this new scene. ");
+            sb.append("Change the background, pose, and composition while keeping the person's face identical. ");
+            sb.append(cleanVisual).append(". ");
         } else {
             sb.append("Place this person in a 19th century Anatolian village scene. ");
         }
 
-        sb.append("Keep the character's face, body, and clothing exactly the same. ");
+        sb.append("Keep ONLY the face and facial features identical. The pose, body position, and framing should match the scene description. ");
         sb.append("Photorealistic cinematic film still, 35mm film grain. ");
         sb.append("19th century Ottoman Anatolian village, warm earth tones. ");
 
@@ -343,17 +377,16 @@ public class FalImageGenerationService {
 
         if (charDesc != null && !charDesc.isBlank()) {
             if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
-                String cleanVisual = visual
-                        .replaceAll("(?i)\\bguitar\\b", "bağlama")
-                        .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama");
+                String cleanVisual = sanitizeVisualPrompt(visual);
                 sb.append(charDesc).append(", ").append(cleanVisual).append(". ");
             } else {
                 sb.append(charDesc).append(". ");
             }
         } else if (visual != null && !visual.isBlank()) {
-            sb.append(visual.replaceAll("(?i)\\bguitar\\b", "bağlama")).append(". ");
+            sb.append(sanitizeVisualPrompt(visual)).append(". ");
         }
 
+        sb.append("Dramatic cinematic composition. ");
         sb.append("Photorealistic cinematic film still, 35mm film grain. ");
         sb.append("19th century Ottoman Anatolian village, warm earth tones. ");
 
@@ -367,6 +400,95 @@ public class FalImageGenerationService {
         }
 
         return sb.toString().trim();
+    }
+
+    // ═══ Türkçe Tespit & Temizleme ═══
+
+    /**
+     * Görsel prompt'u temizler:
+     * 1. Türkçe metin tespiti — uyarı loglar
+     * 2. guitar → bağlama düzeltmesi
+     * 3. Yaygın Türkçe kelimeleri İngilizceye çevirir
+     */
+    private String sanitizeVisualPrompt(String visual) {
+        if (visual == null || visual.isBlank()) return visual;
+
+        String cleaned = visual
+                // Enstrüman düzeltmesi
+                .replaceAll("(?i)\\bguitar\\b", "bağlama")
+                .replaceAll("(?i)\\bacoustic guitar\\b", "bağlama")
+                .replaceAll("(?i)\\blute\\b", "bağlama")
+                .replaceAll("(?i)\\boud\\b", "bağlama");
+
+        // Türkçe karakter tespiti (ç, ş, ğ, ü, ö, ı, İ)
+        boolean hasTurkish = cleaned.matches(".*[çşğüöıİÇŞĞÜÖ].*")
+                || cleaned.matches("(?i).*(köy|dağ|göl|ırmak|çeşme|mektup|ayrılık|buluşma|savaş|asker|yaşlı|genç|kadın|erkek|ağlama|veda|hasret|gurbet|yalnızlık|bahar|kış|sonbahar|yaz|gece|gündüz|sabah|akşam).*");
+
+        if (hasTurkish) {
+            log.warn("⚠️ Görsel prompt'ta Türkçe tespit edildi! Temizleniyor: {}",
+                    cleaned.substring(0, Math.min(80, cleaned.length())));
+
+            // Yaygın Türkçe kelimeleri İngilizceye çevir
+            cleaned = cleaned
+                    // Mekanlar
+                    .replaceAll("(?i)\\bköy\\b", "village")
+                    .replaceAll("(?i)\\bdağ\\b", "mountain")
+                    .replaceAll("(?i)\\bgöl\\b", "lake")
+                    .replaceAll("(?i)\\bırmak\\b", "river")
+                    .replaceAll("(?i)\\bçeşme\\b", "fountain")
+                    .replaceAll("(?i)\\bev\\b", "house")
+                    .replaceAll("(?i)\\byol\\b", "road")
+                    .replaceAll("(?i)\\btarla\\b", "field")
+                    .replaceAll("(?i)\\bahır\\b", "stable")
+                    .replaceAll("(?i)\\bçayır\\b", "meadow")
+                    // İnsanlar
+                    .replaceAll("(?i)\\bkadın\\b", "woman")
+                    .replaceAll("(?i)\\berkek\\b", "man")
+                    .replaceAll("(?i)\\bgenç\\b", "young")
+                    .replaceAll("(?i)\\byaşlı\\b", "old")
+                    .replaceAll("(?i)\\basker\\b", "soldier")
+                    .replaceAll("(?i)\\bçocuk\\b", "child")
+                    .replaceAll("(?i)\\bana\\b", "mother")
+                    .replaceAll("(?i)\\bbaba\\b", "father")
+                    // Eylemler
+                    .replaceAll("(?i)\\bağlama\\b", "crying")
+                    .replaceAll("(?i)\\bağlıyor\\b", "crying")
+                    .replaceAll("(?i)\\byürüyor\\b", "walking")
+                    .replaceAll("(?i)\\bkoşuyor\\b", "running")
+                    .replaceAll("(?i)\\boturuyor\\b", "sitting")
+                    .replaceAll("(?i)\\byazıyor\\b", "writing")
+                    .replaceAll("(?i)\\bbakıyor\\b", "looking")
+                    .replaceAll("(?i)\\bbekliyor\\b", "waiting")
+                    .replaceAll("(?i)\\bveda\\b", "farewell")
+                    .replaceAll("(?i)\\bbuluşma\\b", "meeting")
+                    .replaceAll("(?i)\\bayrılık\\b", "separation")
+                    .replaceAll("(?i)\\bmektup\\b", "letter")
+                    // Doğa / Hava
+                    .replaceAll("(?i)\\bbahar\\b", "spring")
+                    .replaceAll("(?i)\\byaz\\b", "summer")
+                    .replaceAll("(?i)\\bsonbahar\\b", "autumn")
+                    .replaceAll("(?i)\\bkış\\b", "winter")
+                    .replaceAll("(?i)\\bgece\\b", "night")
+                    .replaceAll("(?i)\\bgündüz\\b", "daytime")
+                    .replaceAll("(?i)\\bsabah\\b", "morning")
+                    .replaceAll("(?i)\\bakşam\\b", "evening")
+                    .replaceAll("(?i)\\bgüneş\\b", "sun")
+                    .replaceAll("(?i)\\bay\\b", "moon")
+                    .replaceAll("(?i)\\byağmur\\b", "rain")
+                    .replaceAll("(?i)\\bkar\\b", "snow")
+                    .replaceAll("(?i)\\bsis\\b", "fog")
+                    .replaceAll("(?i)\\brüzgar\\b", "wind")
+                    // Duygular
+                    .replaceAll("(?i)\\bhüzün\\b", "sorrow")
+                    .replaceAll("(?i)\\bhasret\\b", "longing")
+                    .replaceAll("(?i)\\bgurbet\\b", "exile")
+                    .replaceAll("(?i)\\byalnızlık\\b", "loneliness")
+                    .replaceAll("(?i)\\bumut\\b", "hope")
+                    .replaceAll("(?i)\\bsavaş\\b", "war")
+                    .replaceAll("(?i)\\bölüm\\b", "death");
+        }
+
+        return cleaned;
     }
 
     // ═══ MinIO İşlemleri ═══
