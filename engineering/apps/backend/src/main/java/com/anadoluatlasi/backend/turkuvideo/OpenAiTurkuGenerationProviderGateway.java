@@ -748,138 +748,115 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 **Müzik:** [Kapanış melodisi]
 
                 ═══════════════════════════════════════════
-                # BÖLÜM 3: STORYBOARD (TAM 35 SAHNE — EKSİK BIRAKMA)
+                # BÖLÜM 3: STORYBOARD (FİLM ROMANI YAKLAŞIMI)
                 ═══════════════════════════════════════════
 
-                *** KRİTİK KURALLAR — UYULMASI ZORUNLU ***
+                *** TEMEL PRENSİP — BUNU HER ŞEYİN ÜSTÜNDE TUT ***
 
-                1. TAM 35 SAHNE YAZILACAK. 10 veya 15 sahne yazıp bırakmak YASAKTIR.
-                   Sahne 1'den Sahne 35'e kadar HEPSINI yaz.
+                Bu storyboard bir FİLM ROMANI adaptasyonudur.
+                Senin görevin hikâyeyi YENİDEN YAZMAK DEĞİL,
+                hikâye metnini OLDUĞU GİBİ sahnelere bölmek ve
+                her sahne için uygun görsel prompt üretmektir.
 
-                2. BU BİR FİLM. Sessiz izleyen biri bile görsellerden hikâyeyi anlayabilmeli.
-                   Her sahne hikâyenin bir ANINI gösterir — karakter portresi DEĞİL.
+                SESLENDİRME = HİKÂYE METNİNİN KENDİSİ.
+                Hikâye metnindeki cümleler, TTS ile seslendirilecek.
+                Sen yeni cümle UYDURMA, mevcut metni BÖLERSIN.
 
-                3. YASAK GÖRSELLER:
-                   - İki kişi yan yana durup kameraya bakan portre ❌
-                   - Genel "güzel manzara" görseli ❌
-                   - Aynı sahnenin tekrarı ❌
-                   - Karaktersiz boş mekan ❌
-                   - Gitar veya Batı müzik aleti ❌ (SADECE bağlama/saz kullan)
+                *** STORYBOARD OLUŞTURMA ADIMLARI ***
 
-                4. ZORUNLU GÖRSELLER:
-                   - Her sahne bir AKSİYON/AN gösterir: yürüme, saz çalma, ağlama,
-                     mektup yazma, at sürme, hasret, kavuşma, veda...
-                   - Kamera açıları DEĞİŞKEN: close-up yüz, wide manzara, arkadan silüet,
-                     kuş bakışı köy, omuz üstü, alt açı, yan profil...
-                   - Her sahnede FARKLI mekan veya FARKLI an
-                   - Yan karakterler (baba, arkadaş, ağa) kendi sahnelerinde görülmeli
+                ADIM 1: Hikâye metnini temizle
+                  - Kamera yönlendirmeleri çıkar ("Kameranın geniş açıyla...")
+                  - Sahne teknik bilgileri çıkar ("Sabah ışıkları...")
+                  - Sadece ANLATIM METNİNİ bırak (seslendirilecek kısım)
 
-                5. ⚠️ GÖRSEL PROMPT YAZIM KURALLARI (ÇOK ÖNEMLİ):
-                   Görsel prompt'ta karakter FİZİKSEL TANIMI YAZMA!
-                   Saç rengi, sakal, kıyafet detayı, yaş, göz rengi YAZMA!
-                   Bunlar zaten karakter çizelgesinden otomatik eklenecek.
-                   Sadece şunları yaz:
-                   - KARAKTERİN İSMİ (Sümmani, Mihriban vb.)
-                   - AKSİYON (ne yapıyor: walking, playing saz, crying, writing)
-                   - MEKAN (where: village square, mountain path, river bank)
-                   - IŞIK/HAVA (golden sunset, moonlight, misty morning)
-                   - CİNSİYET BELİRT: "man" veya "woman" diye açıkça belirt
+                ADIM 2: Temizlenmiş metni bölümlere ayır
+                  Bölüm dağılımı:
 
-                   ✅ DOĞRU: "Sümmani (man) walking alone through snowy mountain path,
-                      carrying a bağlama on his back, misty mountains, low winter sun,
-                      wide establishing shot, deep loneliness"
-                   ✅ DOĞRU: "Sümmani (man) and Mihriban (woman) meeting at the village
-                      fountain, spring flowers blooming, shy first glance, medium shot"
-                   ✅ DOĞRU: "Mihriban (woman) sitting by the window, embroidering,
-                      rain outside, warm oil lamp light inside, melancholic expression"
-                   ❌ YANLIŞ: "Young handsome man with dark curly hair wearing brown vest"
-                   ❌ YANLIŞ: "Beautiful woman with long flowing hair in red dress"
-                   ❌ YANLIŞ: "Two people standing together" (erkek/kadın BELİRT!)
+                  A) TARİHSEL BAĞLAM bölümü → 2-3 sahne
+                     Bu bölümdeki 3 paragrafı 2-3 sahneye böl.
+                     Her sahne 40-80 kelime seslendirme.
+                     Görseller: Genel Anadolu/Erzurum atmosferi.
+                     NOT: Bu bölüm OLDUĞU GİBİ seslendirilecek.
 
-                6. ENSTRÜMAN KURALI:
-                   Müzik aleti = SADECE "bağlama" veya "saz" yaz.
-                   ASLA "guitar", "lute", "oud" yazma.
-                   Bağlama açıklaması: long thin neck, small pear-shaped wooden body.
+                  B) HİKÂYE bölümü (Prologue'dan Sonsöz'e) → 28-30 sahne
+                     Hikâyedeki HER CÜMLEYİ sahne seslendirmelerine dağıt.
+                     Her sahne 2-4 cümle (40-80 kelime).
+                     Hiçbir cümle ATLANMAMALIdır.
+                     Hikâye metninin TAMAMI seslendirilmelidir.
 
-                7. HİKÂYE KRONOLOJİSİ (⚠️ EN KRİTİK KURAL — FİLM ROMANI YAKLAŞIMI):
-                   Bu storyboard bir FİLM ROMANI adaptasyonudur!
-                   Senaryodaki HER PARAGRAF, HER CÜMLE storyboard'da karşılık bulmalı.
-                   Senaryo metnini baştan sona oku ve 35 sahneye TAMAMEN dağıt.
-                   Hiçbir paragraf atlanmamalı, hiçbir olay özetlenmemeli.
+                  C) KAPANIŞ → 2-3 sahne
+                     Miras/Sonsöz bölümü + CTA.
+                     Bu kısım kısa tutulmalı.
 
-                   ⛔ MUTLAK YASAK: Senaryoda anlatılan hikâye sahne 18'de bitmez!
-                   Senaryonun SON paragrafı sahne 30-32'de anlatılmalı.
-                   Sahne 18'den sonra "tarihsel bağlam", "kültürel miras", "gelenekler"
-                   gibi DOLGU SAHNE YAZMAK KESİNLİKLE YASAKTIR.
+                  TOPLAM: 33-35 sahne
 
-                   SAHNE DAĞILIMI:
-                   Sahne 1-3: GİRİŞ/ATMOSFER — Mekan tanıtımı, dönemin havası.
-                     Temaya göre: köy, cephe, gurbet yolu, şehir, dağ...
-                     SADECE 3 sahne! Giriş kısa tutulmalı.
-                   Sahne 4-8: TANIŞMA — Ana karakterin dünyası.
-                     Günlük yaşamı, ailesi, çevresi, hayalleri veya korkuları.
-                     Her sahne farklı bir detay: ev, iş, arkadaş, aile.
-                   Sahne 9-14: KADER ANI — Hayatı değiştiren olay/kişi başlıyor.
-                     Temaya göre: ilk karşılaşma / savaş haberi / göç kararı /
-                     kaybın başlangıcı / zulmün doruk noktası.
-                     Her sahne bir OLAY göstermeli. 6 sahne boyunca detaylı anlat.
-                   Sahne 15-20: GELİŞME — Olaylar derinleşiyor.
-                     Temaya göre: mutlu anlar / cephe mücadelesi / gurbette
-                     tutunma / hastalık seyri / direniş örgütlenmesi.
-                     Senaryodaki ilgili paragrafları BİRER BİRER sahneye dönüştür.
-                   Sahne 21-26: ENGELLER VE ÇATIŞMA — Zorluklar başlıyor.
-                     Temaya göre: aile engeli / düşman saldırısı / yalnızlık /
-                     kayıp haberi / ihanet / doğa felaketi.
-                     Her sahnede farklı bir engel veya çatışma anı.
-                   Sahne 27-30: DUYGUSAL DORUK — En yoğun sahneler.
-                     Hikâyenin zirvesi. Türkünün doğduğu AN.
-                     Acı/deneyim müziğe dönüşüyor.
-                     4 sahne boyunca YAVAŞ ve DERİN anlat.
-                   Sahne 31-32: MİRAS — Türkü yayılıyor, nesillere aktarılıyor.
-                   Sahne 33-35: KAPANIŞ — Son mesaj + CTA.
-                     SADECE 3 sahne! Kapanış kısa tutulmalı.
+                ADIM 3: Her sahne için görsel prompt üret
+                  Seslendirme metnine UYGUN bir görsel prompt yaz.
+                  Görsel, o anda anlatılan OLAYI veya DUYGUYU göstermeli.
 
-                   ⚠️ KENDİNİ KONTROL ET:
-                   - Sahne 20'de hikâye bitmiş mi? BİTMEMELİ! Sahne 30'a kadar devam et.
-                   - Sahne 19'dan sonra "gelenekler", "toplumsal yapı", "Anadolu kültürü"
-                     gibi genel bilgi sahnesi var mı? VARSA SİL, yerine hikâye sahnesi koy.
-                   - Her sahnede yeni bir OLAY mı var, yoksa önceki sahneyi tekrar mı?
-                     Tekrar varsa, farklı bir sahne yaz.
-                   - Senaryodaki son bölüm (veda, düğün, ayrılık, ölüm) storyboard'da
-                     kaç sahneyle anlatılıyor? EN AZ 4 sahne olmalı!
+                *** SAHNELERİN YAZIM KURALLARI ***
 
-                   ⚠️ TEKRAR YASAĞI: Hiçbir iki sahne aynı eylemi, aynı mekanı
-                   ve aynı duyguyu TEKRAR EDEMEZ. Her sahne BENZERSİZ olmalı.
+                1. SESLENDİRME KURALI (EN KRİTİK):
+                   ⛔ KENDİ CÜMLENİ YAZMA! Hikâye metnindeki cümleleri kullan.
+                   ⛔ Hikâyeyi ÖZETLEME! Her cümle bir sahnede yer almalı.
+                   ⛔ "Bu türkü yıllardır söylenir" gibi GENEL ifade ekleme.
+                   ✅ Hikâye metninden 2-4 cümleyi al, sahneye yerleştir.
+                   ✅ Gerekirse küçük bağlaç düzeltmeleri yap (ör: "Bu dönemde"→"O dönemde")
+                   ✅ Rakamları yazıyla yaz: "19. yüzyıl" → "on dokuzuncu yüzyıl"
 
-                8. SESLENDİRME (⚠️ FİLM ROMANI KURALI):
-                   Senaryodaki HİKÂYE METNİNİ sahnelere paragraf paragraf dağıt.
-                   Her sahne 40-80 kelime seslendirme. Senaryo metnindeki cümleleri
-                   AYNEN veya hafifçe uyarlayarak kullan.
-                   ⛔ YASAK: "Bu türkü yıllardır söylenir" gibi GENEL ifadeler.
-                   ✅ DOĞRU: Senaryodaki spesifik cümleyi sahneye yerleştir:
-                   "O akşam sazını eline aldığında, gözlerinden yaşlar süzüldü..."
+                2. GÖRSEL PROMPT KURALLARI:
+                   ⚠️ İNGİLİZCE YAZ — AI image generation prompt'u olacak.
+                   Karakter FİZİKSEL TANIMI YAZMA (otomatik eklenecek).
+                   SADECE şunları yaz:
+                   - Karakter İSMİ + CİNSİYET: "Sümmani (man)", "Mihriban (woman)"
+                   - AKSİYON: ne yapıyor (walking, playing bağlama, crying)
+                   - MEKAN: nerede (village square, mountain path, window)
+                   - IŞIK/HAVA: (golden sunset, moonlight, snowy morning)
+                   - KAMERA: (wide shot, close-up, medium shot)
+                   Müzik aleti = SADECE "bağlama" yaz, ASLA "guitar" yazma.
 
-                9. ⚠️ SAYI KURALI (ÇOK ÖNEMLİ — TTS İÇİN):
-                   Seslendirme metninde RAKAM KULLANMA! Tüm sayıları YAZIYYLA yaz.
-                   Bu metin TTS (text-to-speech) ile seslendirilecek, rakamlar yanlış okunur.
-                   ✅ DOĞRU: "on dokuzuncu yüzyıl", "bin sekiz yüz altmış yedi"
-                   ❌ YANLIŞ: "19. yüzyıl", "1867"
-                   ✅ DOĞRU: "yirmi beş yaşında", "üç gün sonra", "beş yıl boyunca"
-                   ❌ YANLIŞ: "25 yaşında", "3 gün sonra", "5 yıl boyunca"
-                   Bu kural HİKÂYE ve SENARYO bölümlerindeki tüm metinler için de geçerlidir.
+                   ✅ DOĞRU: "Sümmani (man) playing bağlama alone in snowy village
+                      square at dawn, smoke rising from chimneys, wide shot"
+                   ❌ YANLIŞ: "Young man with dark hair holding guitar"
+
+                3. HİKÂYE AKIŞ KONTROLÜ:
+                   Her sahne bir FARKLI AN göstermeli.
+                   İki sahne aynı mekanı, aynı eylemi gösteremez.
+                   Kamera açıları her sahnede DEĞİŞMELİ:
+                   wide → close-up → medium → silhouette → bird's eye → over-shoulder
+
+                4. SAYI KURALI (TTS İÇİN):
+                   Seslendirme metninde RAKAM KULLANMA!
+                   ✅ "on dokuzuncu yüzyıl", "bin sekiz yüz altmış yedi"
+                   ❌ "19. yüzyıl", "1867"
+
+                *** ÖRNEKLEMİZ — MİHRİBAN HİKÂYESİ İÇİN ***
+
+                Hikâye metni şöyle başlıyorsa:
+                "Erzurum'un karlı tepelerinde, eski bir köyün ortasındaki küçük
+                meydanda, kışın keskin soğuğu iliklere kadar işler."
+
+                Sahne seslendirmesi AYNEN BU OLACAK:
+                "Erzurum'un karlı tepelerinde, eski bir köyün ortasındaki küçük
+                meydanda, kışın keskin soğuğu iliklere kadar işler."
+
+                ⛔ YANLIŞ: "Erzurum'da bir kış günü, soğuk bir köyde
+                hikâyemiz başlıyor." (BU KENDİ CÜMLENDİR, YASAK!)
+
+                *** SAHNE FORMATI ***
 
                 ### Sahne [N]
                 **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
                 **Karakterler:** [Bu sahnede kimler var? İsim + cinsiyet belirt:
-                "Sümmani (erkek)" veya "Sümmani (erkek) ve Mihriban (kadın)"]
-                **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek metin — 40-80 kelime.
-                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.
-                ⚠️ RAKAM KULLANMA — sayıları yazıyla yaz: "on dokuzuncu yüzyıl" gibi.]
-                **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin direkt AI image prompt olacak.
-                SADECE AKSİYON + MEKAN + IŞIK + KAMERA yaz.
-                Karakter fiziksel tanımı YAZMA (otomatik eklenecek).
-                Karakter isimlerini ve cinsiyetini (man/woman) belirt.
-                Müzik aleti = SADECE "bağlama" yaz, ASLA "guitar" yazma.]
+                "Sümmani (erkek)" veya "Sümmani (erkek) ve Mihriban (kadın)"
+                Karakter yoksa "Yok — manzara/atmosfer" yaz]
+                **Seslendirme:** [⚠️ HİKÂYE METNİNDEN ALINMIŞ 2-4 CÜMLE.
+                Kendi cümleni YAZMA. Hikâye metnini AYNEN kullan.
+                Sadece rakamları yazıyla yaz ve küçük bağlaç düzeltmeleri yap.
+                40-80 kelime arası olmalı.]
+                **Görsel:** [⚠️ İNGİLİZCE — AI image prompt.
+                Seslendirmedeki ANI görselleştir.
+                Karakter ismi + cinsiyet + aksiyon + mekan + ışık + kamera.]
                 **Mood:** [Duygusal atmosfer]
                 **Kamera:** [Kamera açısı — her sahnede DEĞİŞTİR]
                 **Geçiş:** [Sonraki sahneye geçiş efekti]
