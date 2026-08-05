@@ -924,13 +924,15 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             }
         }
 
-        // STORYBOARD adımı → hem hikâye hem senaryo ver
+        // STORYBOARD adımı → SADECE hikâyeyi ver (senaryo GÖNDERME — özetlemeye teşvik eder!)
         if ("STORYBOARD".equals(stage)) {
             if (!previousStory.isBlank()) {
                 sb.append("\n═══════════════════════════════════════════\n");
-                sb.append("## ÖNCEKİ ADIMDA ÜRETİLEN HİKÂYE\n");
-                sb.append("Bu hikâyeyi 35 sahneye bölerken HİKÂYENİN KENDİSİNİ kullan.\n");
-                sb.append("Her sahnenin seslendirmesi hikâyenin O ANINI anlatmalı.\n");
+                sb.append("## SESLENDİRME KAYNAK METNİ (HİKÂYE)\n");
+                sb.append("⚠️ KRİTİK: Aşağıdaki metin seslendirilecek KAYNAK METİNDİR.\n");
+                sb.append("Bu metnin HER CÜMLESİ sahnelere dağıtılmalı, HİÇBİR CÜMLE ATLANMAMALI.\n");
+                sb.append("Sen yeni cümle UYDURMA — bu metnin cümlelerini OLDUĞU GİBİ kullan.\n");
+                sb.append("Sadece rakamları yazıyla yaz ve küçük bağlaç düzeltmeleri yap.\n");
                 sb.append("═══════════════════════════════════════════\n\n");
                 sb.append(previousStory).append("\n\n");
             }
@@ -940,13 +942,8 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 sb.append(characterSheet).append("\n\n");
             }
 
-            if (!previousScenario.isBlank()) {
-                sb.append("═══════════════════════════════════════════\n");
-                sb.append("## ÖNCEKİ ADIMDA ÜRETİLEN SENARYO\n");
-                sb.append("Bu senaryo beat'lerini 35 sahneye dağıt. Beat sırasını koru.\n");
-                sb.append("═══════════════════════════════════════════\n\n");
-                sb.append(previousScenario).append("\n\n");
-            }
+            // ⛔ SENARYO GÖNDERİLMİYOR — senaryo beat'leri özet olduğu için
+            // AI'ın kısayol alıp hikâyeyi atlamasına neden oluyordu.
         }
 
         // Stage'e göre özel talimat
@@ -956,9 +953,9 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             case "SCENARIO" -> "Yukarıdaki hikâyeyi temel alarak 6-beat YouTube video senaryosu yaz. " +
                     "Hikâyedeki karakter isimlerini, olayları ve duyguları AYNEN kullan. " +
                     "Her beat'in seslendirme metni hikâyenin İLGİLİ BÖLÜMÜNÜ anlatmalı — generic olma!";
-            case "STORYBOARD" -> "Yukarıdaki hikâye ve senaryoyu temel alarak 35 sahnelik detaylı storyboard planı oluştur. " +
-                    "Her sahnenin seslendirmesi hikâyenin O ANINI anlatmalı. " +
-                    "Karakter isimleri, mekânlar ve duygular hikâyeye SADIK kalmalı.";
+            case "STORYBOARD" -> "Yukarıdaki HİKÂYE METNİNİ sahne sahne böl ve her sahne için görsel prompt üret. " +
+                    "SESLENDİRME = hikâye metninin kendisi. Yeni cümle UYDURMA, metni BÖLERSIN. " +
+                    "Hikâye metnindeki TÜM cümleleri sahnelere dağıt, hiçbir cümle atlanmamalı.";
             case "PLANNING_BUNDLE" -> "Bu türkü için tam üretim paketi hazırla: hikâye + senaryo + storyboard.";
             default -> "Bu konu hakkında detaylı içerik üret.";
         });
