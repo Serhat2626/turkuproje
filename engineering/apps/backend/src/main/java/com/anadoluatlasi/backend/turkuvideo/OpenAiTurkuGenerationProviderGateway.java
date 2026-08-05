@@ -806,6 +806,7 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
                 2. GÖRSEL PROMPT KURALLARI:
                    ⚠️ İNGİLİZCE YAZ — AI image generation prompt'u olacak.
+                   STİL: Digital illustration, graphic novel art style.
                    Karakter FİZİKSEL TANIMI YAZMA (otomatik eklenecek).
                    SADECE şunları yaz:
                    - Karakter İSMİ + CİNSİYET: "Sümmani (man)", "Mihriban (woman)"
@@ -813,10 +814,12 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    - MEKAN: nerede (village square, mountain path, window)
                    - IŞIK/HAVA: (golden sunset, moonlight, snowy morning)
                    - KAMERA: (wide shot, close-up, medium shot)
+                   - DUYGU: (sorrow, longing, hope, anger)
                    Müzik aleti = SADECE "bağlama" yaz, ASLA "guitar" yazma.
 
                    ✅ DOĞRU: "Sümmani (man) playing bağlama alone in snowy village
-                      square at dawn, smoke rising from chimneys, wide shot"
+                      square at dawn, smoke rising from chimneys, wide shot,
+                      deep sorrow, graphic novel illustration"
                    ❌ YANLIŞ: "Young man with dark hair holding guitar"
 
                 3. HİKÂYE AKIŞ KONTROLÜ:

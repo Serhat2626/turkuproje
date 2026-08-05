@@ -4,7 +4,7 @@ spring:
     username: ${POSTGRES_USER:anadolu}
     password: ${POSTGRES_PASSWORD:REDACTED_SECRET}
   jpa:
-    show-sql: true
+    show-sql: false
     hibernate:
       ddl-auto: validate
   data:
@@ -26,22 +26,22 @@ minio:
 ai:
   provider: ${AI_PROVIDER:openai}
   tts-provider: ${AI_TTS_PROVIDER:openai}  # 'openai' veya 'elevenlabs'
-  image-provider: ${AI_IMAGE_PROVIDER:openai}  # 'openai' veya 'fal'
+  image-provider: ${AI_IMAGE_PROVIDER:fal}  # 'openai' veya 'fal'
   openai:
-    api-key: ${OPENAI_API_KEY:}
+    api-key: ${OPENAI_API_KEY:REDACTED_OPENAI_API_KEY}
     model: ${OPENAI_MODEL:gpt-4o}
     timeout-seconds: 180
     # max-output-tokens: Kısıtlanmıyor (Java default: 32000). Bütçe takibi loglardan yapılır.
     temperature: 0.7
   elevenlabs:
-    api-key: ${ELEVENLABS_API_KEY:}
+    api-key: ${ELEVENLABS_API_KEY:REDACTED_ELEVENLABS_API_KEY}
     voice-id: ${ELEVENLABS_VOICE_ID:fZEjvS1BvpajAoOmWcEO}  # "Fatih" — Türkçe hikâye anlatıcı
     model-id: eleven_multilingual_v2
     stability: 0.35        # Düşük = daha duygusal iniş-çıkışlar
     similarity-boost: 0.80  # Sesin doğal karakterini korur
     style: 0.65             # Yüksek = daha dramatik anlatım
   fal:
-    api-key: ${FAL_API_KEY:}
+    api-key: ${FAL_API_KEY:REDACTED_FAL_API_KEY}
     model: fal-ai/flux-pro/v1.1
     image-size: landscape_16_9
     num-inference-steps: 28

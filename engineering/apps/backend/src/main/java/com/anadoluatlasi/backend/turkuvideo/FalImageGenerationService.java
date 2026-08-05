@@ -113,11 +113,12 @@ public class FalImageGenerationService {
             return cdnUrl;
         }
 
-        // Referans prompt: tam boy portre, nötr arka plan
+        // Referans prompt: tam boy portre, nötr arka plan — illustration stili
         String refPrompt = charPrompt
                 + ". Full body portrait, standing pose, facing camera, clear face details, "
                 + "neutral light gray background. "
-                + "Photorealistic, high detail, sharp focus, studio lighting.";
+                + "Digital illustration, graphic novel art style, detailed comic book coloring, "
+                + "clean linework, warm muted color palette, high detail.";
 
         byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
         uploadToMinioPath(minioPath, imageBytes);
@@ -150,7 +151,7 @@ public class FalImageGenerationService {
                     continue;
                 }
                 
-                String refPrompt = charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral light gray background. Photorealistic, high detail, sharp focus, studio lighting.";
+                String refPrompt = charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral light gray background. Digital illustration, graphic novel art style, detailed comic book coloring, clean linework, warm muted color palette, high detail.";
                 byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
                 uploadToMinioPath(minioPath, imageBytes);
                 String cdnUrl = uploadToFalCdn(imageBytes, projectId + "_ref_" + charName.toLowerCase().replaceAll("\\s+", "_") + ".png");
@@ -351,8 +352,8 @@ public class FalImageGenerationService {
         }
 
         sb.append("Keep ONLY the face and facial features identical. The pose, body position, and framing should match the scene description. ");
-        sb.append("Photorealistic cinematic film still, 35mm film grain. ");
-        sb.append("19th century Ottoman Anatolian village, warm earth tones. ");
+        sb.append("Digital illustration, graphic novel art style, detailed comic book coloring, clean linework. ");
+        sb.append("19th century Ottoman Anatolian village, warm muted earth tones, painterly backgrounds. ");
 
         String cameraDir = request.getCameraDirection();
         if (cameraDir != null && !cameraDir.isBlank()) {
@@ -387,8 +388,8 @@ public class FalImageGenerationService {
         }
 
         sb.append("Dramatic cinematic composition. ");
-        sb.append("Photorealistic cinematic film still, 35mm film grain. ");
-        sb.append("19th century Ottoman Anatolian village, warm earth tones. ");
+        sb.append("Digital illustration, graphic novel art style, detailed comic book coloring, clean linework. ");
+        sb.append("19th century Ottoman Anatolian village, warm muted earth tones, painterly backgrounds. ");
 
         String cameraDir = request.getCameraDirection();
         if (cameraDir != null && !cameraDir.isBlank()) {
