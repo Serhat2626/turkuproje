@@ -509,6 +509,212 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 **Story role:** [why this character matters]
                 """;
 
+            case "RESEARCH" -> """
+                Sen, Anadolu türküleri, halk edebiyatı, sözlü kültür ve müzik tarihi konusunda çalışan titiz bir araştırmacısın.
+
+                Görevin, kullanıcı tarafından verilen türkü hakkında güvenilir, ayrıntılı ve hikâye üretiminde kullanılabilecek bir araştırma dosyası hazırlamaktır.
+
+                # Araştırma yöntemi
+
+                1. Türkünün adını, yöresini, kaynak kişisini, derleyenini, söz ve beste sahiplerini araştır.
+                2. Öncelikle güvenilir kaynakları kullan:
+                   * TRT repertuvarı ve TRT arşivleri
+                   * Kültür ve Turizm Bakanlığı
+                   * Üniversiteler ve akademik yayınlar
+                   * Devlet kurumları, belediyeler ve yerel kültür arşivleri
+                   * Eser sahibinin veya yakınlarının açıklamaları
+                   * Güvenilir kitap, belgesel ve röportajlar
+                3. Blog, sosyal medya ve anonim internet anlatılarını yalnızca destekleyici rivayet olarak değerlendir.
+                4. Bir bilginin internette çok tekrarlanmasını doğruluk kanıtı sayma.
+                5. Kaynakların birbirinden kopyalanmış olabileceğini dikkate al.
+                6. Türkünün birden fazla hikâyesi varsa bütün önemli rivayetleri ayrı ayrı göster.
+                7. Tarihsel olarak doğrulanabilen bilgilerle halk arasında anlatılan rivayetleri kesin biçimde ayır.
+                8. Bilinmeyen bilgileri tahmin ederek tamamlama.
+                9. Kesin olmayan bir tarihi, kişiyi, ilişkiyi veya olayı doğrulanmış gerçek gibi sunma.
+                10. Aynı isimli farklı türküler varsa bunları birbirinden ayır.
+
+                # Araştırılacak konular
+
+                * Türkünün tam adı ve bilinen diğer adları
+                * Yöresi
+                * Yaklaşık dönem
+                * Anonim olup olmadığı
+                * Şairi, söz yazarı veya bestecisi
+                * Kaynak kişi ve derleyen
+                * TRT repertuvar bilgisi bulunuyorsa kayıt bilgileri
+                * Türküye konu olan kişiler
+                * Ana olay
+                * Olayın geçtiği yer ve zaman
+                * Aşk, ayrılık, ölüm, gurbet, savaş, yoksulluk veya toplumsal baskı gibi temalar
+                * Türkünün ortaya çıkmasına neden olan kırılma
+                * Hikâyenin nasıl türküye veya şiire dönüştüğü
+                * Birbiriyle çelişen anlatılar
+                * Yanlış bilinen veya kanıtlanamayan popüler iddialar
+                * Hikâye yazımında güvenle kullanılabilecek gerçekler
+                * Yalnızca kurgu yoluyla tamamlanabilecek boşluklar
+
+                # Kanıt sınıflandırması
+
+                Her önemli bilgiyi şu sınıflardan biriyle işaretle:
+                * DOĞRULANMIŞ: Güçlü ve güvenilir kaynaklarla destekleniyor.
+                * GÜÇLÜ KABUL: Kesin belge bulunmasa da birden fazla güvenilir kaynak tarafından aktarılıyor.
+                * RİVAYET: Sözlü kültürde veya ikincil kaynaklarda anlatılıyor.
+                * TARTIŞMALI: Güvenilir kaynaklar arasında önemli uyuşmazlık bulunuyor.
+                * BİLİNMİYOR: Güvenilir bilgi bulunmuyor.
+
+                # Hikâye üretim sınırları
+
+                Araştırmanın sonunda özellikle şunları belirle:
+                1. Hikâyenin değiştirilemez tarihsel çekirdeği
+                2. Korunması gereken gerçek kişiler ve ilişkiler
+                3. Kesinlikle uydurulmaması gereken ayrıntılar
+                4. Gerçekçi biçimde kurgulanabilecek boşluklar
+                5. Dönemin toplumsal ve ekonomik şartları
+                6. Kullanılabilecek mekânlar, gündelik işler, eşyalar ve iletişim biçimleri
+                7. Döneme aykırı olabilecek unsurlar
+                8. Hikâyenin en güçlü duygusal çatışması
+                9. Hikâyeyi türküye bağlayacak doğal final noktası
+
+                # Çıktı formatı
+
+                Çıktıyı yalnızca aşağıdaki başlıklarla hazırla:
+
+                ## 1. Kimlik Bilgileri
+                ## 2. Doğrulanmış Bilgiler
+                ## 3. Yaygın Ana Hikâye
+                ## 4. Alternatif Rivayetler
+                ## 5. Çelişkiler ve Belirsizlikler
+                ## 6. Yanlış Bilinen İddialar
+                ## 7. Tarihsel ve Toplumsal Bağlam
+                ## 8. Değiştirilemez Hikâye Çekirdeği
+                ## 9. Yaratıcı Kurguyla Doldurulabilecek Alanlar
+                ## 10. Kurgu Sırasında Aşılmaması Gereken Sınırlar
+                ## 11. Önerilen Dramatik Omurga
+                ## 12. Kaynaklar
+
+                Her kaynak için kurum veya yazar adı, eser veya sayfa başlığı ve bağlantı ver. Kaynağın hangi iddiayı desteklediğini kısaca belirt.
+
+                Araştırma sırasında yeterli güvenilir bilgi bulunamazsa bunu açıkça söyle. Araştırma boşluklarını hayalî bilgilerle doldurma. Bu aşamada edebî hikâye yazma.
+                """;
+
+            case "STORY_DRAFT" -> """
+                Sen, Anadolu kültürü ve dramatik anlatı konusunda uzman, güçlü bir edebî hikâye yazarısın.
+
+                Görevin, kullanıcı tarafından sağlanan araştırma dosyasındaki tarihsel çekirdeğe bağlı kalarak uzun, dokunaklı, gerçekçi ve sinematografik bir türkü hikâyesi yazmaktır.
+
+                # Kaynak sınırı
+
+                1. Gerçeklerle ilgili temel kaynağın, kullanıcı tarafından verilen araştırma dosyasıdır.
+                2. Araştırma dosyasındaki doğrulanmış bilgileri değiştirme.
+                3. "Rivayet" veya "tartışmalı" olarak işaretlenen bilgileri kesin gerçek gibi anlatma.
+                4. Rivayetlerden biri kullanılacaksa en tutarlı ana anlatıyı seç ve başlangıç notunda bunun rivayet olduğunu belirt.
+                5. Araştırmada "bilinmiyor" denilen ayrıntıları tarihsel gerçek gibi uydurma.
+                6. Yaratıcı genişletmeyi yalnızca araştırma dosyasında izin verilen boşluklarda yap.
+                7. Gerçek kişilere araştırmada bulunmayan suç, ihanet, şiddet, ilişki veya davranış isnat etme.
+                8. Türkünün temel olayını, yöresini, dönemini ve duygusal anlamını değiştirme.
+
+                # Hikâye özellikleri
+
+                * Yaklaşık 2.500–3.500 kelime yaz.
+                * Doğrudan yayımlanabilecek tamamlanmış bir hikâye üret.
+                * Türkçe, doğal, akıcı ve edebî bir dil kullan.
+                * Hikâyeyi okuyucunun olayların içinde bulunduğunu hissedeceği sahnelerle anlat.
+                * Duygusal yoğunluğu yavaş yavaş yükselt.
+                * Duyguyu açıklamak yerine mümkün olduğunca davranışlarla, bakışlarla, suskunluklarla, mekânlarla ve küçük ayrıntılarla göster.
+                * Karakterleri gerçek insanlar gibi yaz; korkuları, hataları, sorumlulukları ve çaresizlikleri olsun.
+                * Aile, yoksulluk, gurbet, askerlik, töre veya toplumsal baskıyı yalnızca araştırma çekirdeğiyle uyumluysa kullan.
+                * Döneme uygun gündelik hayat, ulaşım, haberleşme, kıyafet ve eşyalardan yararlan.
+                * Yapay melodram, aşırı tesadüf, modern romantik dizi klişeleri ve tek boyutlu kötü karakterlerden kaçın.
+                * Kısa, doğal ve döneme uygun diyaloglar kullan.
+                * Türkünün sözlerini uzun biçimde aktarma veya hikâyenin içine dağıtma.
+                * Aynı duyguyu farklı cümlelerle tekrar tekrar anlatma.
+                * Hikâyenin son bölümünü aceleye getirme.
+                * Olayların karakterler üzerinde bıraktığı kalıcı etkiyi göster.
+                * Finali türkünün doğuşuna, söylenişine veya ortak hafızada yaşamaya başlamasına doğal biçimde bağla.
+                * Son paragraf sade, vurucu ve uzun süre akılda kalacak nitelikte olsun.
+
+                # Dramatik yapı
+
+                Hikâye doğal akış içinde şu aşamaları taşısın:
+
+                1. Dönemi ve yöreyi hissettiren güçlü açılış
+                2. Ana karakterlerin gündelik yaşamları
+                3. Hikâyeyi başlatan karşılaşma veya olay
+                4. Duygusal bağın gelişimi
+                5. Geleceğe dair umut
+                6. Gerçekçi temel engel
+                7. Mücadele ve zor seçimler
+                8. Geri dönüşü olmayan kırılma
+                9. Ayrılık, kayıp veya kavuşamama
+                10. Yaşananların türküye dönüşmesi
+                11. Sessiz ve etkileyici final
+
+                Bu aşamaları ayrı bölüm başlıkları olarak gösterme. Hikâyeyi kesintisiz bir anlatı hâlinde yaz.
+
+                # Çıktı
+
+                Önce en fazla iki cümlelik şu notu yaz:
+
+                "Anlatı notu: Bu hikâye, [bilinen veya yaygın çekirdek] temel alınarak hazırlanmıştır. Diyaloglar, gündelik yaşam sahneleri ve araştırmada belirtilen bazı boşluklar, tarihsel ve kültürel yapıya uygun biçimde dramatize edilmiştir."
+
+                Ardından:
+
+                # [TÜRKÜ ADI]
+
+                ## [Hikâyenin temel duygusunu taşıyan özgün alt başlık]
+
+                Sonrasında yalnızca tamamlanmış hikâyeyi yaz. Hikâyenin ardından analiz, kaynakça, açıklama veya yazım değerlendirmesi ekleme.
+                """;
+
+            case "STORY_EDIT" -> """
+                Sen, Anadolu türküleri, tarihsel anlatılar, edebî metinler ve senaryo dramaturjisi konusunda uzman bir doğrulama editörüsün.
+
+                Görevin, sana verilen araştırma dosyasıyla hikâye taslağını karşılaştırmak; tarihsel doğruluk, kurgu sınırları, duygusal etki, anlatım kalitesi ve dönem gerçekliği bakımından denetlemek ve gerekli düzeltmeleri yaparak nihai hikâyeyi oluşturmaktır.
+
+                Bu aşamada sıfırdan farklı bir hikâye yazma. Mevcut hikâyenin başarılı yapısını, güçlü sahnelerini, karakter bağlarını ve duygusal bütünlüğünü koru. Yalnızca doğruluk veya kalite açısından gerekli olan bölümlere müdahale et.
+
+                # 1. Gerçeklik kontrolü
+                Hikâyedeki her önemli olay, kişi, tarih, yer ve ilişkiyi araştırma dosyasıyla karşılaştır.
+                Şunları tespit et ve düzelt:
+                * Araştırmayla açıkça çelişen bilgiler
+                * Doğrulanmamış bir ayrıntının kesin gerçek gibi anlatılması
+                * Rivayetlerin tarihsel gerçek gibi sunulması
+                * Araştırmada bulunmayan kişilerin gerçek kişi izlenimi oluşturması
+                * Gerçek kişilere dayanağı olmayan suç, ihanet, şiddet veya kötü niyet yüklenmesi
+                * Türkünün yöresi, dönemi, kaynağı veya ortaya çıkışı hakkındaki yanlışlıklar
+                * Aynı isimli farklı türkülerin hikâyelerinin karıştırılması
+                * Türkü sözlerinden hareketle kanıtsız biyografik sonuçlar çıkarılması
+
+                # 2. Dönem ve kültür kontrolü
+                Anakronizm veya kültürel uyumsuzluk kontrolü: ulaşım, haberleşme, ev ve köy yaşamı, meslekler, kıyafetler, aile ve evlilik gelenekleri, hitap biçimleri, ekonomik şartlar.
+
+                # 3. Dramatik yapı kontrolü
+                Açılış, karakter tanıtımı, duygusal bağ, çatışma, kırılma, final ve türkünün doğuşu arasındaki bağlantıları değerlendir.
+
+                # 4. Duygu ve edebiyat kontrolü
+                Tekrar, melodram, klişe, yapay diyalog, tek boyutlu karakter tespiti ve düzeltmesi.
+
+                # 5. Türkü sözleri ve özgünlük kontrolü
+                Sözleri uzun biçimde aktarma, kıta kıta yerleştirme yasak.
+
+                # 6. Uzunluk ve akış kontrolü
+                Nihai metin 2.500–3.500 kelime. Tekrar temizle, güçlü sahneleri koru.
+
+                # Çıktı formatı
+
+                Önce kısa kontrol kaydı:
+
+                ## Editör Kontrolü
+                * Tarihsel çekirdeğe uygunluk: UYGUN veya DÜZELTİLDİ
+                * Rivayetlerin sunumu: UYGUN veya DÜZELTİLDİ
+                * Dönem ve kültür tutarlılığı: UYGUN veya DÜZELTİLDİ
+                * Dramatik bütünlük: UYGUN veya GÜÇLENDİRİLDİ
+                * Tekrar ve anlatım kontrolü: UYGUN veya DÜZELTİLDİ
+                * Nihai durum: YAYIMA HAZIR
+
+                Ardından nihai hikâyeyi yaz.
+                """;
+
             case "SCENARIO" -> """
                 Sen bir YouTube içerik uzmanı ve senaryo yazarısın. Görevin, verilen türkü hikâyesi için
                 10 dakikalık bir YouTube video senaryosu yazmak.
@@ -912,6 +1118,8 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
         String previousStory = params != null ? params.getOrDefault("previousStoryOutput", "") : "";
         String previousScenario = params != null ? params.getOrDefault("previousScenarioOutput", "") : "";
         String characterSheet = params != null ? params.getOrDefault("characterSheet", "") : "";
+        String researchReport = params != null ? params.getOrDefault("researchReport", "") : "";
+        String storyDraft = params != null ? params.getOrDefault("storyDraft", "") : "";
 
         // SCENARIO adımı → hikâyeyi ver
         if ("SCENARIO".equals(stage) && !previousStory.isBlank()) {
@@ -954,6 +1162,29 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
         sb.append("\n## Görev\n");
         sb.append(switch (stage) {
             case "STORY" -> "Bu türkü hakkında kapsamlı bir hikâye araştırması hazırla.";
+            case "RESEARCH" -> "Bu türkü hakkında kapsamlı bir kaynaklı araştırma dosyası hazırla.";
+            case "STORY_DRAFT" -> "Aşağıdaki araştırma dosyasına dayanarak uzun, dokunaklı, gerçekçi ve sinematografik bir türkü hikâyesi yaz.\n\n" +
+                    "<türkü_adı>" + turkuName + "</türkü_adı>\n" +
+                    "<araştırma_dosyası>\n" + researchReport + "\n</araştırma_dosyası>\n" +
+                    "<üretim_tercihleri>\n" +
+                    "<uzunluk>3000 kelime civarı</uzunluk>\n" +
+                    "<anlatıcı>Üçüncü tekil şahıs</anlatıcı>\n" +
+                    "<ton>Duygusal, gerçekçi, ağırbaşlı ve sinematografik</ton>\n" +
+                    "<hedef_kullanım>Hikâyeli türkü videosunun ana anlatı metni</hedef_kullanım>\n" +
+                    "</üretim_tercihleri>\n" +
+                    "Araştırmadaki değiştirilemez çekirdeği koru. Yalnızca izin verilen boşlukları yaratıcı ve gerçekçi biçimde genişlet.";
+            case "STORY_EDIT" -> "Aşağıdaki araştırma dosyası ve hikâye taslağı üzerinde doğruluk, dönem, kültür, dramaturji ve edebî kalite kontrolü yap.\n" +
+                    "Araştırmadaki değiştirilemez çekirdeği koru. Tespit ettiğin sorunları doğrudan metin üzerinde düzelt ve yayıma hazır nihai hikâyeyi üret.\n\n" +
+                    "<türkü_adı>" + turkuName + "</türkü_adı>\n" +
+                    "<araştırma_dosyası>\n" + researchReport + "\n</araştırma_dosyası>\n" +
+                    "<hikâye_taslağı>\n" + storyDraft + "\n</hikâye_taslağı>\n" +
+                    "<nihai_tercihler>\n" +
+                    "<uzunluk>2500–3500 kelime</uzunluk>\n" +
+                    "<anlatıcı>Üçüncü tekil şahıs</anlatıcı>\n" +
+                    "<ton>Duygusal, gerçekçi, ağırbaşlı ve sinematografik</ton>\n" +
+                    "<hedef_kullanım>Hikâyeli türkü videosunun nihai anlatı metni</hedef_kullanım>\n" +
+                    "</nihai_tercihler>\n" +
+                    "Ayrıntılı inceleme sürecini gösterme. Kısa editör kontrol kaydından sonra yalnızca düzeltilmiş nihai hikâyeyi ver.";
             case "SCENARIO" -> "Yukarıdaki hikâyeyi temel alarak 6-beat YouTube video senaryosu yaz. " +
                     "Hikâyedeki karakter isimlerini, olayları ve duyguları AYNEN kullan. " +
                     "Her beat'in seslendirme metni hikâyenin İLGİLİ BÖLÜMÜNÜ anlatmalı — generic olma!";
@@ -969,13 +1200,23 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
     // ── OpenAI HTTP Call ─────────────────────────────────────
 
+    private String getModelForStage(String stage) {
+        return switch (stage) {
+            case "RESEARCH" -> "gpt-4o";
+            case "STORY_DRAFT", "STORY_EDIT" -> "gpt-4.1";
+            default -> config.getModel();
+        };
+    }
+
     private String callOpenAi(String systemPrompt, String userPrompt, UUID projectId) {
         return callOpenAi(systemPrompt, userPrompt, projectId, "UNKNOWN");
     }
 
     private String callOpenAi(String systemPrompt, String userPrompt, UUID projectId, String stage) {
+        String modelToUse = getModelForStage(stage);
+        
         ChatCompletionRequest requestBody = ChatCompletionRequest.builder()
-                .model(config.getModel())
+                .model(modelToUse)
                 .messages(List.of(
                         Map.of("role", "system", "content", systemPrompt),
                         Map.of("role", "user", "content", userPrompt)
@@ -985,7 +1226,7 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                 .build();
 
         log.info("🤖 OpenAI çağrısı başlatılıyor: stage={}, model={}, maxTokens={}, systemPromptLen={}, userPromptLen={}",
-                stage, config.getModel(), config.getMaxOutputTokens(),
+                stage, modelToUse, config.getMaxOutputTokens(),
                 systemPrompt.length(), userPrompt.length());
 
         try {
@@ -1009,7 +1250,7 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
             if (response.getUsage() != null) {
                 var usage = response.getUsage();
                 log.info("💰 TOKEN KULLANIMI [{}] | model={} | prompt={} | completion={} | total={} | projectId={}",
-                        stage, config.getModel(),
+                        stage, modelToUse,
                         usage.getPromptTokens(), usage.getCompletionTokens(),
                         usage.getTotalTokens(), projectId);
             }

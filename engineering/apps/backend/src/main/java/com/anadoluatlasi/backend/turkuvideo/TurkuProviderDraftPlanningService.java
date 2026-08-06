@@ -89,6 +89,215 @@ public class TurkuProviderDraftPlanningService {
                 "STORY", result, envelope);
     }
 
+    // ── 3-Stage Story Pipeline ─────────────────────────────────
+
+    /**
+     * 3 aşamalı hikâye üretim pipeline'ı:
+     * 1. RESEARCH — Kaynaklı araştırma
+     * 2. STORY_DRAFT — Araştırmaya dayalı hikâye taslağı
+     * 3. STORY_EDIT — Doğrulama editörü + nihai hikâye
+     *
+     * <p>Her aşama arasında DB'ye kaydedilir. Hata durumunda kaldığı yerden devam eder.</p>
+     */
+    public TurkuProviderPlanningGenerationResponse generateStoryPipeline(
+            UUID projectId, TurkuProviderGenerationRequest request) {
+
+        TurkuVideoProject project = getProject(projectId);
+
+        // Başlangıç veya kaldığı yerden devam (resume desteği)
+        TurkuVideoWorkflowStage stage = project.getWorkflowStage();
+        if (stage != TurkuVideoWorkflowStage.DRAFT_CREATED
+                && stage != TurkuVideoWorkflowStage.RESEARCH_COMPLETED
+                && stage != TurkuVideoWorkflowStage.STORY_DRAFT_COMPLETED) {
+            throw TurkuVideoProjectException.invalidStageTransition(
+                    stage, TurkuVideoWorkflowStage.DRAFT_CREATED);
+        }
+
+        TurkuProviderMode mode = safetyPolicy.resolveProviderMode(project);
+        TurkuProviderPlanningGenerationResponse modeBlock = checkModeBlocking(
+                projectId, mode, "STORY_PIPELINE", project.getWorkflowStage());
+        if (modeBlock != null) return modeBlock;
+
+        sanitizeRequest(request);
+        var safeParams = buildProjectSafeParams(project, request);
+
+        TurkuStoryPackage currentPackage = project.getStoryPackage();
+
+        // ═══ AŞAMA 1: ARAŞTIRMA ═══
+        if (stage == TurkuVideoWorkflowStage.DRAFT_CREATED) {
+            log.info("📚 Aşama 1/3: Araştırma başlıyor — projectId={}", projectId);
+
+            TurkuGenerationSafetyEnvelope env1 = TurkuGenerationSafetyEnvelope.createDefault(
+                    projectId, "RESEARCH", mode);
+            safetyPolicy.enforcePreGenerationPolicy(env1);
+
+            TurkuAiGenerationRequest researchReq = TurkuAiGenerationRequest.builder()
+                    .projectId(projectId)
+                    .generationStage("RESEARCH")
+                    .context(buildNarrativeContext(project))
+                    .promptTemplateId("turku-research-v1")
+                    .safeParams(safeParams)
+                    .build();
+
+            TurkuAiGenerationResult researchResult = gateway.generateAi(researchReq, env1);
+            sanitizer.sanitizeEnvelope(env1);
+            safetyPolicy.enforcePostGenerationPolicy(env1);
+
+            String researchReport = researchResult.getSafeOutputSummary();
+            log.info("📚 Araştırma tamamlandı — {} karakter", researchReport.length());
+
+            // İlk package oluştur veya güncelle
+            currentPackage = TurkuStoryPackage.builder()
+                    .turkuName(project.getTurkuName())
+                    .regionContext(project.getRegion() != null ? project.getRegion() : "Anadolu")
+                    .emotionalTheme(project.getMood() != null ? project.getMood() : "Geleneksel Anadolu duygusu")
+                    .researchReport(researchReport)
+                    .sourceConfidence(researchResult.getOutputConfidence())
+                    .needsHumanReview(true)
+                    .copyrightReviewRequired(true)
+                    .reviewFlags(researchResult.getReviewFlags())
+                    .build();
+
+            project.setStoryPackage(currentPackage);
+            project.advanceTo(TurkuVideoWorkflowStage.RESEARCH_COMPLETED);
+            repository.save(project);
+
+            // Params'a araştırmayı ekle
+            safeParams.put("researchReport", researchReport);
+            stage = TurkuVideoWorkflowStage.RESEARCH_COMPLETED;
+        } else if (currentPackage != null && currentPackage.getResearchReport() != null) {
+            safeParams.put("researchReport", currentPackage.getResearchReport());
+        }
+
+        // ═══ AŞAMA 2: HİKÂYE TASLAĞI ═══
+        if (stage == TurkuVideoWorkflowStage.RESEARCH_COMPLETED) {
+            log.info("📝 Aşama 2/3: Hikâye taslağı başlıyor — projectId={}", projectId);
+
+            TurkuGenerationSafetyEnvelope env2 = TurkuGenerationSafetyEnvelope.createDefault(
+                    projectId, "STORY_DRAFT", mode);
+            safetyPolicy.enforcePreGenerationPolicy(env2);
+
+            TurkuAiGenerationRequest draftReq = TurkuAiGenerationRequest.builder()
+                    .projectId(projectId)
+                    .generationStage("STORY_DRAFT")
+                    .context(buildNarrativeContext(project))
+                    .promptTemplateId("turku-story-draft-v1")
+                    .safeParams(safeParams)
+                    .build();
+
+            TurkuAiGenerationResult draftResult = gateway.generateAi(draftReq, env2);
+            sanitizer.sanitizeEnvelope(env2);
+            safetyPolicy.enforcePostGenerationPolicy(env2);
+
+            String storyDraft = draftResult.getSafeOutputSummary();
+            log.info("📝 Hikâye taslağı tamamlandı — {} karakter", storyDraft.length());
+
+            // Package güncelle
+            currentPackage = TurkuStoryPackage.builder()
+                    .turkuName(currentPackage.getTurkuName())
+                    .regionContext(currentPackage.getRegionContext())
+                    .emotionalTheme(currentPackage.getEmotionalTheme())
+                    .researchReport(currentPackage.getResearchReport())
+                    .storyDraft(storyDraft)
+                    .sourceConfidence(draftResult.getOutputConfidence())
+                    .needsHumanReview(true)
+                    .copyrightReviewRequired(true)
+                    .reviewFlags(draftResult.getReviewFlags())
+                    .build();
+
+            project.setStoryPackage(currentPackage);
+            project.advanceTo(TurkuVideoWorkflowStage.STORY_DRAFT_COMPLETED);
+            repository.save(project);
+
+            safeParams.put("storyDraft", storyDraft);
+            stage = TurkuVideoWorkflowStage.STORY_DRAFT_COMPLETED;
+        } else if (currentPackage != null && currentPackage.getStoryDraft() != null) {
+            safeParams.put("storyDraft", currentPackage.getStoryDraft());
+        }
+
+        // ═══ AŞAMA 3: DOĞRULAMA & EDİTÖRLÜK ═══
+        log.info("✅ Aşama 3/3: Editör kontrolü başlıyor — projectId={}", projectId);
+
+        TurkuGenerationSafetyEnvelope env3 = TurkuGenerationSafetyEnvelope.createDefault(
+                projectId, "STORY_EDIT", mode);
+        safetyPolicy.enforcePreGenerationPolicy(env3);
+
+        TurkuAiGenerationRequest editReq = TurkuAiGenerationRequest.builder()
+                .projectId(projectId)
+                .generationStage("STORY_EDIT")
+                .context(buildNarrativeContext(project))
+                .promptTemplateId("turku-story-edit-v1")
+                .safeParams(safeParams)
+                .build();
+
+        TurkuAiGenerationResult editResult = gateway.generateAi(editReq, env3);
+        sanitizer.sanitizeEnvelope(env3);
+        safetyPolicy.enforcePostGenerationPolicy(env3);
+
+        String editOutput = editResult.getSafeOutputSummary();
+        log.info("✅ Editör kontrolü tamamlandı — {} karakter", editOutput.length());
+
+        // Editör çıktısından qualityStatus ve finalStory ayır
+        String qualityStatus = extractQualityStatus(editOutput);
+        String finalStory = extractFinalStory(editOutput);
+        String characterSheet = extractCharacterSheet(finalStory);
+
+        // Nihai package
+        currentPackage = TurkuStoryPackage.builder()
+                .turkuName(currentPackage.getTurkuName())
+                .regionContext(currentPackage.getRegionContext())
+                .emotionalTheme(currentPackage.getEmotionalTheme())
+                .culturalSignificance("Kaynaklı araştırma + 3 aşamalı üretim")
+                .narrativeAngle("Sağlayıcı perspektifi — editörden geçmiş")
+                .originSummary(finalStory)
+                .storySummary(finalStory)
+                .characterSheet(characterSheet)
+                .researchReport(currentPackage.getResearchReport())
+                .storyDraft(currentPackage.getStoryDraft())
+                .finalStory(finalStory)
+                .qualityStatus(qualityStatus)
+                .sourceConfidence(editResult.getOutputConfidence())
+                .needsHumanReview(true)
+                .copyrightReviewRequired(true)
+                .reviewFlags(editResult.getReviewFlags())
+                .build();
+
+        project.setStoryPackage(currentPackage);
+        project.advanceTo(TurkuVideoWorkflowStage.STORY_CONTEXT_PREPARED);
+        repository.save(project);
+
+        log.info("🎉 3 aşamalı hikâye pipeline tamamlandı — projectId={}", projectId);
+
+        return buildResponse(projectId, project.getWorkflowStage(), mode,
+                "STORY_PIPELINE", editResult, env3);
+    }
+
+    /** Editör çıktısından "## Editör Kontrolü" bölümünü çıkar */
+    private String extractQualityStatus(String editOutput) {
+        if (editOutput == null) return "BİLİNMİYOR";
+        int idx = editOutput.indexOf("## Editör Kontrolü");
+        if (idx < 0) idx = editOutput.indexOf("## Editor Kontrol");
+        if (idx < 0) return "KONTROL KAYDI BULUNAMADI";
+
+        // Editör kontrolü ile hikâye başlangıcı arasındaki metni al
+        int end = editOutput.indexOf("\n# ", idx + 10);
+        if (end < 0) end = Math.min(editOutput.length(), idx + 500);
+        return editOutput.substring(idx, end).trim();
+    }
+
+    /** Editör çıktısından nihai hikâye metnini çıkar (editör notundan sonra) */
+    private String extractFinalStory(String editOutput) {
+        if (editOutput == null) return "";
+        // "## Editör Kontrolü" bölümünden sonraki "# " başlığını bul
+        int editIdx = editOutput.indexOf("## Editör Kontrolü");
+        if (editIdx < 0) editIdx = editOutput.indexOf("## Editor Kontrol");
+        if (editIdx < 0) return editOutput; // Editör notu yoksa tümünü döndür
+
+        int storyStart = editOutput.indexOf("\n# ", editIdx + 10);
+        if (storyStart < 0) return editOutput.substring(editIdx);
+        return editOutput.substring(storyStart).trim();
+    }
+
     // ── Generate Scenario ───────────────────────────────────
 
     public TurkuProviderPlanningGenerationResponse generateScenario(

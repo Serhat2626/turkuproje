@@ -117,6 +117,15 @@ export function generateTurkuStory(
   })
 }
 
+/** 3 aşamalı hikâye pipeline: Araştırma → Taslak → Editör */
+export function generateTurkuStoryPipeline(
+  id: string
+): Promise<ApiResponse<TurkuProviderPlanningGenerationResponse>> {
+  return request<TurkuProviderPlanningGenerationResponse>(`${BASE}/${id}/generate-story-pipeline`, {
+    method: 'POST',
+  })
+}
+
 export function generateTurkuScenario(
   id: string
 ): Promise<ApiResponse<TurkuProviderPlanningGenerationResponse>> {

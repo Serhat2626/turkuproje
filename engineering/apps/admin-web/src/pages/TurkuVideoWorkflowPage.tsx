@@ -177,6 +177,7 @@ function TurkuVideoWorkflowPage() {
   
   const [videoReady, setVideoReady] = useState(false)
   const [activeVideoMode, setActiveVideoMode] = useState<'' | 'preview' | 'full' | 'fullKling'>('')
+  const [storyTab, setStoryTab] = useState<'research'|'draft'|'final'>('final')
 
   const refreshProject = useCallback(async (id: string) => {
     try {
@@ -406,17 +407,17 @@ function TurkuVideoWorkflowPage() {
           {currentStep === 1 && (
             <div className="step-content">
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <h2 style={{ margin: 0, color: '#f59e0b' }}>📜 Adım 1: Hikâye Üret</h2>
+                <h2 style={{ margin: 0, color: '#f59e0b' }}>📜 Adım 1: Hikâye Üret (3 Aşamalı)</h2>
                 <button 
                   className="btn btn-primary" 
                   disabled={!!activeAction}
                   onClick={async () => {
-                    setActiveAction('Hikâye Üretiyor')
+                    setActiveAction('Hikâye Pipeline Çalışıyor')
                     try {
-                      await turkuApi.generateTurkuStory(project.id)
+                      await turkuApi.generateTurkuStoryPipeline(project.id)
                       await refreshProject(project.id)
-                      setSuccessMessage('Hikâye başarıyla üretildi!')
-                      setTimeout(() => setSuccessMessage(null), 3000)
+                      setSuccessMessage('3 aşamalı hikâye pipeline tamamlandı!')
+                      setTimeout(() => setSuccessMessage(null), 5000)
                     } catch (e: any) {
                       setError(e.message)
                     } finally {
@@ -424,43 +425,82 @@ function TurkuVideoWorkflowPage() {
                     }
                   }}
                 >
-                  {activeAction === 'Hikâye Üretiyor' ? '⏳ Üretiliyor...' : '⚙️ Hikâye Üret (AI)'}
+                  {activeAction === 'Hikâye Pipeline Çalışıyor' ? '⏳ 1.Araştırma → 2.Taslak → 3.Editör...' : '🚀 Hikâye Üret (3 Aşamalı Pipeline)'}
                 </button>
               </div>
 
-              {content && (content.storyPayload || content.story) && (
-                <div style={{ background: '#0f172a', padding: '20px', borderRadius: '8px' }}>
-                  {(() => {
-                    const storyData = content.storyPayload || content.story
-                    return (
-                      <>
-                        <h4 style={{ color: '#fbbf24', marginTop: 0 }}>Hikâye Özeti</h4>
-                        <p style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.6' }}>{storyData.storySummary || storyData.summary}</p>
-                        
-                        {storyData.originSummary && (
-                          <>
-                            <h4 style={{ color: '#3b82f6', marginTop: '16px' }}>Tarihçe ve Köken</h4>
-                            <p style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.6' }}>{storyData.originSummary}</p>
-                          </>
+              {content && (content.storyPayload || content.story) && (() => {
+                const storyData = content.storyPayload || content.story
+                return (
+                  <div style={{ background: '#0f172a', padding: '20px', borderRadius: '8px' }}>
+                    {/* Tab Bar */}
+                    <div style={{ display: 'flex', gap: '4px', marginBottom: '16px', borderBottom: '1px solid #334155', paddingBottom: '8px' }}>
+                      {[
+                        { key: 'research' as const, label: '📚 Araştırma', color: '#8b5cf6' },
+                        { key: 'draft' as const, label: '📝 Taslak', color: '#f59e0b' },
+                        { key: 'final' as const, label: '✅ Nihai Hikâye', color: '#10b981' },
+                      ].map(tab => (
+                        <button
+                          key={tab.key}
+                          onClick={() => setStoryTab(tab.key)}
+                          style={{
+                            padding: '8px 16px',
+                            borderRadius: '6px 6px 0 0',
+                            border: 'none',
+                            cursor: 'pointer',
+                            fontWeight: storyTab === tab.key ? 700 : 400,
+                            background: storyTab === tab.key ? tab.color + '22' : 'transparent',
+                            color: storyTab === tab.key ? tab.color : '#94a3b8',
+                            borderBottom: storyTab === tab.key ? `2px solid ${tab.color}` : '2px solid transparent',
+                          }}
+                        >
+                          {tab.label}
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Tab Content */}
+                    {storyTab === 'research' && (
+                      <div>
+                        <h4 style={{ color: '#8b5cf6', marginTop: 0 }}>📚 Kaynaklı Araştırma Raporu</h4>
+                        <p style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.6', maxHeight: '500px', overflowY: 'auto' }}>
+                          {storyData.researchReport || 'Araştırma raporu henüz üretilmedi. Pipeline çalıştırın.'}
+                        </p>
+                      </div>
+                    )}
+
+                    {storyTab === 'draft' && (
+                      <div>
+                        <h4 style={{ color: '#f59e0b', marginTop: 0 }}>📝 Hikâye Taslağı</h4>
+                        <p style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.6', maxHeight: '500px', overflowY: 'auto' }}>
+                          {storyData.storyDraft || 'Hikâye taslağı henüz üretilmedi. Pipeline çalıştırın.'}
+                        </p>
+                      </div>
+                    )}
+
+                    {storyTab === 'final' && (
+                      <div>
+                        {storyData.qualityStatus && (
+                          <div style={{ background: '#064e3b', padding: '12px', borderRadius: '6px', marginBottom: '12px', fontSize: '13px' }}>
+                            <strong style={{ color: '#34d399' }}>Editör Kontrolü:</strong>
+                            <pre style={{ whiteSpace: 'pre-wrap', color: '#a7f3d0', margin: '8px 0 0', fontSize: '12px' }}>{storyData.qualityStatus}</pre>
+                          </div>
                         )}
-                        
-                        {storyData.narrativeAngle && (
-                          <>
-                            <h4 style={{ color: '#10b981', marginTop: '16px' }}>Anlatı Açısı</h4>
-                            <p style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.6' }}>{storyData.narrativeAngle}</p>
-                          </>
-                        )}
-                        
-                        <div style={{ marginTop: '24px', textAlign: 'right' }}>
-                          <button className="btn btn-success" onClick={() => markStepCompleted(1)} style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer' }}>
-                            ✅ Beğendim, Sonraki Adım
-                          </button>
-                        </div>
-                      </>
-                    )
-                  })()}
-                </div>
-              )}
+                        <h4 style={{ color: '#10b981', marginTop: 0 }}>✅ Nihai Hikâye (Editörden Geçmiş)</h4>
+                        <p style={{ whiteSpace: 'pre-wrap', color: '#cbd5e1', lineHeight: '1.6', maxHeight: '500px', overflowY: 'auto' }}>
+                          {storyData.finalStory || storyData.storySummary || storyData.summary || 'Nihai hikâye henüz üretilmedi.'}
+                        </p>
+                      </div>
+                    )}
+                    
+                    <div style={{ marginTop: '24px', textAlign: 'right' }}>
+                      <button className="btn btn-success" onClick={() => markStepCompleted(1)} style={{ background: '#10b981', color: 'white', border: 'none', padding: '10px 20px', borderRadius: '8px', cursor: 'pointer' }}>
+                        ✅ Beğendim, Sonraki Adım
+                      </button>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
           )}
 

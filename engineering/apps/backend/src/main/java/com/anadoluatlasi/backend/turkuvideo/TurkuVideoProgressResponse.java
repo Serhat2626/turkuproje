@@ -63,6 +63,8 @@ public final class TurkuVideoProgressResponse {
     private static String computeNextAction(TurkuVideoWorkflowStage stage) {
         return switch (stage) {
             case DRAFT_CREATED -> "prepare-story";
+            case RESEARCH_COMPLETED -> "Araştırma tamamlandı — hikâye taslağı üretilecek";
+            case STORY_DRAFT_COMPLETED -> "Taslak tamamlandı — editör kontrolü yapılacak";
             case STORY_CONTEXT_PREPARED -> "prepare-scenario";
             case SCENARIO_PREPARED -> "prepare-storyboard";
             case STORYBOARD_PREPARED -> "prepare-scene-assets";

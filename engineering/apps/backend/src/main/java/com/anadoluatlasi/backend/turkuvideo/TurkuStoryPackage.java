@@ -28,6 +28,16 @@ public final class TurkuStoryPackage {
     private final boolean copyrightReviewRequired;
     private final List<String> reviewFlags;
 
+    // ── 3-Stage Pipeline Outputs ──
+    /** 1. aşama: Kaynaklı araştırma raporu */
+    private final String researchReport;
+    /** 2. aşama: Hikâye taslağı */
+    private final String storyDraft;
+    /** 3. aşama: Editörden geçmiş nihai hikâye */
+    private final String finalStory;
+    /** 3. aşama: Editör kalite kontrol kaydı */
+    private final String qualityStatus;
+
     private TurkuStoryPackage(Builder b) {
         this.turkuName = b.turkuName;
         this.regionContext = b.regionContext;
@@ -41,6 +51,10 @@ public final class TurkuStoryPackage {
         this.needsHumanReview = b.needsHumanReview;
         this.copyrightReviewRequired = b.copyrightReviewRequired;
         this.reviewFlags = b.reviewFlags != null ? List.copyOf(b.reviewFlags) : List.of();
+        this.researchReport = b.researchReport;
+        this.storyDraft = b.storyDraft;
+        this.finalStory = b.finalStory;
+        this.qualityStatus = b.qualityStatus;
     }
 
     public String getTurkuName() { return turkuName; }
@@ -55,6 +69,10 @@ public final class TurkuStoryPackage {
     public boolean isNeedsHumanReview() { return needsHumanReview; }
     public boolean isCopyrightReviewRequired() { return copyrightReviewRequired; }
     public List<String> getReviewFlags() { return reviewFlags; }
+    public String getResearchReport() { return researchReport; }
+    public String getStoryDraft() { return storyDraft; }
+    public String getFinalStory() { return finalStory; }
+    public String getQualityStatus() { return qualityStatus; }
 
     public static Builder builder() { return new Builder(); }
 
@@ -72,6 +90,10 @@ public final class TurkuStoryPackage {
         private boolean needsHumanReview = true;
         private boolean copyrightReviewRequired = true;
         private List<String> reviewFlags;
+        private String researchReport;
+        private String storyDraft;
+        private String finalStory;
+        private String qualityStatus;
 
         public Builder turkuName(String v) { this.turkuName = v; return this; }
         public Builder regionContext(String v) { this.regionContext = v; return this; }
@@ -85,6 +107,10 @@ public final class TurkuStoryPackage {
         public Builder needsHumanReview(boolean v) { this.needsHumanReview = v; return this; }
         public Builder copyrightReviewRequired(boolean v) { this.copyrightReviewRequired = v; return this; }
         public Builder reviewFlags(List<String> v) { this.reviewFlags = v; return this; }
+        public Builder researchReport(String v) { this.researchReport = v; return this; }
+        public Builder storyDraft(String v) { this.storyDraft = v; return this; }
+        public Builder finalStory(String v) { this.finalStory = v; return this; }
+        public Builder qualityStatus(String v) { this.qualityStatus = v; return this; }
 
         public TurkuStoryPackage build() { return new TurkuStoryPackage(this); }
     }

@@ -410,6 +410,23 @@ public class TurkuVideoProjectController {
         return ResponseEntity.ok(ApiResponse.success(response, "Hikâye üretimi tamamlandı"));
     }
 
+    // ── POST /admin/turku-video-projects/{id}/generate-story-pipeline ──
+
+    @PostMapping("/{id}/generate-story-pipeline")
+    @Operation(summary = "3 aşamalı hikâye pipeline'ı",
+               description = "Araştırma → Hikâye Taslağı → Editör Doğrulaması. " +
+                              "Her aşama DB'ye kaydedilir. Hata durumunda kaldığı yerden devam eder.")
+    public ResponseEntity<ApiResponse<TurkuProviderPlanningGenerationResponse>> generateStoryPipeline(
+            @PathVariable UUID id,
+            @RequestBody(required = false) TurkuProviderGenerationRequest request,
+            @RequestParam(required = false) ReviewActorRole actorRole,
+            @RequestParam(required = false) String actorReference) {
+
+        resolvePlanningActor(actorRole, actorReference);
+        TurkuProviderPlanningGenerationResponse response = providerDraftService.generateStoryPipeline(id, request);
+        return ResponseEntity.ok(ApiResponse.success(response, "3 aşamalı hikâye pipeline tamamlandı"));
+    }
+
     // ── POST /admin/turku-video-projects/{id}/generate-scenario ──
 
     @PostMapping("/{id}/generate-scenario")

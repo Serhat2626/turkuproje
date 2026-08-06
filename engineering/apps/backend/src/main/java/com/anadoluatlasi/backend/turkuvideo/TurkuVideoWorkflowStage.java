@@ -11,7 +11,13 @@ public enum TurkuVideoWorkflowStage {
     /** Project bootstrapped, no generation yet */
     DRAFT_CREATED,
 
-    /** Story context package prepared */
+    /** 3-Stage Pipeline: Kaynaklı araştırma tamamlandı */
+    RESEARCH_COMPLETED,
+
+    /** 3-Stage Pipeline: Hikâye taslağı oluşturuldu */
+    STORY_DRAFT_COMPLETED,
+
+    /** Story context package prepared (nihai hikâye hazır) */
     STORY_CONTEXT_PREPARED,
 
     /** Scenario/narrative beats prepared */
