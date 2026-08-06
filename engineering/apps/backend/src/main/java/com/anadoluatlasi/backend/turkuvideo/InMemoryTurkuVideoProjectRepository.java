@@ -11,12 +11,12 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
- * In-memory implementasyonu — TurkuVideoProject henüz JPA Entity olmadığı için
- * ConcurrentHashMap ile çalışır. Hem production hem test'te kullanılır.
+ * In-memory implementasyonu — DEVRE DIŞI (JPA adapter aktif).
+ * Test'lerde kullanılmak üzere korunuyor.
  *
- * <p>JPA Entity'ye geçildiğinde bu sınıf kaldırılıp Spring Data proxy kullanılır.</p>
+ * <p>Production'da JpaTurkuVideoProjectRepositoryAdapter (@Primary) kullanılır.</p>
  */
-@Repository
+// @Repository — devre dışı, JpaTurkuVideoProjectRepositoryAdapter @Primary olarak aktif
 public class InMemoryTurkuVideoProjectRepository implements TurkuVideoProjectRepository {
 
     private final Map<UUID, TurkuVideoProject> store = new ConcurrentHashMap<>();

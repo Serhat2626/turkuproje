@@ -32,6 +32,10 @@ import type {
 
 const BASE = '/admin/turku-video-projects'
 
+export function listTurkuVideoProjects(): Promise<ApiResponse<any[]>> {
+  return request<any[]>(`${BASE}`)
+}
+
 export function bootstrapTurkuVideoProject(
   data: TurkuVideoBootstrapRequest
 ): Promise<ApiResponse<TurkuVideoBootstrapResponse>> {

@@ -1,11 +1,15 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
 import java.util.List;
 
 /**
  * FP-019 Task 03: Scenario plan — 6-beat video narrative structure.
  * No lyrics, no copyrighted media, no public URLs.
  */
+@JsonDeserialize(builder = TurkuScenarioPlan.Builder.class)
 public final class TurkuScenarioPlan {
 
     private final String title;
@@ -36,6 +40,7 @@ public final class TurkuScenarioPlan {
 
     public static Builder builder() { return new Builder(); }
 
+    @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
         private String title;
         private String logline;

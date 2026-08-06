@@ -89,6 +89,8 @@ public class TurkuVideoProjectController {
 
     private final TurkuVideoAssemblyService videoAssemblyService;
 
+    private final TurkuVideoProjectRepository projectRepository;
+
     public TurkuVideoProjectController(TurkuVideoProjectBootstrapService bootstrapService,
                                         TurkuVideoPlanningService planningService,
                                         TurkuVideoAssetPlanningService assetPlanningService,
@@ -102,7 +104,8 @@ public class TurkuVideoProjectController {
                                         AdminActorResolver actorResolver,
                                         MinioClient minioClient,
                                         MinioConfig minioConfig,
-                                        TurkuVideoAssemblyService videoAssemblyService) {
+                                        TurkuVideoAssemblyService videoAssemblyService,
+                                        TurkuVideoProjectRepository projectRepository) {
         this.bootstrapService = bootstrapService;
         this.planningService = planningService;
         this.assetPlanningService = assetPlanningService;
@@ -117,6 +120,28 @@ public class TurkuVideoProjectController {
         this.minioClient = minioClient;
         this.minioConfig = minioConfig;
         this.videoAssemblyService = videoAssemblyService;
+        this.projectRepository = projectRepository;
+    }
+
+    // ── GET /admin/turku-video-projects ──
+
+    @GetMapping
+    @Operation(summary = "Tüm türkü video projelerini listele")
+    public ResponseEntity<ApiResponse<List<Map<String, Object>>>> listProjects() {
+        var repo = projectRepository;
+        List<Map<String, Object>> list = repo.findAll().stream()
+                .sorted((a, b) -> b.getCreatedAt() != null && a.getCreatedAt() != null
+                        ? b.getCreatedAt().compareTo(a.getCreatedAt()) : 0)
+                .map(p -> {
+                    Map<String, Object> m = new java.util.LinkedHashMap<>();
+                    m.put("id", p.getId().toString());
+                    m.put("turkuName", p.getTurkuName());
+                    m.put("workflowStage", p.getWorkflowStage().name());
+                    m.put("createdAt", p.getCreatedAt());
+                    return m;
+                })
+                .collect(java.util.stream.Collectors.toList());
+        return ResponseEntity.ok(ApiResponse.success(list, "Projeler listelendi"));
     }
 
     // ── POST /admin/turku-video-projects/bootstrap ──
@@ -1632,27 +1657,38 @@ public class TurkuVideoProjectController {
     private String selectBestReference(TurkuStoryboardScene scene, Map<String, String> characterReferenceUrls) {
         if (characterReferenceUrls == null || characterReferenceUrls.isEmpty()) return null;
         
-        // Sahne karakter bilgisi varsa eşle
+        // Tek karakter varsa ("default"), TÜM sahnelerde kullan
+        if (characterReferenceUrls.size() == 1 && characterReferenceUrls.containsKey("default")) {
+            log.info("Sahne '{}' — tek karakter referansı (default) kullanılıyor", scene.getSceneTitle());
+            return characterReferenceUrls.get("default");
+        }
+        
+        // Çoklu karakter: sahne metninde isim ara
         String sceneChars = scene.getCharacters();
-        // Also check scene title and visual description for character names
         if (sceneChars == null || sceneChars.isBlank()) {
             sceneChars = (scene.getSceneTitle() != null ? scene.getSceneTitle() : "") + " " +
-                         (scene.getVisualDescription() != null ? scene.getVisualDescription() : "");
+                         (scene.getVisualDescription() != null ? scene.getVisualDescription() : "") + " " +
+                         (scene.getNarrationSummary() != null ? scene.getNarrationSummary() : "");
         }
         
         String sceneText = sceneChars.toLowerCase();
         
-        // Karakter isimlerini sahne metninde ara
         for (Map.Entry<String, String> entry : characterReferenceUrls.entrySet()) {
             String charName = entry.getKey().toLowerCase();
-            // İsmin ilk kelimesini de kontrol et ("Sümmani (erkek)" → "sümmani")
+            if ("default".equals(charName)) continue; // default'u isim eşleştirmede atla
             String firstName = charName.split("[\\s(]+")[0];
             if (sceneText.contains(firstName)) {
+                log.info("Sahne '{}' — karakter eşleşmesi: '{}'", scene.getSceneTitle(), entry.getKey());
                 return entry.getValue();
             }
         }
         
-        // Eşleşme yoksa referans KULLANMA — sahne Flux Pro v1.1 ile üretilecek
+        // Eşleşme yok ama "default" varsa, onu kullan
+        if (characterReferenceUrls.containsKey("default")) {
+            log.info("Sahne '{}' — fallback: default karakter referansı kullanılacak", scene.getSceneTitle());
+            return characterReferenceUrls.get("default");
+        }
+        
         log.info("Sahne '{}' için karakter eşleşmesi bulunamadı → referanssız Flux Pro kullanılacak", scene.getSceneTitle());
         return null;
     }
@@ -1671,6 +1707,7 @@ public class TurkuVideoProjectController {
         }
         
         String sheet = project.getStoryPackage().getCharacterSheet();
+        log.info("📋 Karakter çizelgesi uzunluk: {} karakter", sheet.length());
         String[] sections = sheet.split("(?=###\\s)");
         
         for (String section : sections) {
@@ -1680,10 +1717,10 @@ public class TurkuVideoProjectController {
             // Karakter adını çıkar
             String firstLine = trimmed.split("\\n")[0].replaceAll("^#+\\s*", "").trim();
             
-            // Setting/Period/Mekan bölümlerini atla
+            // Setting/Period/Mekan bölümlerini atla (karakter değil)
             if (firstLine.toLowerCase().contains("setting") || firstLine.toLowerCase().contains("mekan")
                     || firstLine.toLowerCase().contains("period") || firstLine.toLowerCase().contains("dönem")
-                    || firstLine.toLowerCase().contains("supporting")) continue;
+                    || firstLine.toLowerCase().contains("color palette")) continue;
             
             // İsmi çıkar (Name: veya **Name:** satırından)
             String charName = extractCharacterName(trimmed);
@@ -1695,11 +1732,15 @@ public class TurkuVideoProjectController {
             
             if (!charPrompt.isBlank() && charPrompt.length() > 20) {
                 characters.put(charName, charPrompt);
+                log.info("👤 Karakter bulundu: '{}' → promptLen={}", charName, charPrompt.length());
             }
         }
         
         if (characters.isEmpty()) {
+            log.warn("⚠️ Karakter çizelgesinden isim çıkarılamadı, default kullanılacak");
             characters.put("default", buildCharacterDescription(project));
+        } else {
+            log.info("✅ Toplam {} karakter referansı oluşturulacak", characters.size());
         }
         
         return characters;

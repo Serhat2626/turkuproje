@@ -113,13 +113,13 @@ public class FalImageGenerationService {
             return cdnUrl;
         }
 
-        // Referans prompt: tam boy portre, nötr arka plan — illustration stili EN BAŞTA
-        String refPrompt = "2D hand-drawn digital illustration, comic book panel art style, "
-                + "cel-shaded coloring, bold clean outlines, flat color fills. "
-                + "NOT a photograph, NOT photorealistic. "
+        // Referans prompt: tam boy portre, nötr arka plan — yağlıboya stili EN BAŞTA
+        String refPrompt = "Classical oil painting style, rich textures, dramatic chiaroscuro lighting, "
+                + "warm Rembrandt-inspired tones, visible brushstrokes, deep warm colors. "
+                + "NOT a photograph, NOT digital art. "
                 + charPrompt
                 + ". Full body portrait, standing pose, facing camera, clear face details, "
-                + "neutral light gray background, warm muted color palette.";
+                + "neutral warm gray background, golden hour lighting.";
 
         byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
         uploadToMinioPath(minioPath, imageBytes);
@@ -152,7 +152,7 @@ public class FalImageGenerationService {
                     continue;
                 }
                 
-                String refPrompt = "2D hand-drawn digital illustration, comic book panel art style, cel-shaded coloring, bold clean outlines, flat color fills. NOT a photograph, NOT photorealistic. " + charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral light gray background, warm muted color palette.";
+                String refPrompt = "Classical oil painting style, rich textures, dramatic chiaroscuro lighting, warm Rembrandt-inspired tones, visible brushstrokes, deep warm colors. NOT a photograph, NOT digital art. " + charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral warm gray background, golden hour lighting.";
                 byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
                 uploadToMinioPath(minioPath, imageBytes);
                 String cdnUrl = uploadToFalCdn(imageBytes, projectId + "_ref_" + charName.toLowerCase().replaceAll("\\s+", "_") + ".png");
@@ -343,9 +343,9 @@ public class FalImageGenerationService {
         StringBuilder sb = new StringBuilder();
 
         // ⚠️ STİL EN BAŞTA — Flux Pro prompt başına ağırlık verir
-        sb.append("2D hand-drawn digital illustration, comic book panel art style, ");
-        sb.append("cel-shaded coloring, bold clean outlines, flat color fills, ");
-        sb.append("NOT a photograph, NOT photorealistic, NOT 3D render. ");
+        sb.append("Classical oil painting style, rich textures, dramatic chiaroscuro lighting, ");
+        sb.append("warm Rembrandt-inspired tones, visible brushstrokes, deep warm colors, ");
+        sb.append("NOT a photograph, NOT digital art, NOT 3D render. ");
 
         String visual = request.getSafePromptSummary();
         if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
@@ -379,9 +379,9 @@ public class FalImageGenerationService {
         StringBuilder sb = new StringBuilder();
 
         // ⚠️ STİL EN BAŞTA — Flux Pro prompt başına ağırlık verir
-        sb.append("2D hand-drawn digital illustration, comic book panel art style, ");
-        sb.append("cel-shaded coloring, bold clean outlines, flat color fills, ");
-        sb.append("NOT a photograph, NOT photorealistic, NOT 3D render. ");
+        sb.append("Classical oil painting style, rich textures, dramatic chiaroscuro lighting, ");
+        sb.append("warm Rembrandt-inspired tones, visible brushstrokes, deep warm colors, ");
+        sb.append("NOT a photograph, NOT digital art, NOT 3D render. ");
 
         String visual = request.getSafePromptSummary();
         String charDesc = request.getCharacterDescription();

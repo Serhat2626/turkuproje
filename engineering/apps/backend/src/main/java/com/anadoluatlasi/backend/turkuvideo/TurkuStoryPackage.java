@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
+import com.fasterxml.jackson.databind.annotation.JsonPOJOBuilder;
+
 import java.util.List;
 
 /**
@@ -8,6 +11,7 @@ import java.util.List;
  * <p>Does not store lyrics, copyrighted media, public URLs, raw provider payloads,
  * or credential/session data.</p>
  */
+@JsonDeserialize(builder = TurkuStoryPackage.Builder.class)
 public final class TurkuStoryPackage {
 
     private final String turkuName;
@@ -54,6 +58,7 @@ public final class TurkuStoryPackage {
 
     public static Builder builder() { return new Builder(); }
 
+    @JsonPOJOBuilder(withPrefix = "")
     public static final class Builder {
         private String turkuName;
         private String regionContext;
