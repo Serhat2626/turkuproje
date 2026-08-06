@@ -744,30 +744,48 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
                 *** KRİTİK KURALLAR — UYULMASI ZORUNLU ***
 
-                1. TAM 35 SAHNE YAZILACAK. 10 veya 15 sahne yazıp bırakmak YASAKTIR.
-                   Sahne 1'den Sahne 35'e kadar HEPSINI yaz.
+                1. HİKÂYE TAMAMEN ANLATILMALI.
+                   Hikâyenin başından sonuna kadar TÜM OLAYLARI kapsayan sahneler oluştur.
+                   Hikâye yarıda kalmamalı. Son sahne hikâyenin doğal kapanışı olmalı.
 
-                2. BU BİR FİLM. Sessiz izleyen biri bile görsellerden hikâyeyi anlayabilmeli.
+                2. EN FAZLA 35 SAHNE (= 35 GÖRSEL) oluşturulabilir.
+                   Her sahne = 1 benzersiz görsel. Görsel üretim maliyeti nedeniyle
+                   sahne sayısını 25-35 arasında tut.
+                   Hikâye kısaysa daha az sahne (15-25) yeterli.
+                   Hikâye uzunsa sahneleri birleştir, önemli anları seç.
+
+                3. SAHNE SÜRESİ ESNEKTİR.
+                   Kısa sahneler: 10-15 saniye (geçiş anları, atmosfer)
+                   Normal sahneler: 15-25 saniye (olaylar, diyalog)
+                   Uzun sahneler: 25-40 saniye (duygusal zirveler, dönüm noktaları)
+                   Toplam süre: ~600 saniye (10 dakika).
+                   Aynı görsel üzerinde uzun seslendirme devam edebilir.
+
+                4. BU BİR FİLM. Sessiz izleyen biri bile görsellerden hikâyeyi anlayabilmeli.
                    Her sahne hikâyenin bir ANINI gösterir — karakter portresi DEĞİL.
 
-                3. YASAK GÖRSELLER:
+                5. YASAK GÖRSELLER:
                    - İki kişi yan yana durup kameraya bakan portre ❌
                    - Genel "güzel manzara" görseli ❌
                    - Aynı sahnenin tekrarı ❌
 
-                4. ZORUNLU GÖRSELLER:
+                6. ZORUNLU GÖRSELLER:
                    - Her sahne bir AKSİYON/AN gösterir: yürüme, saz çalma, ağlama, veda...
                    - Kamera açıları DEĞİŞKEN: close-up, wide, silüet, kuş bakışı...
                    - Yan karakterler (baba, arkadaş, ağa) kendi sahnelerinde görülmeli
 
-                5. SESLENDIRME: Senaryo beat'lerindeki hikâyeyi sahnelere dağıt.
-                   Her sahne 40-80 kelime. HİKÂYENİN O ANINI anlat, genel bilgi DEĞİL.
+                7. SESLENDİRME: Senaryo beat'lerindeki hikâyeyi sahnelere dağıt.
+                   Kısa sahnelerde: 30-60 kelime.
+                   Uzun sahnelerde: 60-120 kelime.
+                   HİKÂYENİN O ANINI anlat, genel bilgi DEĞİL.
+                   Tüm seslendirmeler birleştiğinde HİKÂYENİN TAMAMI anlatılmış olmalı.
 
                 FORMAT (her sahne için):
                 ### Sahne [numara]
-                **Süre:** [saniye — toplam 600sn = 10dk. Her sahne 15-20sn]
-                **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek — 40-80 kelime.
-                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.]
+                **Süre:** [saniye — esnek. Toplam ~600sn = 10dk]
+                **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek.
+                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.
+                Süre uzunsa seslendirme de uzun olabilir.]
                 **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin AI image prompt olacak.
                 Fal.ai modeli Türkçe ANLAMIYOR. İngilizce yaz!
                 Format: "[Character] is [doing action] in [location].
@@ -983,22 +1001,22 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                   Bölüm dağılımı:
 
                   A) TARİHSEL BAĞLAM bölümü → 2-3 sahne
-                     Bu bölümdeki 3 paragrafı 2-3 sahneye böl.
-                     Her sahne 40-80 kelime seslendirme.
-                     Görseller: Genel Anadolu/Erzurum atmosferi.
+                     Bu bölümdeki paragrafları 2-3 sahneye böl.
+                     Görseller: Genel Anadolu atmosferi.
                      NOT: Bu bölüm OLDUĞU GİBİ seslendirilecek.
 
-                  B) HİKÂYE bölümü (Prologue'dan Sonsöz'e) → 28-30 sahne
+                  B) HİKÂYE bölümü (Prologue'dan Sonsöz'e) → hikâyeyi tamamen kapsayan sahneler
                      Hikâyedeki HER CÜMLEYİ sahne seslendirmelerine dağıt.
-                     Her sahne 2-4 cümle (40-80 kelime).
                      Hiçbir cümle ATLANMAMALIdır.
                      Hikâye metninin TAMAMI seslendirilmelidir.
+                     Sahne süreleri esnek: kısa anlar 10-15sn, duygusal zirveler 25-40sn.
+                     Aynı görsel üzerinde uzun seslendirme devam edebilir.
 
                   C) KAPANIŞ → 2-3 sahne
                      Miras/Sonsöz bölümü + CTA.
                      Bu kısım kısa tutulmalı.
 
-                  TOPLAM: 33-35 sahne
+                  TOPLAM: Hikâyeyi kapsayan kadar sahne, EN FAZLA 35 sahne (= 35 görsel)
 
                 ADIM 3: Her sahne için görsel prompt üret
                   Seslendirme metnine UYGUN bir görsel prompt yaz.

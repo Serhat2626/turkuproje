@@ -47,7 +47,8 @@ public class TurkuProviderDraftPlanningService {
             UUID projectId, TurkuProviderGenerationRequest request) {
 
         TurkuVideoProject project = getProject(projectId);
-        validateStage(project, TurkuVideoWorkflowStage.DRAFT_CREATED);
+        // Hikâye yeniden üretilebilir — DRAFT_CREATED veya sonrası kabul edilir
+        validateStageAtLeast(project, TurkuVideoWorkflowStage.DRAFT_CREATED);
 
         TurkuProviderMode mode = safetyPolicy.resolveProviderMode(project);
 
@@ -106,12 +107,8 @@ public class TurkuProviderDraftPlanningService {
 
         // Başlangıç veya kaldığı yerden devam (resume desteği)
         TurkuVideoWorkflowStage stage = project.getWorkflowStage();
-        if (stage != TurkuVideoWorkflowStage.DRAFT_CREATED
-                && stage != TurkuVideoWorkflowStage.RESEARCH_COMPLETED
-                && stage != TurkuVideoWorkflowStage.STORY_DRAFT_COMPLETED) {
-            throw TurkuVideoProjectException.invalidStageTransition(
-                    stage, TurkuVideoWorkflowStage.DRAFT_CREATED);
-        }
+        // Pipeline yeniden çalıştırılabilir — DRAFT_CREATED veya sonrası kabul edilir
+        validateStageAtLeast(project, TurkuVideoWorkflowStage.DRAFT_CREATED);
 
         TurkuProviderMode mode = safetyPolicy.resolveProviderMode(project);
         TurkuProviderPlanningGenerationResponse modeBlock = checkModeBlocking(
@@ -304,7 +301,8 @@ public class TurkuProviderDraftPlanningService {
             UUID projectId, TurkuProviderGenerationRequest request) {
 
         TurkuVideoProject project = getProject(projectId);
-        validateStage(project, TurkuVideoWorkflowStage.STORY_CONTEXT_PREPARED);
+        // Senaryo yeniden üretilebilir — STORY_CONTEXT_PREPARED veya sonrası kabul edilir
+        validateStageAtLeast(project, TurkuVideoWorkflowStage.STORY_CONTEXT_PREPARED);
 
         if (project.getStoryPackage() == null) {
             throw TurkuVideoProjectException.missingPrerequisite("Hikâye paketi hazırlanmalıdır");
@@ -349,7 +347,11 @@ public class TurkuProviderDraftPlanningService {
             UUID projectId, TurkuProviderGenerationRequest request) {
 
         TurkuVideoProject project = getProject(projectId);
-        validateStage(project, TurkuVideoWorkflowStage.SCENARIO_PREPARED);
+        // Storyboard yeniden üretilebilir — SCENARIO_PREPARED veya sonraki aşamalar kabul edilir
+        if (project.getWorkflowStage().ordinal() < TurkuVideoWorkflowStage.SCENARIO_PREPARED.ordinal()) {
+            throw TurkuVideoProjectException.invalidStageTransition(
+                    project.getWorkflowStage(), TurkuVideoWorkflowStage.SCENARIO_PREPARED);
+        }
 
         if (project.getScenarioPlan() == null) {
             throw TurkuVideoProjectException.missingPrerequisite("Senaryo planı hazırlanmalıdır");
@@ -394,7 +396,8 @@ public class TurkuProviderDraftPlanningService {
             UUID projectId, TurkuProviderGenerationRequest request) {
 
         TurkuVideoProject project = getProject(projectId);
-        validateStage(project, TurkuVideoWorkflowStage.DRAFT_CREATED);
+        // Planning bundle yeniden üretilebilir — DRAFT_CREATED veya sonrası kabul edilir
+        validateStageAtLeast(project, TurkuVideoWorkflowStage.DRAFT_CREATED);
 
         TurkuProviderMode mode = safetyPolicy.resolveProviderMode(project);
 
@@ -512,6 +515,14 @@ public class TurkuProviderDraftPlanningService {
         if (project.getWorkflowStage() != expected) {
             throw TurkuVideoProjectException.invalidStageTransition(
                     project.getWorkflowStage(), expected);
+        }
+    }
+
+    /** Aşama en az 'minimumStage' seviyesinde olmalı — yeniden üretim için geri dönüş de dahil */
+    private void validateStageAtLeast(TurkuVideoProject project, TurkuVideoWorkflowStage minimumStage) {
+        if (project.getWorkflowStage().ordinal() < minimumStage.ordinal()) {
+            throw TurkuVideoProjectException.invalidStageTransition(
+                    project.getWorkflowStage(), minimumStage);
         }
     }
 

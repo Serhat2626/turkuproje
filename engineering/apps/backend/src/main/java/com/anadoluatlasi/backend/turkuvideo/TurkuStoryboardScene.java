@@ -1,6 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 
 /**
@@ -25,9 +26,18 @@ public final class TurkuStoryboardScene {
         this(sceneNo, sceneTitle, visualDescription, narrationSummary, mood, estimatedDurationSeconds, cameraDirection, transitionHint, musicNote, null);
     }
 
-    public TurkuStoryboardScene(int sceneNo, String sceneTitle, String visualDescription,
-                                 String narrationSummary, String mood, int estimatedDurationSeconds,
-                                 String cameraDirection, String transitionHint, String musicNote, String characters) {
+    @JsonCreator
+    public TurkuStoryboardScene(
+            @JsonProperty("sceneNo") int sceneNo,
+            @JsonProperty("sceneTitle") String sceneTitle,
+            @JsonProperty("visualDescription") String visualDescription,
+            @JsonProperty("narrationSummary") String narrationSummary,
+            @JsonProperty("mood") String mood,
+            @JsonProperty("estimatedDurationSeconds") int estimatedDurationSeconds,
+            @JsonProperty("cameraDirection") String cameraDirection,
+            @JsonProperty("transitionHint") String transitionHint,
+            @JsonProperty("musicNote") String musicNote,
+            @JsonProperty("characters") String characters) {
         this.sceneNo = sceneNo;
         this.sceneTitle = sceneTitle;
         this.visualDescription = visualDescription;

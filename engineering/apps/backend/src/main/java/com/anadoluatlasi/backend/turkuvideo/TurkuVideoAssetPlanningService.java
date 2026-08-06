@@ -28,8 +28,8 @@ public class TurkuVideoAssetPlanningService {
     public TurkuSceneAssetPlan prepareSceneAssets(UUID projectId,
                                                    TurkuSceneAssetPreparationRequest request) {
         TurkuVideoProject project = getProject(projectId);
-        validateStage(project, TurkuVideoWorkflowStage.STORYBOARD_PREPARED,
-                TurkuVideoWorkflowStage.SCENE_ASSET_PLAN_PREPARED);
+        // Yeniden üretilebilir — STORYBOARD_PREPARED veya sonrası kabul edilir
+        validateStageAtLeast(project, TurkuVideoWorkflowStage.STORYBOARD_PREPARED);
 
         if (project.getStoryboardPlan() == null || project.getStoryboardPlan().getScenes().isEmpty()) {
             throw TurkuVideoProjectException.missingPrerequisite("Storyboard sahneleri mevcut olmalıdır");
@@ -79,8 +79,8 @@ public class TurkuVideoAssetPlanningService {
     public TurkuSceneImageBatch prepareImageBatch(UUID projectId,
                                                     TurkuImageBatchPreparationRequest request) {
         TurkuVideoProject project = getProject(projectId);
-        validateStage(project, TurkuVideoWorkflowStage.SCENE_ASSET_PLAN_PREPARED,
-                TurkuVideoWorkflowStage.IMAGE_BATCH_PREPARED);
+        // Yeniden üretilebilir — SCENE_ASSET_PLAN_PREPARED veya sonrası kabul edilir
+        validateStageAtLeast(project, TurkuVideoWorkflowStage.SCENE_ASSET_PLAN_PREPARED);
 
         if (project.getSceneAssetPlan() == null || project.getSceneAssetPlan().getItems().isEmpty()) {
             throw TurkuVideoProjectException.missingPrerequisite("Sahne varlık planı mevcut olmalıdır");
@@ -177,6 +177,14 @@ public class TurkuVideoAssetPlanningService {
         if (project.getWorkflowStage() != required) {
             throw TurkuVideoProjectException.invalidStageTransition(
                     project.getWorkflowStage(), target);
+        }
+    }
+
+    /** Aşama en az 'minimumStage' seviyesinde olmalı — yeniden üretim için */
+    private void validateStageAtLeast(TurkuVideoProject project, TurkuVideoWorkflowStage minimumStage) {
+        if (project.getWorkflowStage().ordinal() < minimumStage.ordinal()) {
+            throw TurkuVideoProjectException.invalidStageTransition(
+                    project.getWorkflowStage(), minimumStage);
         }
     }
 
