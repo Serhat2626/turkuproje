@@ -286,7 +286,7 @@ class TurkuFfmpegSandboxRunnerTest {
             var controller = new TurkuVideoProjectController(
                     bootstrapService, planningService, assetService,
                     draftService, imageBatchService, compositionService,
-                    renderManifestService, renderJobService, executionService, new TurkuStoryboardInternalRenderChainHarness(), actorResolver, null, null, null);
+                    renderManifestService, renderJobService, executionService, new TurkuStoryboardInternalRenderChainHarness(), actorResolver, null, null, null, null);
 
             TurkuVideoBootstrapRequest req = new TurkuVideoBootstrapRequest();
             req.setTurkuName("Çanakkale Türküsü");

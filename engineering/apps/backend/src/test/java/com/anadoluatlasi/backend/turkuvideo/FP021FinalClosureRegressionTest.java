@@ -53,7 +53,7 @@ class FP021FinalClosureRegressionTest {
         controller = new TurkuVideoProjectController(
                 bootstrapService, planningService, assetService,
                 draftService, imageBatchService, compositionService,
-                renderManifestService, renderJobService, renderExecutionService, new TurkuStoryboardInternalRenderChainHarness(), actorResolver, null, null, null);
+                renderManifestService, renderJobService, renderExecutionService, new TurkuStoryboardInternalRenderChainHarness(), actorResolver, null, null, null, null);
     }
 
     private TurkuVideoProject bootstrapProject() {
