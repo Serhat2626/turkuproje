@@ -1,6 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
 import jakarta.persistence.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -58,27 +60,35 @@ public class JpaTurkuVideoProjectEntity {
 
     // ── JSONB alanları (complex nesneler) ──
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "story_package_json", columnDefinition = "jsonb")
     private String storyPackageJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "scenario_plan_json", columnDefinition = "jsonb")
     private String scenarioPlanJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "storyboard_plan_json", columnDefinition = "jsonb")
     private String storyboardPlanJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "scene_asset_plan_json", columnDefinition = "jsonb")
     private String sceneAssetPlanJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "image_batch_json", columnDefinition = "jsonb")
     private String imageBatchJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "composition_plan_json", columnDefinition = "jsonb")
     private String compositionPlanJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "render_manifest_json", columnDefinition = "jsonb")
     private String renderManifestJson;
 
+    @JdbcTypeCode(SqlTypes.JSON)
     @Column(name = "render_job_json", columnDefinition = "jsonb")
     private String renderJobJson;
 
