@@ -634,7 +634,11 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    Türkünün yayılışı, nesiller boyu aktarılması.
                    Bugün bile dinleyenleri etkileyen evrensel duygu.
 
-                Her paragraf sinematik olsun — kamera açılarını hayal et.
+                Her paragraf EDEBİ bir roman gibi yazılmalı.
+                ⛔ YASAK: "Kamera şunu gösteriyor", "sahne değişiyor",
+                "geniş açı", "yakın çekim" gibi TEKNİK/SİNEMATİK ifadeler.
+                Bu metin TTS ile SESLENDİRİLECEK — saf anlatım metni olmalı.
+                ✅ DOĞRU: Betimleyici, duygusal, edebî nesir.
                 Beş duyuya hitap et: rüzgarın sesi, toprağın kokusu,
                 gözyaşının sıcaklığı, sazın tınısı.
                 İzleyici DERİNDEN ETKİLENMELİ.]

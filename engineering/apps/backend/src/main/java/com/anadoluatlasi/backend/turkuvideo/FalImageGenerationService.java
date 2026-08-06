@@ -113,12 +113,13 @@ public class FalImageGenerationService {
             return cdnUrl;
         }
 
-        // Referans prompt: tam boy portre, nötr arka plan — illustration stili
-        String refPrompt = charPrompt
+        // Referans prompt: tam boy portre, nötr arka plan — illustration stili EN BAŞTA
+        String refPrompt = "2D hand-drawn digital illustration, comic book panel art style, "
+                + "cel-shaded coloring, bold clean outlines, flat color fills. "
+                + "NOT a photograph, NOT photorealistic. "
+                + charPrompt
                 + ". Full body portrait, standing pose, facing camera, clear face details, "
-                + "neutral light gray background. "
-                + "Digital illustration, graphic novel art style, detailed comic book coloring, "
-                + "clean linework, warm muted color palette, high detail.";
+                + "neutral light gray background, warm muted color palette.";
 
         byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
         uploadToMinioPath(minioPath, imageBytes);
@@ -151,7 +152,7 @@ public class FalImageGenerationService {
                     continue;
                 }
                 
-                String refPrompt = charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral light gray background. Digital illustration, graphic novel art style, detailed comic book coloring, clean linework, warm muted color palette, high detail.";
+                String refPrompt = "2D hand-drawn digital illustration, comic book panel art style, cel-shaded coloring, bold clean outlines, flat color fills. NOT a photograph, NOT photorealistic. " + charPrompt + ". Full body portrait, standing pose, facing slightly left, clear face details, neutral light gray background, warm muted color palette.";
                 byte[] imageBytes = callFalApi(refPrompt, referenceModel, null);
                 uploadToMinioPath(minioPath, imageBytes);
                 String cdnUrl = uploadToFalCdn(imageBytes, projectId + "_ref_" + charName.toLowerCase().replaceAll("\\s+", "_") + ".png");
@@ -341,6 +342,11 @@ public class FalImageGenerationService {
     private String buildKontextPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
 
+        // ⚠️ STİL EN BAŞTA — Flux Pro prompt başına ağırlık verir
+        sb.append("2D hand-drawn digital illustration, comic book panel art style, ");
+        sb.append("cel-shaded coloring, bold clean outlines, flat color fills, ");
+        sb.append("NOT a photograph, NOT photorealistic, NOT 3D render. ");
+
         String visual = request.getSafePromptSummary();
         if (visual != null && !visual.isBlank() && !visual.equals("Genel Anadolu manzarası")) {
             String cleanVisual = sanitizeVisualPrompt(visual);
@@ -351,8 +357,7 @@ public class FalImageGenerationService {
             sb.append("Place this person in a 19th century Anatolian village scene. ");
         }
 
-        sb.append("Keep ONLY the face and facial features identical. The pose, body position, and framing should match the scene description. ");
-        sb.append("Digital illustration, graphic novel art style, detailed comic book coloring, clean linework. ");
+        sb.append("Keep ONLY the face and facial features identical. ");
         sb.append("19th century Ottoman Anatolian village, warm muted earth tones, painterly backgrounds. ");
 
         String cameraDir = request.getCameraDirection();
@@ -373,6 +378,11 @@ public class FalImageGenerationService {
     private String buildFluxPrompt(TurkuImageGenerationRequest request) {
         StringBuilder sb = new StringBuilder();
 
+        // ⚠️ STİL EN BAŞTA — Flux Pro prompt başına ağırlık verir
+        sb.append("2D hand-drawn digital illustration, comic book panel art style, ");
+        sb.append("cel-shaded coloring, bold clean outlines, flat color fills, ");
+        sb.append("NOT a photograph, NOT photorealistic, NOT 3D render. ");
+
         String visual = request.getSafePromptSummary();
         String charDesc = request.getCharacterDescription();
 
@@ -387,8 +397,6 @@ public class FalImageGenerationService {
             sb.append(sanitizeVisualPrompt(visual)).append(". ");
         }
 
-        sb.append("Dramatic cinematic composition. ");
-        sb.append("Digital illustration, graphic novel art style, detailed comic book coloring, clean linework. ");
         sb.append("19th century Ottoman Anatolian village, warm muted earth tones, painterly backgrounds. ");
 
         String cameraDir = request.getCameraDirection();
