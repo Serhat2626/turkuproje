@@ -1,6 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 
@@ -16,6 +17,21 @@ public final class TurkuSceneImageBatch {
     private final List<TurkuSceneImageRequest> imageRequests;
     private List<TurkuSceneImageResult> imageResults;
     private final List<String> reviewFlags;
+
+    @JsonCreator
+    public TurkuSceneImageBatch(@JsonProperty("batchId") UUID batchId,
+                                 @JsonProperty("projectId") UUID projectId,
+                                 @JsonProperty("status") TurkuImageBatchStatus status,
+                                 @JsonProperty("imageRequests") List<TurkuSceneImageRequest> imageRequests,
+                                 @JsonProperty("imageResults") List<TurkuSceneImageResult> imageResults,
+                                 @JsonProperty("reviewFlags") List<String> reviewFlags) {
+        this.batchId = batchId;
+        this.projectId = projectId;
+        this.status = status;
+        this.imageRequests = imageRequests != null ? List.copyOf(imageRequests) : List.of();
+        this.imageResults = imageResults != null ? List.copyOf(imageResults) : List.of();
+        this.reviewFlags = reviewFlags != null ? List.copyOf(reviewFlags) : List.of();
+    }
 
     public TurkuSceneImageBatch(UUID batchId, UUID projectId,
                                  TurkuImageBatchStatus status,

@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * FP-021 Task 03: Single scene entry in the render manifest.
  * Safe internal refs only — no public URL, no base64, no storage key.
@@ -16,10 +19,16 @@ public final class TurkuRenderManifestScene {
     private final String transitionOut;
     private final String cameraDirection;
 
-    public TurkuRenderManifestScene(int sceneNo, String sceneTitle, String imageRef,
-                                     String narrationRef, String musicRef,
-                                     double durationSeconds, String transitionIn,
-                                     String transitionOut, String cameraDirection) {
+    @JsonCreator
+    public TurkuRenderManifestScene(@JsonProperty("sceneNo") int sceneNo,
+                                     @JsonProperty("sceneTitle") String sceneTitle,
+                                     @JsonProperty("imageRef") String imageRef,
+                                     @JsonProperty("narrationRef") String narrationRef,
+                                     @JsonProperty("musicRef") String musicRef,
+                                     @JsonProperty("durationSeconds") double durationSeconds,
+                                     @JsonProperty("transitionIn") String transitionIn,
+                                     @JsonProperty("transitionOut") String transitionOut,
+                                     @JsonProperty("cameraDirection") String cameraDirection) {
         this.sceneNo = sceneNo;
         this.sceneTitle = sceneTitle;
         this.imageRef = imageRef;

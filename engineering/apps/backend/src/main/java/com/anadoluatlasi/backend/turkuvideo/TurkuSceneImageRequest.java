@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * FP-019 Task 04: Per-scene image generation request.
  * Safe opaque reference only — no provider/storage/base64 data.
@@ -12,9 +15,12 @@ public final class TurkuSceneImageRequest {
     private final String styleHint;
     private final String aspectRatioHint;
 
-    public TurkuSceneImageRequest(int sceneNo, String safePromptSummary,
-                                   String safeNegativeNotes, String styleHint,
-                                   String aspectRatioHint) {
+    @JsonCreator
+    public TurkuSceneImageRequest(@JsonProperty("sceneNo") int sceneNo,
+                                   @JsonProperty("safePromptSummary") String safePromptSummary,
+                                   @JsonProperty("safeNegativeNotes") String safeNegativeNotes,
+                                   @JsonProperty("styleHint") String styleHint,
+                                   @JsonProperty("aspectRatioHint") String aspectRatioHint) {
         this.sceneNo = sceneNo;
         this.safePromptSummary = safePromptSummary;
         this.safeNegativeNotes = safeNegativeNotes;

@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * FP-021 Task 02: Narration segment — original summary text, NOT lyrics.
  * No copyrighted content. No TTS audio data.
@@ -14,9 +17,15 @@ public final class TurkuNarrationSegment {
     private final String language;
     private final boolean ttsReady;
 
-    public TurkuNarrationSegment(int segmentNo, int sceneNo, String narrationText,
-                                  double durationSeconds, String voiceStyle,
-                                  String language, boolean ttsReady) {
+    @JsonCreator
+    public TurkuNarrationSegment(
+            @JsonProperty("segmentNo") int segmentNo,
+            @JsonProperty("sceneNo") int sceneNo,
+            @JsonProperty("narrationText") String narrationText,
+            @JsonProperty("durationSeconds") double durationSeconds,
+            @JsonProperty("voiceStyle") String voiceStyle,
+            @JsonProperty("language") String language,
+            @JsonProperty("ttsReady") boolean ttsReady) {
         this.segmentNo = segmentNo;
         this.sceneNo = sceneNo;
         this.narrationText = narrationText;

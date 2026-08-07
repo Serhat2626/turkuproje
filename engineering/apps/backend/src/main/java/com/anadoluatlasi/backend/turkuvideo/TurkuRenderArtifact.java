@@ -1,5 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.UUID;
 
 public final class TurkuRenderArtifact {
@@ -11,6 +13,25 @@ public final class TurkuRenderArtifact {
     private final String sizeLabel;
     private final boolean humanReviewRequired;
     private final boolean autoApproved;
+
+    @JsonCreator
+    public TurkuRenderArtifact(@JsonProperty("artifactId") UUID artifactId,
+                                @JsonProperty("artifactRef") String artifactRef,
+                                @JsonProperty("format") String format,
+                                @JsonProperty("durationSeconds") double durationSeconds,
+                                @JsonProperty("resolution") String resolution,
+                                @JsonProperty("sizeLabel") String sizeLabel,
+                                @JsonProperty("humanReviewRequired") boolean humanReviewRequired,
+                                @JsonProperty("autoApproved") boolean autoApproved) {
+        this.artifactId = artifactId;
+        this.artifactRef = artifactRef;
+        this.format = format;
+        this.durationSeconds = durationSeconds;
+        this.resolution = resolution;
+        this.sizeLabel = sizeLabel;
+        this.humanReviewRequired = humanReviewRequired;
+        this.autoApproved = autoApproved;
+    }
 
     public TurkuRenderArtifact(UUID artifactId, String artifactRef, String format,
                                 double durationSeconds, String resolution, String sizeLabel) {

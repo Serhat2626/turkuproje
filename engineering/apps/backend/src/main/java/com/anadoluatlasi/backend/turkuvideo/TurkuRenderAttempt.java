@@ -1,5 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -13,10 +15,15 @@ public final class TurkuRenderAttempt {
     private final long durationMs;
     private final String rendererAlias;
 
-    public TurkuRenderAttempt(UUID attemptId, int attemptNo, Instant startedAt,
-                               Instant completedAt, TurkuRenderJobStatus status,
-                               TurkuRenderFailureCode failureCode, long durationMs,
-                               String rendererAlias) {
+    @JsonCreator
+    public TurkuRenderAttempt(@JsonProperty("attemptId") UUID attemptId,
+                               @JsonProperty("attemptNo") int attemptNo,
+                               @JsonProperty("startedAt") Instant startedAt,
+                               @JsonProperty("completedAt") Instant completedAt,
+                               @JsonProperty("status") TurkuRenderJobStatus status,
+                               @JsonProperty("failureCode") TurkuRenderFailureCode failureCode,
+                               @JsonProperty("durationMs") long durationMs,
+                               @JsonProperty("rendererAlias") String rendererAlias) {
         this.attemptId = attemptId;
         this.attemptNo = attemptNo;
         this.startedAt = startedAt;

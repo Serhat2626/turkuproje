@@ -1,6 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
-import java.util.List;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
 /**
  * FP-019 Task 04: Per-scene asset item — visual prompt plan for one scene.
@@ -18,10 +19,17 @@ public final class TurkuSceneAssetItem {
     private final boolean needsHumanReview;
     private final boolean copyrightReviewRequired;
 
-    public TurkuSceneAssetItem(int sceneNo, String assetPurpose, String visualPromptSummary,
-                                String negativePromptSafetyNotes, String styleHint,
-                                String mood, String aspectRatioHint,
-                                boolean needsHumanReview, boolean copyrightReviewRequired) {
+    @JsonCreator
+    public TurkuSceneAssetItem(
+            @JsonProperty("sceneNo") int sceneNo,
+            @JsonProperty("assetPurpose") String assetPurpose,
+            @JsonProperty("visualPromptSummary") String visualPromptSummary,
+            @JsonProperty("negativePromptSafetyNotes") String negativePromptSafetyNotes,
+            @JsonProperty("styleHint") String styleHint,
+            @JsonProperty("mood") String mood,
+            @JsonProperty("aspectRatioHint") String aspectRatioHint,
+            @JsonProperty("needsHumanReview") boolean needsHumanReview,
+            @JsonProperty("copyrightReviewRequired") boolean copyrightReviewRequired) {
         this.sceneNo = sceneNo;
         this.assetPurpose = assetPurpose;
         this.visualPromptSummary = visualPromptSummary;

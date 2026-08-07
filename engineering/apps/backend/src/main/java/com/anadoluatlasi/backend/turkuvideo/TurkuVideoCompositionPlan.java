@@ -1,6 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 
@@ -33,6 +35,23 @@ public final class TurkuVideoCompositionPlan {
                                       TurkuSceneTimingPlan timingPlan,
                                       TurkuTransitionPlan transitionPlan,
                                       List<String> reviewFlags) {
+        this(compositionId, projectId, totalDurationSeconds, scenes, narrationSegments,
+             timingPlan, transitionPlan, true, true, false, reviewFlags);
+    }
+
+    @JsonCreator
+    public TurkuVideoCompositionPlan(
+            @JsonProperty("compositionId") UUID compositionId,
+            @JsonProperty("projectId") UUID projectId,
+            @JsonProperty("totalDurationSeconds") int totalDurationSeconds,
+            @JsonProperty("scenes") List<TurkuVideoCompositionScene> scenes,
+            @JsonProperty("narrationSegments") List<TurkuNarrationSegment> narrationSegments,
+            @JsonProperty("timingPlan") TurkuSceneTimingPlan timingPlan,
+            @JsonProperty("transitionPlan") TurkuTransitionPlan transitionPlan,
+            @JsonProperty("humanReviewRequired") boolean humanReviewRequired,
+            @JsonProperty("copyrightReviewRequired") boolean copyrightReviewRequired,
+            @JsonProperty("autoApproved") boolean autoApproved,
+            @JsonProperty("reviewFlags") List<String> reviewFlags) {
         this.compositionId = compositionId;
         this.projectId = projectId;
         this.totalDurationSeconds = totalDurationSeconds;
@@ -40,9 +59,9 @@ public final class TurkuVideoCompositionPlan {
         this.narrationSegments = narrationSegments != null ? List.copyOf(narrationSegments) : List.of();
         this.timingPlan = timingPlan;
         this.transitionPlan = transitionPlan;
-        this.humanReviewRequired = true;
-        this.copyrightReviewRequired = true;
-        this.autoApproved = false;
+        this.humanReviewRequired = humanReviewRequired;
+        this.copyrightReviewRequired = copyrightReviewRequired;
+        this.autoApproved = autoApproved;
         this.reviewFlags = reviewFlags != null ? List.copyOf(reviewFlags) : List.of();
     }
 

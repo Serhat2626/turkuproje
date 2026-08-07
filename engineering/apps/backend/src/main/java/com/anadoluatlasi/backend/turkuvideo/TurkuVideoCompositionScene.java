@@ -1,5 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 /**
  * FP-021 Task 02: Single scene in the video composition timeline.
  * Safe internal image ref only — no public URL, no base64, no storage key.
@@ -17,10 +20,18 @@ public final class TurkuVideoCompositionScene {
     private final String transitionOut;
     private final String cameraDirection;
 
-    public TurkuVideoCompositionScene(int sceneNo, String sceneTitle, String visualDescription,
-                                       String narrationText, String mood, double durationSeconds,
-                                       String imageRef, String transitionIn, String transitionOut,
-                                       String cameraDirection) {
+    @JsonCreator
+    public TurkuVideoCompositionScene(
+            @JsonProperty("sceneNo") int sceneNo,
+            @JsonProperty("sceneTitle") String sceneTitle,
+            @JsonProperty("visualDescription") String visualDescription,
+            @JsonProperty("narrationText") String narrationText,
+            @JsonProperty("mood") String mood,
+            @JsonProperty("durationSeconds") double durationSeconds,
+            @JsonProperty("imageRef") String imageRef,
+            @JsonProperty("transitionIn") String transitionIn,
+            @JsonProperty("transitionOut") String transitionOut,
+            @JsonProperty("cameraDirection") String cameraDirection) {
         this.sceneNo = sceneNo;
         this.sceneTitle = sceneTitle;
         this.visualDescription = visualDescription;

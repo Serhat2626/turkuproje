@@ -41,6 +41,7 @@ public class JpaTurkuVideoProjectRepositoryAdapter implements TurkuVideoProjectR
     private ObjectMapper createObjectMapper() {
         ObjectMapper mapper = new ObjectMapper();
         mapper.registerModule(new JavaTimeModule());
+        mapper.registerModule(new com.fasterxml.jackson.module.paramnames.ParameterNamesModule());
         mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
         mapper.configure(SerializationFeature.WRITE_DATES_AS_TIMESTAMPS, false);
         

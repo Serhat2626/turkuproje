@@ -1,6 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.time.Instant;
 import java.util.ArrayList;
 import java.util.List;
@@ -19,6 +21,33 @@ public final class TurkuRenderJob {
     private final List<TurkuRenderAttempt> attempts;
     private TurkuRenderArtifact artifact;
     private final List<String> reviewFlags;
+
+    @JsonCreator
+    public TurkuRenderJob(@JsonProperty("jobId") UUID jobId,
+                          @JsonProperty("projectId") UUID projectId,
+                          @JsonProperty("manifestRef") String manifestRef,
+                          @JsonProperty("status") TurkuRenderJobStatus status,
+                          @JsonProperty("humanReviewRequired") boolean humanReviewRequired,
+                          @JsonProperty("copyrightReviewRequired") boolean copyrightReviewRequired,
+                          @JsonProperty("autoApproved") boolean autoApproved,
+                          @JsonProperty("createdAt") Instant createdAt,
+                          @JsonProperty("updatedAt") Instant updatedAt,
+                          @JsonProperty("attempts") List<TurkuRenderAttempt> attempts,
+                          @JsonProperty("artifact") TurkuRenderArtifact artifact,
+                          @JsonProperty("reviewFlags") List<String> reviewFlags) {
+        this.jobId = jobId;
+        this.projectId = projectId;
+        this.manifestRef = manifestRef;
+        this.status = status;
+        this.humanReviewRequired = humanReviewRequired;
+        this.copyrightReviewRequired = copyrightReviewRequired;
+        this.autoApproved = autoApproved;
+        this.createdAt = createdAt;
+        this.updatedAt = updatedAt;
+        this.attempts = attempts != null ? new ArrayList<>(attempts) : new ArrayList<>();
+        this.artifact = artifact;
+        this.reviewFlags = reviewFlags != null ? new ArrayList<>(reviewFlags) : new ArrayList<>();
+    }
 
     public TurkuRenderJob(UUID jobId, UUID projectId, String manifestRef,
                            List<String> reviewFlags) {

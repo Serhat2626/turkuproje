@@ -109,6 +109,12 @@
             <scope>runtime</scope>
         </dependency>
 
+        <!-- Jackson ParameterNames — constructor-based deserialization for immutable classes -->
+        <dependency>
+            <groupId>com.fasterxml.jackson.module</groupId>
+            <artifactId>jackson-module-parameter-names</artifactId>
+        </dependency>
+
         <!-- Test -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

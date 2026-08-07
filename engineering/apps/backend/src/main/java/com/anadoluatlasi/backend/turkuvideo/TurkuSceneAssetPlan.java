@@ -1,6 +1,7 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
-
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 
@@ -15,8 +16,12 @@ public final class TurkuSceneAssetPlan {
     private final List<TurkuSceneAssetItem> items;
     private final List<String> reviewFlags;
 
-    public TurkuSceneAssetPlan(UUID planId, UUID projectId,
-                                List<TurkuSceneAssetItem> items, List<String> reviewFlags) {
+    @JsonCreator
+    public TurkuSceneAssetPlan(
+            @JsonProperty("planId") UUID planId,
+            @JsonProperty("projectId") UUID projectId,
+            @JsonProperty("items") List<TurkuSceneAssetItem> items,
+            @JsonProperty("reviewFlags") List<String> reviewFlags) {
         this.planId = planId;
         this.projectId = projectId;
         this.items = items != null ? List.copyOf(items) : List.of();

@@ -1,6 +1,8 @@
 package com.anadoluatlasi.backend.turkuvideo;
 
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
 import java.util.UUID;
 
@@ -25,6 +27,33 @@ public final class TurkuRenderManifest {
     private final boolean copyrightReviewRequired;
     private final boolean autoApproved;
     private final List<String> reviewFlags;
+
+    @JsonCreator
+    public TurkuRenderManifest(@JsonProperty("manifestId") UUID manifestId,
+                                @JsonProperty("projectId") UUID projectId,
+                                @JsonProperty("compositionId") UUID compositionId,
+                                @JsonProperty("scenes") List<TurkuRenderManifestScene> scenes,
+                                @JsonProperty("targetResolution") String targetResolution,
+                                @JsonProperty("targetFps") int targetFps,
+                                @JsonProperty("targetFormat") String targetFormat,
+                                @JsonProperty("totalDurationSeconds") double totalDurationSeconds,
+                                @JsonProperty("humanReviewRequired") boolean humanReviewRequired,
+                                @JsonProperty("copyrightReviewRequired") boolean copyrightReviewRequired,
+                                @JsonProperty("autoApproved") boolean autoApproved,
+                                @JsonProperty("reviewFlags") List<String> reviewFlags) {
+        this.manifestId = manifestId;
+        this.projectId = projectId;
+        this.compositionId = compositionId;
+        this.scenes = scenes != null ? List.copyOf(scenes) : List.of();
+        this.targetResolution = targetResolution;
+        this.targetFps = targetFps;
+        this.targetFormat = targetFormat;
+        this.totalDurationSeconds = totalDurationSeconds;
+        this.humanReviewRequired = humanReviewRequired;
+        this.copyrightReviewRequired = copyrightReviewRequired;
+        this.autoApproved = autoApproved;
+        this.reviewFlags = reviewFlags != null ? List.copyOf(reviewFlags) : List.of();
+    }
 
     public TurkuRenderManifest(UUID manifestId, UUID projectId, UUID compositionId,
                                 List<TurkuRenderManifestScene> scenes,
