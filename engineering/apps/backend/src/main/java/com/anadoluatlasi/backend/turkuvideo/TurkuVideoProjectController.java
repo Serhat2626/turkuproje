@@ -742,15 +742,21 @@ public class TurkuVideoProjectController {
 
     @PostMapping("/{id}/generate-tts")
     @Operation(summary = "TTS seslendirme üret",
-               description = "Tüm storyboard sahneleri için ses dosyası üretir.")
+               description = "Tüm storyboard sahneleri için ses dosyası üretir. ElevenLabs varsa onu kullanır, yoksa OpenAI TTS.")
     public ResponseEntity<ApiResponse<TurkuTtsService.TurkuTtsResponse>> generateTts(
             @PathVariable UUID id) {
-        if (ttsService == null) {
-            return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(ApiResponse.error("TTS servisi yapılandırılmamış (ai.provider=openai gerekli)"));
+        // ElevenLabs varsa öncelikli kullan
+        if (elevenLabsTtsService != null) {
+            TurkuTtsService.TurkuTtsResponse result = elevenLabsTtsService.generateForProject(id, 0);
+            return ResponseEntity.ok(ApiResponse.success(result));
         }
-        TurkuTtsService.TurkuTtsResponse result = ttsService.generateForProject(id);
-        return ResponseEntity.ok(ApiResponse.success(result));
+        // Yoksa OpenAI TTS
+        if (ttsService != null) {
+            TurkuTtsService.TurkuTtsResponse result = ttsService.generateForProject(id);
+            return ResponseEntity.ok(ApiResponse.success(result));
+        }
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(ApiResponse.error("TTS servisi yapılandırılmamış (ai.tts-provider=elevenlabs veya ai.provider=openai gerekli)"));
     }
 
     // ── DALL-E Batch Image Generation ──

@@ -25,7 +25,7 @@ minio:
 # AI Provider konfigürasyonu
 ai:
   provider: ${AI_PROVIDER:openai}
-  tts-provider: ${AI_TTS_PROVIDER:openai}  # 'openai' veya 'elevenlabs'
+  tts-provider: ${AI_TTS_PROVIDER:elevenlabs}  # 'openai' veya 'elevenlabs'
   image-provider: ${AI_IMAGE_PROVIDER:fal}  # 'openai' veya 'fal'
   openai:
     api-key: ${OPENAI_API_KEY:REDACTED_OPENAI_API_KEY}
