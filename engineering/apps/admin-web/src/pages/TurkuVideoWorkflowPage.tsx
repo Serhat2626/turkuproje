@@ -584,7 +584,14 @@ function TurkuVideoWorkflowPage() {
                         setSuccessMessage('Görseller başarıyla üretildi!')
                         setTimeout(() => setSuccessMessage(null), 3000)
                       } catch (e: any) {
-                        setError(e.message)
+                        // Timeout olsa bile görseller arka planda üretilmiş olabilir
+                        if (e.message?.includes('zaman aşımı') || e.message?.includes('timeout') || e.message?.includes('120')) {
+                          setError('⚠️ İstek zaman aşımına uğradı (120s). Video üretimi hâlâ devam ediyor olabilir — sayfayı yenileyin.')
+                        } else {
+                          setError(e.message)
+                        }
+                        // Her durumda projeyi yenile — kısmi sonuçları göster
+                        await refreshProject(project.id)
                       } finally {
                         setActiveAction(null)
                       }

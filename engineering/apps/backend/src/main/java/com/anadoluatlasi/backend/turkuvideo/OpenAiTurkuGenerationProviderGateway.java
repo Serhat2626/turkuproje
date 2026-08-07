@@ -744,9 +744,12 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
                 *** KRİTİK KURALLAR — UYULMASI ZORUNLU ***
 
-                1. HİKÂYE TAMAMEN ANLATILMALI.
+                1. HİKÂYE TAMAMEN ANLATILMALI — EN ÖNEMLİ KURAL.
                    Hikâyenin başından sonuna kadar TÜM OLAYLARI kapsayan sahneler oluştur.
-                   Hikâye yarıda kalmamalı. Son sahne hikâyenin doğal kapanışı olmalı.
+                   Hikâye yarıda kalmamalı. Son sahne hikâyenin DOĞAL KAPANIŞI olmalı.
+                   Senaryo metnindeki TÜM olaylar, dönüm noktaları ve sonuç anlatılmalı.
+                   Hikâye "bir gün..." veya "böylece..." diye bitmeli, ortada kesilmemeli.
+                   ⚠️ Hikâyeyi yarıda bırakan storyboard KABUL EDİLMEZ.
 
                 2. EN FAZLA 35 SAHNE (= 35 GÖRSEL) oluşturulabilir.
                    Her sahne = 1 benzersiz görsel. Görsel üretim maliyeti nedeniyle
@@ -756,10 +759,10 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
 
                 3. SAHNE SÜRESİ ESNEKTİR.
                    Kısa sahneler: 10-15 saniye (geçiş anları, atmosfer)
-                   Normal sahneler: 15-25 saniye (olaylar, diyalog)
-                   Uzun sahneler: 25-40 saniye (duygusal zirveler, dönüm noktaları)
-                   Toplam süre: ~600 saniye (10 dakika).
-                   Aynı görsel üzerinde uzun seslendirme devam edebilir.
+                   Normal sahneler: 20-30 saniye (olaylar, diyalog)
+                   Uzun sahneler: 30-50 saniye (duygusal zirveler, dönüm noktaları)
+                   Toplam süre: ~600-720 saniye (10-12 dakika).
+                   Aynı görsel üzerinde uzun seslendirme devam edebilir — bu normaldir.
 
                 4. BU BİR FİLM. Sessiz izleyen biri bile görsellerden hikâyeyi anlayabilmeli.
                    Her sahne hikâyenin bir ANINI gösterir — karakter portresi DEĞİL.
@@ -774,18 +777,20 @@ public class OpenAiTurkuGenerationProviderGateway implements TurkuGenerationProv
                    - Kamera açıları DEĞİŞKEN: close-up, wide, silüet, kuş bakışı...
                    - Yan karakterler (baba, arkadaş, ağa) kendi sahnelerinde görülmeli
 
-                7. SESLENDİRME: Senaryo beat'lerindeki hikâyeyi sahnelere dağıt.
-                   Kısa sahnelerde: 30-60 kelime.
-                   Uzun sahnelerde: 60-120 kelime.
-                   HİKÂYENİN O ANINI anlat, genel bilgi DEĞİL.
-                   Tüm seslendirmeler birleştiğinde HİKÂYENİN TAMAMI anlatılmış olmalı.
+                7. SESLENDİRME — UZUN VE DETAYLI OLMALI.
+                   ⚠️ Her sahne EN AZ 80 kelime, karmaşık sahneler 120-200 kelime olmalı.
+                   Hikâyenin tamamı ~3000-4000 kelime seslendirme ile anlatılacak.
+                   35 sahne × ortalama 100 kelime = 3500 kelime.
+                   HİKÂYENİN O ANINI detaylı anlat, kısa ve genel geçme.
+                   Tüm seslendirmeler birleştiğinde HİKÂYENİN TAMAMI eksiksiz anlatılmış olmalı.
+                   Son sahnenin seslendirmesi hikâyenin son cümlesini içermelidir.
 
                 FORMAT (her sahne için):
                 ### Sahne [numara]
-                **Süre:** [saniye — esnek. Toplam ~600sn = 10dk]
+                **Süre:** [saniye — esnek. Toplam ~600-720sn = 10-12dk]
                 **Seslendirme:** [TÜRKÇE — TTS ile seslendirilecek.
-                Hikâyenin BU ANINI anlat. Edebî, sinematik, duygusal.
-                Süre uzunsa seslendirme de uzun olabilir.]
+                Hikâyenin BU ANINI detaylı anlat. Edebî, sinematik, duygusal.
+                EN AZ 80 kelime yaz. Uzun sahneler 120-200 kelime olabilir.]
                 **Görsel:** [⚠️ İNGİLİZCE YAZ — Bu metin AI image prompt olacak.
                 Fal.ai modeli Türkçe ANLAMIYOR. İngilizce yaz!
                 Format: "[Character] is [doing action] in [location].
