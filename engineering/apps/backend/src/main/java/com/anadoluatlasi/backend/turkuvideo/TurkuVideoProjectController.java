@@ -747,7 +747,7 @@ public class TurkuVideoProjectController {
             @PathVariable UUID id) {
         // ElevenLabs varsa öncelikli kullan
         if (elevenLabsTtsService != null) {
-            TurkuTtsService.TurkuTtsResponse result = elevenLabsTtsService.generateForProject(id, 0);
+            TurkuTtsService.TurkuTtsResponse result = elevenLabsTtsService.generateForProject(id);
             return ResponseEntity.ok(ApiResponse.success(result));
         }
         // Yoksa OpenAI TTS
