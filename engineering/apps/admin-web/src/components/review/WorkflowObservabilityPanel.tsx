@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import type {
   SafeWorkflowObservabilitySummary,
-  SafeWorkflowDiagnosticItem,
   SafeWorkflowDiagnosticType,
   SafeOperationalControlHint,
   ReviewTargetType,
